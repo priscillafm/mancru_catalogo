@@ -157,15 +157,15 @@ export default function CatalogPage() {
                   color: isActive ? 'var(--text)' : 'var(--text2)',
                   cursor: 'pointer', textAlign: 'left',
                 }}>
-                {brand.logo_url
-                  ? <span style={{ width: 28, height: 28, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <img src={brand.logo_url} alt=""
+                <span style={{ width: 28, height: 28, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {brand.logo_url
+                    ? <img src={brand.logo_url} alt=""
                         style={{ maxWidth: 28, maxHeight: 28, objectFit: 'contain', mixBlendMode: 'screen', filter: 'brightness(1.1)' }}
-                        onError={e => e.target.parentElement.innerHTML = `<span style="width:10px;height:10px;border-radius:50%;background:${brand.color};display:inline-block"></span>`}
+                        onError={e => { e.target.style.display='none'; e.target.insertAdjacentHTML('afterend',`<span style="width:10px;height:10px;border-radius:50%;background:${brand.color};display:inline-block"></span>`) }}
                       />
-                    </span>
-                  : <span style={{ width: 10, height: 10, borderRadius: '50%', background: brand.color, flexShrink: 0 }} />
-                }
+                    : <span style={{ width: 10, height: 10, borderRadius: '50%', background: brand.color, display: 'inline-block' }} />
+                  }
+                </span>
                 <span style={{ fontSize: 13, fontWeight: 500, flex: 1 }}>{brand.name}</span>
                 {countInBrand > 0 && (
                   <span style={{
