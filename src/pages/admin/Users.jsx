@@ -65,6 +65,27 @@ export default function Users() {
     setInviting(false)
   }
 
+  async function deleteUser(userId, memberId) {
+    if (!confirm('¿Eliminar este usuario? Esta acción no se puede deshacer.')) return
+    const SUPABASE_URL  = import.meta.env.VITE_SUPABASE_URL
+    const SUPABASE_ANON = import.meta.env.VITE_SUPABASE_ANON_KEY
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/delete-user`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPABASE_ANON}`,
+        'apikey': SUPABASE_ANON,
+      },
+      body: JSON.stringify({ user_id: userId }),
+    })
+    const result = await resp.json()
+    if (result.error) {
+      alert(`Error: ${result.error}`)
+    } else {
+      qc.invalidateQueries(['members', companyId])
+    }
+  }
+
   async function changeRole(memberId, newRole) {
     await supabase.from('user_memberships').update({ role: newRole }).eq('id', memberId)
     qc.invalidateQueries(['members', companyId])
@@ -179,12 +200,20 @@ export default function Users() {
                   </span>
                 </td>
                 <td style={tdStyle}>
-                  <button onClick={() => toggleActive(m.id, m.active)} style={{
-                    padding: '3px 10px', borderRadius: 6, fontSize: 11, cursor: 'pointer',
-                    border: '1px solid var(--border)', background: 'transparent', color: 'var(--text2)',
-                  }}>
-                    {m.active ? 'Desactivar' : 'Activar'}
-                  </button>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button onClick={() => toggleActive(m.id, m.active)} style={{
+                      padding: '3px 10px', borderRadius: 6, fontSize: 11, cursor: 'pointer',
+                      border: '1px solid var(--border)', background: 'transparent', color: 'var(--text2)',
+                    }}>
+                      {m.active ? 'Desactivar' : 'Activar'}
+                    </button>
+                    <button onClick={() => deleteUser(m.users?.id, m.id)} style={{
+                      padding: '3px 10px', borderRadius: 6, fontSize: 11, cursor: 'pointer',
+                      border: '1px solid #ef444444', background: 'transparent', color: '#ef4444',
+                    }}>
+                      Eliminar
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
