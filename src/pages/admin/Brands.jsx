@@ -10,14 +10,14 @@ function slugify(str) {
 export default function Brands() {
   const companyId   = useAuthStore(s => s.membership?.company_id)
   const qc          = useQueryClient()
-  const [modal, setModal]   = useState(null)  // null | { id?, name, color, textColor }
+  const [modal, setModal]   = useState(null)  // null | { id?, name, color, textColor, logoUrl }
   const [search, setSearch] = useState('')
 
   const { data: brands = [] } = useQuery({
     queryKey: ['brands', companyId],
     queryFn: async () => {
       const { data } = await supabase.from('brands')
-        .select('id, name, color, text_color, aliases')
+        .select('id, name, color, text_color, logo_url, aliases')
         .eq('company_id', companyId).is('deleted_at', null).order('sort_order')
       return data ?? []
     },
@@ -29,6 +29,7 @@ export default function Brands() {
       const payload = {
         company_id: companyId, name: form.name,
         slug: slugify(form.name), color: form.color, text_color: form.textColor,
+        logo_url: form.logoUrl || null,
       }
       if (form.id) {
         await supabase.from('brands').update(payload).eq('id', form.id)
@@ -77,7 +78,7 @@ export default function Brands() {
                 </td>
                 <td style={tdStyle}><strong>{b.name}</strong></td>
                 <td style={tdStyle}>
-                  <button onClick={() => setModal({ id: b.id, name: b.name, color: b.color, textColor: b.text_color })} style={btnSm}>Editar</button>
+                  <button onClick={() => setModal({ id: b.id, name: b.name, color: b.color, textColor: b.text_color, logoUrl: b.logo_url || '' })} style={btnSm}>Editar</button>
                   <button onClick={() => { if (confirm('¿Eliminar esta marca?')) remove.mutate(b.id) }} style={{ ...btnSm, color: '#ef4444', borderColor: 'rgba(239,68,68,.3)', marginLeft: 6 }}>Eliminar</button>
                 </td>
               </tr>
@@ -96,6 +97,13 @@ export default function Brands() {
           </Field>
           <Field label="Color de texto">
             <input type="color" value={modal.textColor} onChange={e => setModal(m => ({ ...m, textColor: e.target.value }))} style={{ ...inputStyle, height: 40, padding: 4 }} />
+          </Field>
+          <Field label="URL del logo (Drive o web)">
+            <input value={modal.logoUrl || ''} onChange={e => setModal(m => ({ ...m, logoUrl: e.target.value }))}
+              placeholder="https://drive.google.com/uc?id=..." style={inputStyle} />
+            {modal.logoUrl && (
+              <img src={modal.logoUrl} alt="preview" style={{ marginTop: 8, maxHeight: 40, objectFit: 'contain', mixBlendMode: 'screen' }} onError={e => e.target.style.display='none'} />
+            )}
           </Field>
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 6 }}>
             <button onClick={() => setModal(null)} style={btnSm}>Cancelar</button>
