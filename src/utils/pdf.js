@@ -105,17 +105,19 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
             img.src = brandLogo
           })
           if (dims) {
-            const maxH = HEADER_H - 4
-            const maxW = 40
+            const maxH = HEADER_H - 6
+            const maxW = 24
             const ratio = dims.w / dims.h
-            const h = Math.min(maxH, maxW / ratio)
-            const w = h * ratio
-            doc.addImage(brandLogo, fmt, 6, (HEADER_H - h) / 2, w, h, undefined, 'FAST')
-            logoAdded = true
+            let w, h
+            if (ratio > 1) { w = maxW; h = w / ratio }
+            else           { h = maxH; w = h * ratio }
+            if (h > maxH)  { h = maxH; w = h * ratio }
+            doc.addImage(brandLogo, fmt, 5, (HEADER_H - h) / 2, w, h, undefined, 'FAST')
+            logoAdded = w
           }
         } catch { /* skip logo if it fails */ }
       }
-      doc.text(brandName, logoAdded ? 50 : 10, 14)
+      doc.text(brandName, logoAdded ? 5 + logoAdded + 3 : 10, 14)
       doc.setFontSize(11)
       doc.setFont('helvetica', 'normal')
       doc.text(companyName, PW / 2, 14, { align: 'center' })
