@@ -97,11 +97,25 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
       if (brandLogo && typeof brandLogo === 'string' && brandLogo.startsWith('data:image')) {
         try {
           const fmt = brandLogo.startsWith('data:image/png') ? 'PNG' : 'JPEG'
-          doc.addImage(brandLogo, fmt, 6, 3, 16, 16, undefined, 'FAST')
-          logoAdded = true
+          // Get natural dimensions to preserve aspect ratio
+          const dims = await new Promise(res => {
+            const img = new Image()
+            img.onload = () => res({ w: img.naturalWidth, h: img.naturalHeight })
+            img.onerror = () => res(null)
+            img.src = brandLogo
+          })
+          if (dims) {
+            const maxH = HEADER_H - 4
+            const maxW = 40
+            const ratio = dims.w / dims.h
+            const h = Math.min(maxH, maxW / ratio)
+            const w = h * ratio
+            doc.addImage(brandLogo, fmt, 6, (HEADER_H - h) / 2, w, h, undefined, 'FAST')
+            logoAdded = true
+          }
         } catch { /* skip logo if it fails */ }
       }
-      doc.text(brandName, logoAdded ? 26 : 10, 14)
+      doc.text(brandName, logoAdded ? 50 : 10, 14)
       doc.setFontSize(11)
       doc.setFont('helvetica', 'normal')
       doc.text(companyName, PW / 2, 14, { align: 'center' })
