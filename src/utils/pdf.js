@@ -91,8 +91,13 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
       doc.setFont('helvetica', 'bold')
       doc.setTextColor(brandTextClr)
       if (brandLogo) {
-        try { doc.addImage(brandLogo, 'PNG', 6, 3, 16, 16, undefined, 'FAST') } catch {}
-        doc.text(brandName, 26, 14)
+        try {
+          const fmt = brandLogo.includes('data:image/png') ? 'PNG' : 'JPEG'
+          doc.addImage(brandLogo, fmt, 6, 3, 16, 16, undefined, 'FAST')
+          doc.text(brandName, 26, 14)
+        } catch {
+          doc.text(brandName, 10, 14)
+        }
       } else {
         doc.text(brandName, 10, 14)
       }
