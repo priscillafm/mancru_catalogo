@@ -100,6 +100,7 @@ function detectChangedFields(current, incoming) {
     ['category_id', current.category_id, incoming.category_id],
     ['price',       current.price,       incoming.price],
     ['stock',       current.stock,       incoming.stock],
+    ['image_ref',   current.image_url,   incoming.image_ref],
   ]
   for (const [field, a, b] of compare) {
     // eslint-disable-next-line eqeqeq
