@@ -21,7 +21,7 @@ export default function PDFPreviewModal({ brandGroups, company, onClose }) {
     setPrices(prev => {
       const next = { ...prev }
       for (const p of allProducts) {
-        next[p.id] = { currency, amount: next[p.id]?.amount ?? '', ...next[p.id], currency }
+        next[p.id] = { ...next[p.id], currency, amount: next[p.id]?.amount ?? '' }
       }
       return next
     })
