@@ -148,30 +148,15 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
         const PAD     = 4
         const inner_w = CELL_W - PAD * 2
 
-        // Category chip — shown on first card of each new category
-        const catName = p.categories?.name ?? null
-        const isNewCat = catName && (absIdx === 0 || products[absIdx - 1]?.category_id !== p.category_id)
-        const CAT_H = isNewCat ? 5 : 0
-
         // Card background
         doc.setFillColor('#f5f5f5')
-        doc.roundedRect(x + 1, y + 1 + CAT_H, CELL_W - 2, CELL_H - 2 - CAT_H, 3, 3, 'F')
-
-        // Category label strip
-        if (isNewCat) {
-          doc.setFillColor(brandColor)
-          doc.roundedRect(x + 1, y + 1, CELL_W - 2, CAT_H + 2, 2, 2, 'F')
-          doc.setFontSize(5.5)
-          doc.setFont('helvetica', 'bold')
-          doc.setTextColor(brandTextClr)
-          doc.text(catName.toUpperCase(), x + CELL_W / 2, y + 4.5, { align: 'center' })
-        }
+        doc.roundedRect(x + 1, y + 1, CELL_W - 2, CELL_H - 2, 3, 3, 'F')
 
         // Image area
-        const imgAreaH = (CELL_H - CAT_H) * 0.52
+        const imgAreaH = CELL_H * 0.52
         const imgSize  = Math.min(inner_w, imgAreaH) - 2
         const imgX     = x + (CELL_W - imgSize) / 2
-        const imgY     = y + PAD + CAT_H
+        const imgY     = y + PAD
 
         const b64 = await loadImageAsBase64(p.image_url)
         if (b64) {
@@ -212,11 +197,11 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
 
         // Price — pinned near bottom of card
         if (p._price) {
-          const priceText = `${p._currency ?? '$'} ${p._price}`
-          doc.setFontSize(8)
+          const curLabel = (p._currency ?? '$') === '$' ? '$ UYU' : 'USD'
+          doc.setFontSize(11)
           doc.setFont('helvetica', 'bold')
           doc.setTextColor('#111111')
-          doc.text(priceText, x + CELL_W / 2, y + CELL_H - 4, { align: 'center' })
+          doc.text(`${curLabel} ${p._price}`, x + CELL_W / 2, y + CELL_H - 4, { align: 'center' })
         }
       }
     }
