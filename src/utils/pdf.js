@@ -81,11 +81,12 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
     if (brand.logo_url) {
       try { brandLogo = await loadImageAsBase64(brand.logo_url) } catch { brandLogo = null }
     }
-    // Sort products by category name then product name
-    const sorted = [...products].sort((a, b) =>
-      (a.categories?.name ?? '').localeCompare(b.categories?.name ?? '', 'es') ||
-      (a.name ?? '').localeCompare(b.name ?? '', 'es')
-    )
+    // Sort products by category name (no category goes last), then product name
+    const sorted = [...products].sort((a, b) => {
+      const catA = a.categories?.name ?? '￿'
+      const catB = b.categories?.name ?? '￿'
+      return catA.localeCompare(catB, 'es') || (a.name ?? '').localeCompare(b.name ?? '', 'es')
+    })
 
     // Dynamic layout: new category always starts on a new row
     let slot = 0      // slot index within current page (0..PER_PAGE-1)
@@ -140,8 +141,8 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
     // Start first page for this brand
     if (!firstPage) doc.addPage()
     firstPage = false
-    await renderLogo()
     renderHeaderFooter(pageNum)
+    await renderLogo()
 
     for (let si = 0; si < sorted.length; si++) {
       const p = sorted[si]
@@ -158,8 +159,8 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
         slot = 0
         pageNum++
         doc.addPage()
-        await renderLogo()
         renderHeaderFooter(pageNum)
+        await renderLogo()
       }
 
       const col = slot % COLS_PDF
