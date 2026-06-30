@@ -81,23 +81,39 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
     if (brand.logo_url) {
       try { brandLogo = await loadImageAsBase64(brand.logo_url) } catch { brandLogo = null }
     }
-    const pages        = Math.ceil(products.length / PER_PAGE)
+    // Sort products by category name then product name
+    const sorted = [...products].sort((a, b) =>
+      (a.categories?.name ?? '').localeCompare(b.categories?.name ?? '', 'es') ||
+      (a.name ?? '').localeCompare(b.name ?? '', 'es')
+    )
 
-    for (let pg = 0; pg < pages; pg++) {
-      if (!firstPage) doc.addPage()
-      firstPage = false
+    // Dynamic layout: new category always starts on a new row
+    let slot = 0      // slot index within current page (0..PER_PAGE-1)
+    let pageNum = 0
+    let totalPages = null  // calculated after first pass (we'll use 0 for unknown)
 
-      // ── Header ──────────────────────────────────────
+    const renderHeaderFooter = (pg) => {
       doc.setFillColor(brandColor)
       doc.rect(0, 0, PW, HEADER_H, 'F')
       doc.setFontSize(14)
       doc.setFont('helvetica', 'bold')
       doc.setTextColor(brandTextClr)
-      let logoAdded = false
+      // logo handled async before this call
+      doc.setFontSize(11)
+      doc.setFont('helvetica', 'normal')
+      doc.text(companyName, PW / 2, 14, { align: 'center' })
+      if (companyWeb) doc.text(companyWeb, PW - 10, 14, { align: 'right' })
+      doc.setFillColor(brandColor)
+      doc.rect(0, PH - FOOTER_H, PW, FOOTER_H, 'F')
+      doc.setFontSize(7)
+      doc.setTextColor(brandTextClr)
+      doc.text(`${brandName}  •  Pág. ${pg + 1}`, PW / 2, PH - 2.5, { align: 'center' })
+    }
+
+    const renderLogo = async () => {
       if (brandLogo && typeof brandLogo === 'string' && brandLogo.startsWith('data:image')) {
         try {
           const fmt = brandLogo.startsWith('data:image/png') ? 'PNG' : 'JPEG'
-          // Get natural dimensions to preserve aspect ratio
           const dims = await new Promise(res => {
             const img = new Image()
             img.onload = () => res({ w: img.naturalWidth, h: img.naturalHeight })
@@ -105,105 +121,115 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
             img.src = brandLogo
           })
           if (dims) {
-            const maxH = HEADER_H - 6
-            const maxW = 24
+            const maxH = HEADER_H - 6, maxW = 24
             const ratio = dims.w / dims.h
             let w, h
-            if (ratio > 1) { w = maxW; h = w / ratio }
-            else           { h = maxH; w = h * ratio }
+            if (ratio > 1) { w = maxW; h = w / ratio } else { h = maxH; w = h * ratio }
             if (h > maxH)  { h = maxH; w = h * ratio }
             doc.addImage(brandLogo, fmt, 5, (HEADER_H - h) / 2, w, h, undefined, 'NONE')
-            logoAdded = w
+            return
           }
-        } catch { /* skip logo if it fails */ }
+        } catch { /* skip */ }
       }
-      if (!logoAdded) doc.text(brandName, 10, 14)
-      doc.setFontSize(11)
-      doc.setFont('helvetica', 'normal')
-      doc.text(companyName, PW / 2, 14, { align: 'center' })
-      if (companyWeb) doc.text(companyWeb, PW - 10, 14, { align: 'right' })
-
-      // ── Footer ──────────────────────────────────────
-      doc.setFillColor(brandColor)
-      doc.rect(0, PH - FOOTER_H, PW, FOOTER_H, 'F')
-      doc.setFontSize(7)
+      doc.setFontSize(14)
+      doc.setFont('helvetica', 'bold')
       doc.setTextColor(brandTextClr)
-      doc.text(`${brandName}  •  Pág. ${pg + 1} / ${pages}`, PW / 2, PH - 2.5, { align: 'center' })
+      doc.text(brandName, 10, 14)
+    }
 
-      // ── Products ─────────────────────────────────────
-      const batch = products.slice(pg * PER_PAGE, (pg + 1) * PER_PAGE)
+    // Start first page for this brand
+    if (!firstPage) doc.addPage()
+    firstPage = false
+    await renderLogo()
+    renderHeaderFooter(pageNum)
 
-      for (let ci = 0; ci < batch.length; ci++) {
-        const p      = batch[ci]
-        const absIdx = pg * PER_PAGE + ci
-        const col    = ci % COLS_PDF
-        const row    = Math.floor(ci / COLS_PDF)
+    for (let si = 0; si < sorted.length; si++) {
+      const p = sorted[si]
 
-        const x = 8 + col * CELL_W
-        const y = CONTENT_TOP + row * CELL_H
-
-        globalIdx++
-        onProgress && onProgress(globalIdx, totalProducts)
-
-        const PAD     = 4
-        const inner_w = CELL_W - PAD * 2
-
-        // Card background
-        doc.setFillColor('#f5f5f5')
-        doc.roundedRect(x + 1, y + 1, CELL_W - 2, CELL_H - 2, 3, 3, 'F')
-
-        // Image area
-        const imgAreaH = CELL_H * 0.52
-        const imgSize  = Math.min(inner_w, imgAreaH) - 2
-        const imgX     = x + (CELL_W - imgSize) / 2
-        const imgY     = y + PAD
-
-        const b64 = await loadImageAsBase64(p.image_url)
-        if (b64) {
-          try { doc.addImage(b64, 'JPEG', imgX, imgY, imgSize, imgSize, undefined, 'FAST') }
-          catch { drawNoImage(doc, imgX, imgY, imgSize) }
-        } else {
-          drawNoImage(doc, imgX, imgY, imgSize)
+      // If new category and we're mid-row, jump to next row
+      if (si > 0 && sorted[si].category_id !== sorted[si - 1].category_id) {
+        if (slot % COLS_PDF !== 0) {
+          slot = Math.ceil(slot / COLS_PDF) * COLS_PDF
         }
+      }
 
-        let tY = imgY + imgSize + 3
+      // New page if slot exceeded
+      if (slot >= PER_PAGE) {
+        slot = 0
+        pageNum++
+        doc.addPage()
+        await renderLogo()
+        renderHeaderFooter(pageNum)
+      }
 
-        // SKU badge
-        const SKU_H = 5.5
-        doc.setFillColor(brandColor)
-        doc.roundedRect(x + PAD, tY, inner_w, SKU_H, 1.5, 1.5, 'F')
-        doc.setFontSize(7)
-        doc.setFont('helvetica', 'bold')
-        doc.setTextColor(brandTextClr)
-        doc.text(String(p.sku ?? ''), x + CELL_W / 2, tY + 3.7, { align: 'center' })
-        tY += SKU_H + 4
+      const col = slot % COLS_PDF
+      const row = Math.floor(slot / COLS_PDF)
+      const x   = 8 + col * CELL_W
+      const y   = CONTENT_TOP + row * CELL_H
 
-        // Product name
-        doc.setFontSize(7.5)
+      globalIdx++
+      onProgress && onProgress(globalIdx, totalProducts)
+
+      const PAD     = 4
+      const inner_w = CELL_W - PAD * 2
+
+      // Card background
+      doc.setFillColor('#f5f5f5')
+      doc.roundedRect(x + 1, y + 1, CELL_W - 2, CELL_H - 2, 3, 3, 'F')
+
+      // Image area
+      const imgAreaH = CELL_H * 0.52
+      const imgSize  = Math.min(inner_w, imgAreaH) - 2
+      const imgX     = x + (CELL_W - imgSize) / 2
+      const imgY     = y + PAD
+
+      const b64 = await loadImageAsBase64(p.image_url)
+      if (b64) {
+        try { doc.addImage(b64, 'JPEG', imgX, imgY, imgSize, imgSize, undefined, 'FAST') }
+        catch { drawNoImage(doc, imgX, imgY, imgSize) }
+      } else {
+        drawNoImage(doc, imgX, imgY, imgSize)
+      }
+
+      let tY = imgY + imgSize + 3
+
+      // SKU badge
+      const SKU_H = 5.5
+      doc.setFillColor(brandColor)
+      doc.roundedRect(x + PAD, tY, inner_w, SKU_H, 1.5, 1.5, 'F')
+      doc.setFontSize(7)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(brandTextClr)
+      doc.text(String(p.sku ?? ''), x + CELL_W / 2, tY + 3.7, { align: 'center' })
+      tY += SKU_H + 4
+
+      // Product name
+      doc.setFontSize(7.5)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor('#111111')
+      const nameLines = doc.splitTextToSize(String(p.name ?? ''), inner_w).slice(0, 2)
+      doc.text(nameLines, x + PAD, tY)
+      tY += nameLines.length * 4.2 + 1
+
+      // Description
+      if (tY + 5 < y + CELL_H - PAD) {
+        doc.setFontSize(6.5)
+        doc.setFont('helvetica', 'normal')
+        doc.setTextColor('#888888')
+        const descLines = doc.splitTextToSize(String(p.description ?? ''), inner_w).slice(0, 2)
+        doc.text(descLines, x + PAD, tY)
+      }
+
+      // Price — pinned near bottom of card
+      if (p._price) {
+        const curLabel = (p._currency ?? '$') === '$' ? '$ UYU' : 'USD'
+        doc.setFontSize(11)
         doc.setFont('helvetica', 'bold')
         doc.setTextColor('#111111')
-        const nameLines = doc.splitTextToSize(String(p.name ?? ''), inner_w).slice(0, 2)
-        doc.text(nameLines, x + PAD, tY)
-        tY += nameLines.length * 4.2 + 1
-
-        // Description
-        if (tY + 5 < y + CELL_H - PAD) {
-          doc.setFontSize(6.5)
-          doc.setFont('helvetica', 'normal')
-          doc.setTextColor('#888888')
-          const descLines = doc.splitTextToSize(String(p.description ?? ''), inner_w).slice(0, 2)
-          doc.text(descLines, x + PAD, tY)
-        }
-
-        // Price — pinned near bottom of card
-        if (p._price) {
-          const curLabel = (p._currency ?? '$') === '$' ? '$ UYU' : 'USD'
-          doc.setFontSize(11)
-          doc.setFont('helvetica', 'bold')
-          doc.setTextColor('#111111')
-          doc.text(`${curLabel} ${p._price}`, x + CELL_W / 2, y + CELL_H - 4, { align: 'center' })
-        }
+        doc.text(`${curLabel} ${p._price}`, x + CELL_W / 2, y + CELL_H - 4, { align: 'center' })
       }
+
+      slot++
     }
   }
 
