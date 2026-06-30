@@ -39,7 +39,7 @@ export default function CatalogPage() {
     queryFn: async () => {
       let q = supabase
         .from('products')
-        .select('id, sku, name, description, image_url, category_id, brand_id, categories(name)')
+        .select('id, sku, name, description, image_url, category_id, brand_id, stock, categories(name)')
         .eq('company_id', companyId)
         .eq('active', true)
         .is('deleted_at', null)
@@ -109,7 +109,9 @@ export default function CatalogPage() {
   function buildBrandGroups() {
     const groups = []
     for (const brand of brands) {
-      const ps = Object.values(selectedMap).filter(p => p.brand_id === brand.id)
+      const ps = Object.values(selectedMap)
+        .filter(p => p.brand_id === brand.id)
+        .sort((a, b) => (a.categories?.name ?? '').localeCompare(b.categories?.name ?? '', 'es') || (a.name ?? '').localeCompare(b.name ?? '', 'es'))
       if (ps.length > 0) groups.push({ brand, products: ps })
     }
     return groups
@@ -267,17 +269,20 @@ export default function CatalogPage() {
 
 function ProductCard({ product, selected, brandColor, onClick }) {
   const [hovered, setHovered] = React.useState(false)
+  const noStock = product.stock === 0
   return (
-    <div onClick={onClick}
-      onMouseEnter={() => setHovered(true)}
+    <div
+      onClick={noStock ? undefined : onClick}
+      onMouseEnter={() => !noStock && setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        background: hovered && !selected ? 'var(--surface-h)' : 'var(--surface)',
-        border: `1px solid ${selected ? brandColor : hovered ? 'var(--accent)' : 'var(--border)'}`,
+        background: noStock ? 'var(--bg-panel)' : hovered && !selected ? 'var(--surface-h)' : 'var(--surface)',
+        border: `1px solid ${selected ? brandColor : noStock ? 'var(--border)' : hovered ? 'var(--accent)' : 'var(--border)'}`,
         boxShadow: selected ? `0 0 0 1px ${brandColor}` : 'none',
-        borderRadius: 13, cursor: 'pointer', overflow: 'hidden', position: 'relative',
+        borderRadius: 13, cursor: noStock ? 'default' : 'pointer', overflow: 'hidden', position: 'relative',
         transition: 'border-color 0.15s, background 0.15s, transform 0.15s',
-        transform: hovered && !selected ? 'translateY(-3px)' : 'none',
+        transform: hovered && !selected && !noStock ? 'translateY(-3px)' : 'none',
+        opacity: noStock ? 0.6 : 1,
       }}>
       {selected && (
         <div style={{
@@ -286,9 +291,17 @@ function ProductCard({ product, selected, brandColor, onClick }) {
           alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, color: '#fff',
         }}>✓</div>
       )}
+      {noStock && (
+        <div style={{
+          position: 'absolute', top: 7, right: 7,
+          padding: '2px 7px', borderRadius: 6,
+          background: 'rgba(0,0,0,0.55)', color: '#fff',
+          fontSize: 9, fontWeight: 700, letterSpacing: '.05em', textTransform: 'uppercase',
+        }}>Sin stock</div>
+      )}
       {product.image_url ? (
         <img src={product.image_url} alt=""
-          style={{ width: '100%', aspectRatio: '1', objectFit: 'contain', background: 'var(--bg-panel)', display: 'block' }}
+          style={{ width: '100%', aspectRatio: '1', objectFit: 'contain', background: 'var(--bg-panel)', display: 'block', filter: noStock ? 'grayscale(1)' : 'none' }}
           onError={e => { e.target.style.display = 'none' }} />
       ) : (
         <div style={{ width: '100%', aspectRatio: '1', background: 'var(--bg-panel)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text3)', fontSize: 28 }}>
