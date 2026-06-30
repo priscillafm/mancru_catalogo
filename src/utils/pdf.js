@@ -77,7 +77,10 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
     const brandColor   = brand.color      ?? '#6366f1'
     const brandTextClr = brand.text_color ?? '#ffffff'
     const brandName    = brand.name       ?? ''
-    const brandLogo    = brand.logo_url   ? await loadImageAsBase64(brand.logo_url) : null
+    let brandLogo = null
+    if (brand.logo_url) {
+      try { brandLogo = await loadImageAsBase64(brand.logo_url) } catch { brandLogo = null }
+    }
     const pages        = Math.ceil(products.length / PER_PAGE)
 
     for (let pg = 0; pg < pages; pg++) {
@@ -90,17 +93,15 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
       doc.setFontSize(14)
       doc.setFont('helvetica', 'bold')
       doc.setTextColor(brandTextClr)
-      if (brandLogo) {
+      let logoAdded = false
+      if (brandLogo && typeof brandLogo === 'string' && brandLogo.startsWith('data:image')) {
         try {
-          const fmt = brandLogo.includes('data:image/png') ? 'PNG' : 'JPEG'
+          const fmt = brandLogo.startsWith('data:image/png') ? 'PNG' : 'JPEG'
           doc.addImage(brandLogo, fmt, 6, 3, 16, 16, undefined, 'FAST')
-          doc.text(brandName, 26, 14)
-        } catch {
-          doc.text(brandName, 10, 14)
-        }
-      } else {
-        doc.text(brandName, 10, 14)
+          logoAdded = true
+        } catch { /* skip logo if it fails */ }
       }
+      doc.text(brandName, logoAdded ? 26 : 10, 14)
       doc.setFontSize(11)
       doc.setFont('helvetica', 'normal')
       doc.text(companyName, PW / 2, 14, { align: 'center' })
