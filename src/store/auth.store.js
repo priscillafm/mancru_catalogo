@@ -21,13 +21,15 @@ export const useAuthStore = create((set, get) => ({
   },
 
   async loadMembership(userId) {
-    const { data: user, error: ue } = await supabase
+    const { data: { user: authUser } } = await supabase.auth.getUser()
+
+    const { data: user } = await supabase
       .from('users')
       .select('*')
       .eq('id', userId)
       .single()
 
-    const { data: membership, error: me } = await supabase
+    let { data: membership } = await supabase
       .from('user_memberships')
       .select('*, companies(*)')
       .eq('user_id', userId)
@@ -36,8 +38,22 @@ export const useAuthStore = create((set, get) => ({
       .limit(1)
       .single()
 
-    if (ue) console.error('user load error', ue)
-    if (me) console.error('membership load error', me)
+    // Si no tiene membresía pero la invitación incluía company_id/role, crearla
+    if (!membership && authUser?.user_metadata?.company_id) {
+      const { company_id, role = 'vendor' } = authUser.user_metadata
+      await supabase.from('user_memberships').insert({
+        user_id:    userId,
+        company_id,
+        role,
+        active:     true,
+      })
+      const { data: created } = await supabase
+        .from('user_memberships')
+        .select('*, companies(*)')
+        .eq('user_id', userId)
+        .single()
+      membership = created
+    }
 
     set({ user, membership })
   },
