@@ -170,8 +170,9 @@ export default function CatalogPage() {
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
         {/* Toolbar */}
         <div style={{
-          height: 60, padding: '0 20px', borderBottom: '1px solid var(--border)',
-          display: 'flex', alignItems: 'center', gap: 10, background: 'var(--bg-bar)', flexWrap: 'wrap'
+          minHeight: 60, padding: '0 20px', borderBottom: '1px solid var(--border)',
+          display: 'flex', alignItems: 'center', gap: 10, background: 'var(--bg-bar)', flexWrap: 'wrap',
+          rowGap: 8, paddingTop: 8, paddingBottom: 8,
         }}>
           {activeBrand && (
             <span style={{ fontSize: 15, fontWeight: 700, color: activeBrand.color, flexShrink: 0 }}>
