@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/auth.store'
@@ -124,10 +124,20 @@ export default function CatalogPage() {
         borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column'
       }}>
         <div style={{ padding: '20px 16px 14px', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ fontSize: 11, color: 'var(--text3)', letterSpacing: '0.1em', marginBottom: 4 }}>
-            {membership?.companies?.name ?? '—'}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 5 }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 17, fontWeight: 700, color: 'var(--text)', letterSpacing: '-.01em' }}>
+              {membership?.companies?.name?.toLowerCase() ?? 'catálogo'}
+            </span>
+            <span style={{
+              width: 7, height: 17, borderRadius: 2, flexShrink: 0,
+              background: 'var(--accent)',
+              animation: 'blink 1.15s steps(1) infinite',
+              display: 'inline-block',
+            }} />
           </div>
-          <h1 style={{ fontSize: 16, fontWeight: 700 }}>Catálogos</h1>
+          <div style={{ fontSize: 9, fontFamily: 'var(--font-mono)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text3)' }}>
+            Generador · Catálogos
+          </div>
         </div>
 
         <nav style={{ flex: 1, overflowY: 'auto', padding: '6px 0' }}>
@@ -248,13 +258,19 @@ export default function CatalogPage() {
 }
 
 function ProductCard({ product, selected, brandColor, onClick }) {
+  const [hovered, setHovered] = React.useState(false)
   return (
-    <div onClick={onClick} style={{
-      background: 'var(--surface)', border: `1px solid ${selected ? brandColor : 'var(--border)'}`,
-      boxShadow: selected ? `0 0 0 1px ${brandColor}` : 'none',
-      borderRadius: 13, cursor: 'pointer', overflow: 'hidden', position: 'relative',
-      transition: 'border-color 0.15s',
-    }}>
+    <div onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: hovered && !selected ? 'var(--surface-h)' : 'var(--surface)',
+        border: `1px solid ${selected ? brandColor : hovered ? 'var(--accent)' : 'var(--border)'}`,
+        boxShadow: selected ? `0 0 0 1px ${brandColor}` : 'none',
+        borderRadius: 13, cursor: 'pointer', overflow: 'hidden', position: 'relative',
+        transition: 'border-color 0.15s, background 0.15s, transform 0.15s',
+        transform: hovered && !selected ? 'translateY(-3px)' : 'none',
+      }}>
       {selected && (
         <div style={{
           position: 'absolute', top: 7, left: 7, width: 20, height: 20,
@@ -284,7 +300,7 @@ function ProductCard({ product, selected, brandColor, onClick }) {
         <div style={{ fontSize: 12, fontWeight: 600, lineHeight: 1.35, marginBottom: 3, color: 'var(--text)' }}>
           {product.name}
         </div>
-        <div style={{ fontSize: 10, color: 'var(--accent)', fontFamily: 'monospace', fontWeight: 500 }}>
+        <div style={{ fontSize: 9.5, color: 'var(--accent)', fontFamily: 'var(--font-mono)', fontWeight: 500, letterSpacing: '.04em' }}>
           {product.sku}
         </div>
       </div>

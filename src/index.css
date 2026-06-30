@@ -17,13 +17,17 @@
   --danger:      #ef4444;
   --success:     #22c55e;
   --amber:       #F5A623;
+  --font-display: 'Geist', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', monospace;
 }
+
+@keyframes blink { 0%,49%{opacity:1} 50%,100%{opacity:0} }
 
 html, body, #root {
   height: 100%;
   background: var(--bg);
   color: var(--text);
-  font-family: system-ui, sans-serif;
+  font-family: var(--font-display);
   font-size: 14px;
   margin: 0;
   padding: 0;
