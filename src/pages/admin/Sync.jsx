@@ -59,9 +59,10 @@ export default function Sync() {
       const incomingCats = [...new Set(rows.map(r => r.category).filter(Boolean))]
       const newCats = incomingCats.filter(name => !catMap[name.trim().toLowerCase()])
       if (newCats.length > 0) {
-        const { data: created } = await supabase.from('categories').insert(
+        const { data: created, error: catErr } = await supabase.from('categories').insert(
           newCats.map(name => ({ company_id: companyId, name: name.trim() }))
         ).select('id, name, aliases')
+        console.log('categories insert:', { newCats, created, catErr })
         catMap = buildNameMap([...(cats ?? []), ...(created ?? [])])
       }
 
