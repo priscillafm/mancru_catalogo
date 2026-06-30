@@ -112,12 +112,12 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
             if (ratio > 1) { w = maxW; h = w / ratio }
             else           { h = maxH; w = h * ratio }
             if (h > maxH)  { h = maxH; w = h * ratio }
-            doc.addImage(brandLogo, fmt, 5, (HEADER_H - h) / 2, w, h, undefined, 'FAST')
+            doc.addImage(brandLogo, fmt, 5, (HEADER_H - h) / 2, w, h, undefined, 'NONE')
             logoAdded = w
           }
         } catch { /* skip logo if it fails */ }
       }
-      doc.text(brandName, logoAdded ? 5 + logoAdded + 3 : 10, 14)
+      if (!logoAdded) doc.text(brandName, 10, 14)
       doc.setFontSize(11)
       doc.setFont('helvetica', 'normal')
       doc.text(companyName, PW / 2, 14, { align: 'center' })
