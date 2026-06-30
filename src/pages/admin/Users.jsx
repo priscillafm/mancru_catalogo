@@ -21,7 +21,7 @@ export default function Users() {
     queryFn: async () => {
       const { data } = await supabase
         .from('user_memberships')
-        .select('id, role, active, joined_at, users(id, name, email)')
+        .select('id, role, active, joined_at, users!user_memberships_user_id_fkey(id, name, email)')
         .eq('company_id', companyId)
         .order('joined_at')
       return data ?? []
