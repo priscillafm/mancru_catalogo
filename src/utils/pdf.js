@@ -186,7 +186,7 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
         tY += nameLines.length * 4.2 + 1
 
         // Price
-        if (p._price && tY + 5 < y + CELL_H - PAD) {
+        if (p._price) {
           const priceText = `${p._currency ?? '$'} ${p._price}`
           doc.setFontSize(7.5)
           doc.setFont('helvetica', 'bold')

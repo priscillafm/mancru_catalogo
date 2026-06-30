@@ -145,7 +145,7 @@ export default function PDFPreviewModal({ brandGroups, company, onClose }) {
                           value={prices[p.id]?.currency ?? '$'}
                           onChange={e => setPrice(p.id, 'currency', e.target.value)}
                           style={{ padding: '5px 8px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text)', fontSize: 12, cursor: 'pointer', outline: 'none' }}>
-                          <option value="$">$ ARS</option>
+                          <option value="$">$ UYU</option>
                           <option value="USD">USD</option>
                         </select>
                         <input
