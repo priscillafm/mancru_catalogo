@@ -126,7 +126,7 @@ export default function CatalogPage() {
         <div style={{ padding: '20px 16px 14px', borderBottom: '1px solid var(--border)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 5 }}>
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 17, fontWeight: 700, color: 'var(--text)', letterSpacing: '-.01em' }}>
-              {membership?.companies?.name?.toLowerCase() ?? 'catálogo'}
+              potato
             </span>
             <span style={{
               width: 7, height: 17, borderRadius: 2, flexShrink: 0,
@@ -136,7 +136,7 @@ export default function CatalogPage() {
             }} />
           </div>
           <div style={{ fontSize: 9, fontFamily: 'var(--font-mono)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text3)' }}>
-            Generador · Catálogos
+            {membership?.companies?.name ?? '—'} · Catálogos
           </div>
         </div>
 
