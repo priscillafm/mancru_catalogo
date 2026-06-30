@@ -10,10 +10,11 @@ export default function Users() {
   const companyId = useAuthStore(s => s.membership?.company_id)
   const qc = useQueryClient()
 
-  const [inviteEmail, setInviteEmail] = useState('')
-  const [inviteRole, setInviteRole]   = useState('vendor')
-  const [inviteMsg, setInviteMsg]     = useState('')
-  const [inviting, setInviting]       = useState(false)
+  const [newEmail, setNewEmail]   = useState('')
+  const [newPass, setNewPass]     = useState('')
+  const [newRole, setNewRole]     = useState('vendor')
+  const [inviteMsg, setInviteMsg] = useState('')
+  const [inviting, setInviting]   = useState(false)
 
   const { data: members = [], isLoading } = useQuery({
     queryKey: ['members', companyId],
@@ -30,43 +31,36 @@ export default function Users() {
 
   async function handleInvite(e) {
     e.preventDefault()
-    if (!inviteEmail.trim()) return
+    if (!newEmail.trim() || !newPass.trim()) return
     setInviting(true)
     setInviteMsg('')
 
-    // Invite via Supabase Auth (sends magic link email)
-    const { error } = await supabase.auth.admin
-      ? { error: null } // fallback — use signInWithOtp as invite
-      : { error: null }
+    const SUPABASE_URL  = import.meta.env.VITE_SUPABASE_URL
+    const SUPABASE_ANON = import.meta.env.VITE_SUPABASE_ANON_KEY
 
-    const { error: invErr } = await supabase.auth.signInWithOtp({
-      email: inviteEmail.trim(),
-      options: {
-        shouldCreateUser: true,
-        emailRedirectTo: window.location.origin,
-        data: { company_id: companyId, role: inviteRole },
-      }
+    const resp = await fetch(`${SUPABASE_URL}/functions/v1/create-user`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPABASE_ANON}`,
+        'apikey': SUPABASE_ANON,
+      },
+      body: JSON.stringify({
+        email:      newEmail.trim(),
+        password:   newPass.trim(),
+        company_id: companyId,
+        role:       newRole,
+      }),
     })
 
-    if (invErr) {
-      setInviteMsg(`Error: ${invErr.message}`)
+    const result = await resp.json()
+    if (result.error) {
+      setInviteMsg(`Error: ${result.error}`)
     } else {
-      setInviteMsg(`✓ Email enviado a ${inviteEmail.trim()} — el usuario debe aceptar la invitación`)
-      setInviteEmail('')
-
-      // Pre-register membership so it's ready when they accept
-      const { data: existingUser } = await supabase
-        .from('users').select('id').eq('email', inviteEmail.trim()).single()
-
-      if (existingUser) {
-        await supabase.from('user_memberships').upsert({
-          user_id: existingUser.id,
-          company_id: companyId,
-          role: inviteRole,
-          active: true,
-        }, { onConflict: 'user_id,company_id' })
-        qc.invalidateQueries(['members', companyId])
-      }
+      setInviteMsg(`✓ Usuario creado — puede ingresar con ${newEmail.trim()}`)
+      setNewEmail('')
+      setNewPass('')
+      qc.invalidateQueries(['members', companyId])
     }
     setInviting(false)
   }
@@ -93,26 +87,31 @@ export default function Users() {
         background: 'var(--surface)', border: '1px solid var(--border)',
         borderRadius: 12, padding: 20, marginBottom: 28,
       }}>
-        <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 14 }}>Invitar usuario</h3>
+        <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 14 }}>Crear usuario</h3>
         <form onSubmit={handleInvite} style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
-          <div style={{ flex: 1, minWidth: 220 }}>
+          <div style={{ flex: 1, minWidth: 200 }}>
             <label style={{ fontSize: 11, color: 'var(--text3)', display: 'block', marginBottom: 5 }}>EMAIL</label>
             <input
-              type="email" value={inviteEmail}
-              onChange={e => setInviteEmail(e.target.value)}
+              type="email" value={newEmail}
+              onChange={e => setNewEmail(e.target.value)}
               placeholder="usuario@empresa.com"
               required
-              style={{
-                width: '100%', padding: '9px 12px',
-                background: 'var(--bg)', border: '1px solid var(--border)',
-                borderRadius: 7, color: 'var(--text)', fontSize: 13, outline: 'none',
-                boxSizing: 'border-box',
-              }}
+              style={fieldStyle}
+            />
+          </div>
+          <div style={{ flex: 1, minWidth: 160 }}>
+            <label style={{ fontSize: 11, color: 'var(--text3)', display: 'block', marginBottom: 5 }}>CONTRASEÑA</label>
+            <input
+              type="text" value={newPass}
+              onChange={e => setNewPass(e.target.value)}
+              placeholder="Contraseña inicial"
+              required
+              style={fieldStyle}
             />
           </div>
           <div>
             <label style={{ fontSize: 11, color: 'var(--text3)', display: 'block', marginBottom: 5 }}>ROL</label>
-            <select value={inviteRole} onChange={e => setInviteRole(e.target.value)}
+            <select value={newRole} onChange={e => setNewRole(e.target.value)}
               style={{
                 padding: '9px 12px', background: 'var(--bg)',
                 border: '1px solid var(--border)', borderRadius: 7,
@@ -127,7 +126,7 @@ export default function Users() {
             border: 'none', borderRadius: 7, fontWeight: 700, cursor: inviting ? 'not-allowed' : 'pointer',
             fontSize: 13, opacity: inviting ? 0.7 : 1,
           }}>
-            {inviting ? 'Enviando...' : 'Enviar invitación'}
+            {inviting ? 'Creando...' : 'Crear usuario'}
           </button>
         </form>
         {inviteMsg && (
@@ -194,6 +193,13 @@ export default function Users() {
       </div>
     </div>
   )
+}
+
+const fieldStyle = {
+  width: '100%', padding: '9px 12px',
+  background: 'var(--bg)', border: '1px solid var(--border)',
+  borderRadius: 7, color: 'var(--text)', fontSize: 13, outline: 'none',
+  boxSizing: 'border-box',
 }
 
 const thStyle = {
