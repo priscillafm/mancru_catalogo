@@ -185,6 +185,16 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
         doc.text(nameLines, x + PAD, tY)
         tY += nameLines.length * 4.2 + 1
 
+        // Price
+        if (p._price && tY + 5 < y + CELL_H - PAD) {
+          const priceText = `${p._currency ?? '$'} ${p._price}`
+          doc.setFontSize(7.5)
+          doc.setFont('helvetica', 'bold')
+          doc.setTextColor(brandColor)
+          doc.text(priceText, x + CELL_W / 2, tY, { align: 'center' })
+          tY += 5
+        }
+
         // Description
         if (tY + 5 < y + CELL_H - PAD) {
           doc.setFontSize(6.5)
