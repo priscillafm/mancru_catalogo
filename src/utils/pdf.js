@@ -201,16 +201,6 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
         doc.text(nameLines, x + PAD, tY)
         tY += nameLines.length * 4.2 + 1
 
-        // Price
-        if (p._price) {
-          const priceText = `${p._currency ?? '$'} ${p._price}`
-          doc.setFontSize(7.5)
-          doc.setFont('helvetica', 'bold')
-          doc.setTextColor(brandColor)
-          doc.text(priceText, x + CELL_W / 2, tY, { align: 'center' })
-          tY += 5
-        }
-
         // Description
         if (tY + 5 < y + CELL_H - PAD) {
           doc.setFontSize(6.5)
@@ -218,6 +208,15 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
           doc.setTextColor('#888888')
           const descLines = doc.splitTextToSize(String(p.description ?? ''), inner_w).slice(0, 2)
           doc.text(descLines, x + PAD, tY)
+        }
+
+        // Price — pinned near bottom of card
+        if (p._price) {
+          const priceText = `${p._currency ?? '$'} ${p._price}`
+          doc.setFontSize(8)
+          doc.setFont('helvetica', 'bold')
+          doc.setTextColor('#111111')
+          doc.text(priceText, x + CELL_W / 2, y + CELL_H - 4, { align: 'center' })
         }
       }
     }

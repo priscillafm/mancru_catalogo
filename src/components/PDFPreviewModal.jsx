@@ -17,6 +17,16 @@ export default function PDFPreviewModal({ brandGroups, company, onClose }) {
     setPrices(prev => ({ ...prev, [id]: { currency: '$', ...prev[id], [field]: value } }))
   }
 
+  function setAllCurrency(currency) {
+    setPrices(prev => {
+      const next = { ...prev }
+      for (const p of allProducts) {
+        next[p.id] = { currency, amount: next[p.id]?.amount ?? '', ...next[p.id], currency }
+      }
+      return next
+    })
+  }
+
   function buildGroupsWithPrices() {
     return brandGroups.map(g => ({
       ...g,
@@ -128,9 +138,18 @@ export default function PDFPreviewModal({ brandGroups, company, onClose }) {
 
           {step === 'pricing' && (
             <div>
-              <p style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 20 }}>
-                Dejá en blanco los que no llevan precio. El precio se imprime en el PDF.
-              </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+                <span style={{ fontSize: 12, color: 'var(--text2)' }}>Moneda global:</span>
+                {['$', 'USD'].map(cur => (
+                  <button key={cur} onClick={() => setAllCurrency(cur)} style={{
+                    padding: '5px 14px', borderRadius: 6, fontSize: 12, cursor: 'pointer', fontWeight: 600,
+                    border: '1px solid var(--border)', background: 'var(--surface-h)', color: 'var(--text2)',
+                  }}>
+                    Todo {cur === '$' ? '$ UYU' : 'USD'}
+                  </button>
+                ))}
+                <span style={{ fontSize: 11, color: 'var(--text3)', marginLeft: 4 }}>Dejá el precio en blanco para no imprimirlo.</span>
+              </div>
               {brandGroups.map(({ brand, products }) => (
                 <div key={brand.id} style={{ marginBottom: 24 }}>
                   <div style={{ fontSize: 11, fontWeight: 700, color: brand.color, letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 10, paddingBottom: 6, borderBottom: `1px solid ${brand.color}44` }}>
