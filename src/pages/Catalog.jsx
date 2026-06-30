@@ -156,7 +156,12 @@ export default function CatalogPage() {
                   cursor: 'pointer', textAlign: 'left',
                 }}>
                 {brand.logo_url
-                  ? <img src={brand.logo_url} alt="" style={{ width: 22, height: 22, objectFit: 'contain', borderRadius: 4, flexShrink: 0 }} onError={e => e.target.style.display='none'} />
+                  ? <span style={{ width: 28, height: 28, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <img src={brand.logo_url} alt=""
+                        style={{ maxWidth: 28, maxHeight: 28, objectFit: 'contain', mixBlendMode: 'screen', filter: 'brightness(1.1)' }}
+                        onError={e => e.target.parentElement.innerHTML = `<span style="width:10px;height:10px;border-radius:50%;background:${brand.color};display:inline-block"></span>`}
+                      />
+                    </span>
                   : <span style={{ width: 10, height: 10, borderRadius: '50%', background: brand.color, flexShrink: 0 }} />
                 }
                 <span style={{ fontSize: 13, fontWeight: 500, flex: 1 }}>{brand.name}</span>
