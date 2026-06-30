@@ -53,7 +53,17 @@ export default function Sync() {
         .select('id, name, aliases').eq('company_id', companyId).is('deleted_at', null)
 
       const brandMap = buildNameMap(brands ?? [])
-      const catMap   = buildNameMap(cats   ?? [])
+      let   catMap   = buildNameMap(cats   ?? [])
+
+      // Auto-create missing categories
+      const incomingCats = [...new Set(rows.map(r => r.category).filter(Boolean))]
+      const newCats = incomingCats.filter(name => !catMap[name.trim().toLowerCase()])
+      if (newCats.length > 0) {
+        const { data: created } = await supabase.from('categories').insert(
+          newCats.map(name => ({ company_id: companyId, name: name.trim() }))
+        ).select('id, name, aliases')
+        catMap = buildNameMap([...(cats ?? []), ...(created ?? [])])
+      }
 
       const diff    = computeDiff(rows, existing ?? [], brandMap, catMap)
       const summary = summarizeDiff(diff)
