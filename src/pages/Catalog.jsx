@@ -24,7 +24,7 @@ export default function CatalogPage() {
     queryFn: async () => {
       const { data } = await supabase
         .from('brands')
-        .select('id, name, color, text_color')
+        .select('id, name, color, text_color, logo_url')
         .eq('company_id', companyId)
         .eq('active', true)
         .is('deleted_at', null)
@@ -155,7 +155,10 @@ export default function CatalogPage() {
                   color: isActive ? 'var(--text)' : 'var(--text2)',
                   cursor: 'pointer', textAlign: 'left',
                 }}>
-                <span style={{ width: 10, height: 10, borderRadius: '50%', background: brand.color, flexShrink: 0 }} />
+                {brand.logo_url
+                  ? <img src={brand.logo_url} alt="" style={{ width: 22, height: 22, objectFit: 'contain', borderRadius: 4, flexShrink: 0 }} onError={e => e.target.style.display='none'} />
+                  : <span style={{ width: 10, height: 10, borderRadius: '50%', background: brand.color, flexShrink: 0 }} />
+                }
                 <span style={{ fontSize: 13, fontWeight: 500, flex: 1 }}>{brand.name}</span>
                 {countInBrand > 0 && (
                   <span style={{

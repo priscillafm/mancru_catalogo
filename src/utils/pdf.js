@@ -77,6 +77,7 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
     const brandColor   = brand.color      ?? '#6366f1'
     const brandTextClr = brand.text_color ?? '#ffffff'
     const brandName    = brand.name       ?? ''
+    const brandLogo    = brand.logo_url   ? await loadImageAsBase64(brand.logo_url) : null
     const pages        = Math.ceil(products.length / PER_PAGE)
 
     for (let pg = 0; pg < pages; pg++) {
@@ -89,7 +90,12 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
       doc.setFontSize(14)
       doc.setFont('helvetica', 'bold')
       doc.setTextColor(brandTextClr)
-      doc.text(brandName, 10, 14)
+      if (brandLogo) {
+        try { doc.addImage(brandLogo, 'PNG', 6, 3, 16, 16, undefined, 'FAST') } catch {}
+        doc.text(brandName, 26, 14)
+      } else {
+        doc.text(brandName, 10, 14)
+      }
       doc.setFontSize(11)
       doc.setFont('helvetica', 'normal')
       doc.text(companyName, PW / 2, 14, { align: 'center' })
