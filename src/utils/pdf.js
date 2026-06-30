@@ -49,16 +49,21 @@ async function loadImageAsBase64(url) {
  * @param {Object} company
  * @param {Function} onProgress - (current, total) => void
  */
-export async function generateCatalogPDF(brandGroups, company, onProgress) {
-  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
+export async function generateCatalogPDF(brandGroups, company, onProgress, orientation = 'landscape') {
+  const isLandscape = orientation === 'landscape'
+  const doc = new jsPDF({ orientation, unit: 'mm', format: 'a4' })
 
-  const PW = 297, PH = 210
-  const HEADER_H   = 22
-  const FOOTER_H   = 8
+  const PW = isLandscape ? 297 : 210
+  const PH = isLandscape ? 210 : 297
+  const HEADER_H    = 22
+  const FOOTER_H    = 8
   const CONTENT_TOP = HEADER_H + 6
   const CONTENT_BOT = PH - FOOTER_H - 4
-  const CELL_W = (PW - 16) / COLS
-  const CELL_H = (CONTENT_BOT - CONTENT_TOP) / ROWS
+  const COLS_PDF    = isLandscape ? 4 : 3
+  const ROWS_PDF    = isLandscape ? 2 : 4
+  const CELL_W = (PW - 16) / COLS_PDF
+  const CELL_H = (CONTENT_BOT - CONTENT_TOP) / ROWS_PDF
+  const PER_PAGE = COLS_PDF * ROWS_PDF
 
   const companyName = company?.name    ?? ''
   const companyWeb  = company?.website ?? ''
@@ -72,7 +77,7 @@ export async function generateCatalogPDF(brandGroups, company, onProgress) {
     const brandColor   = brand.color      ?? '#6366f1'
     const brandTextClr = brand.text_color ?? '#ffffff'
     const brandName    = brand.name       ?? ''
-    const pages        = Math.ceil(products.length / PER)
+    const pages        = Math.ceil(products.length / PER_PAGE)
 
     for (let pg = 0; pg < pages; pg++) {
       if (!firstPage) doc.addPage()
@@ -98,12 +103,12 @@ export async function generateCatalogPDF(brandGroups, company, onProgress) {
       doc.text(`${brandName}  •  Pág. ${pg + 1} / ${pages}`, PW / 2, PH - 2.5, { align: 'center' })
 
       // ── Products ─────────────────────────────────────
-      const batch = products.slice(pg * PER, (pg + 1) * PER)
+      const batch = products.slice(pg * PER_PAGE, (pg + 1) * PER_PAGE)
 
       for (let ci = 0; ci < batch.length; ci++) {
         const p   = batch[ci]
-        const col = ci % COLS
-        const row = Math.floor(ci / COLS)
+        const col = ci % COLS_PDF
+        const row = Math.floor(ci / COLS_PDF)
 
         const x = 8 + col * CELL_W
         const y = CONTENT_TOP + row * CELL_H

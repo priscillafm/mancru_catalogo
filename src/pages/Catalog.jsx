@@ -46,7 +46,7 @@ export default function CatalogPage() {
       if (activeBrandId) q = q.eq('brand_id', activeBrandId)
       if (activeCatId)   q = q.eq('category_id', activeCatId)
       if (search)        q = q.ilike('name', `%${search}%`)
-      const { data } = await q.order('name').limit(500)
+      const { data } = await q.order('category_id', { nullsFirst: false }).order('name').limit(500)
       return data ?? []
     },
     enabled: !!companyId && !!activeBrandId,
@@ -226,16 +226,12 @@ export default function CatalogPage() {
           ) : products.length === 0 ? (
             <EmptyState icon="🔍" message="Sin resultados" />
           ) : (
-            <div style={{
-              display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: 14
-            }}>
-              {products.map(product => (
-                <ProductCard key={product.id} product={product}
-                  selected={!!selectedMap[product.id]}
-                  brandColor={activeBrand?.color}
-                  onClick={() => toggleSelect(product)} />
-              ))}
-            </div>
+            <ProductGrid
+              products={products}
+              selectedMap={selectedMap}
+              brandColor={activeBrand?.color}
+              onToggle={toggleSelect}
+            />
           )}
         </div>
       </main>
@@ -292,6 +288,46 @@ function ProductCard({ product, selected, brandColor, onClick }) {
           {product.sku}
         </div>
       </div>
+    </div>
+  )
+}
+
+function ProductGrid({ products, selectedMap, brandColor, onToggle }) {
+  // Group by category
+  const groups = []
+  let lastCatId = undefined
+  for (const p of products) {
+    if (p.category_id !== lastCatId) {
+      groups.push({ catName: p.categories?.name ?? null, items: [] })
+      lastCatId = p.category_id
+    }
+    groups[groups.length - 1].items.push(p)
+  }
+
+  return (
+    <div>
+      {groups.map((g, gi) => (
+        <div key={gi} style={{ marginBottom: 24 }}>
+          {g.catName && (
+            <div style={{
+              fontSize: 11, fontWeight: 700, color: 'var(--text3)',
+              letterSpacing: '0.08em', textTransform: 'uppercase',
+              marginBottom: 10, paddingBottom: 6,
+              borderBottom: '1px solid var(--border)',
+            }}>
+              {g.catName}
+            </div>
+          )}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: 14 }}>
+            {g.items.map(product => (
+              <ProductCard key={product.id} product={product}
+                selected={!!selectedMap[product.id]}
+                brandColor={brandColor}
+                onClick={() => onToggle(product)} />
+            ))}
+          </div>
+        </div>
+      ))}
     </div>
   )
 }

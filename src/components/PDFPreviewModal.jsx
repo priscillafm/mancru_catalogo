@@ -2,8 +2,9 @@ import { useState } from 'react'
 import { generateCatalogPDF } from '@/utils/pdf'
 
 export default function PDFPreviewModal({ brandGroups, company, onClose }) {
-  const [generating, setGenerating] = useState(false)
-  const [progress, setProgress]     = useState('')
+  const [generating, setGenerating]   = useState(false)
+  const [progress, setProgress]       = useState('')
+  const [orientation, setOrientation] = useState('landscape')
 
   const totalProducts = brandGroups.reduce((n, g) => n + g.products.length, 0)
 
@@ -14,7 +15,8 @@ export default function PDFPreviewModal({ brandGroups, company, onClose }) {
       await generateCatalogPDF(
         brandGroups,
         company,
-        (current, total) => setProgress(`Procesando imagen ${current} de ${total}...`)
+        (current, total) => setProgress(`Procesando imagen ${current} de ${total}...`),
+        orientation,
       )
       setProgress('¡Listo!')
     } catch (err) {
@@ -44,6 +46,19 @@ export default function PDFPreviewModal({ brandGroups, company, onClose }) {
             <p style={{ fontSize: 12, color: 'var(--text3)', marginTop: 3 }}>
               {brandGroups.length} marca{brandGroups.length !== 1 ? 's' : ''} — {totalProducts} producto{totalProducts !== 1 ? 's' : ''}
             </p>
+          </div>
+          <div style={{ display: 'flex', gap: 6, marginLeft: 'auto', marginRight: 16 }}>
+            {['landscape','portrait'].map(o => (
+              <button key={o} onClick={() => setOrientation(o)} style={{
+                padding: '6px 14px', borderRadius: 7, fontSize: 12, cursor: 'pointer',
+                border: `1px solid ${orientation === o ? 'var(--accent)' : 'var(--border)'}`,
+                background: orientation === o ? 'var(--accent)' : 'var(--surface)',
+                color: orientation === o ? 'var(--accent-text)' : 'var(--text2)',
+                fontWeight: orientation === o ? 700 : 400,
+              }}>
+                {o === 'landscape' ? '⬛ Horizontal' : '▯ Vertical'}
+              </button>
+            ))}
           </div>
           <button onClick={onClose}
             style={{ background: 'none', border: 'none', color: 'var(--text3)', fontSize: 20, cursor: 'pointer' }}>
