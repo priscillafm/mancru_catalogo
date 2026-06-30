@@ -31,7 +31,6 @@ async function fetchBlob(url, headers = {}) {
 async function loadImageAsBase64(url) {
   if (!url) return null
   if (imgCache.has(url)) return imgCache.get(url)
-
   try {
     const b64 = await fetchBlob(proxyUrl(url), {
       'Authorization': `Bearer ${SUPABASE_ANON}`,
@@ -44,121 +43,132 @@ async function loadImageAsBase64(url) {
   }
 }
 
-export async function generateCatalogPDF(products, brand, company, onProgress) {
+/**
+ * Generates a multi-brand PDF catalog.
+ * @param {Array<{brand, products[]}>} brandGroups
+ * @param {Object} company
+ * @param {Function} onProgress - (current, total) => void
+ */
+export async function generateCatalogPDF(brandGroups, company, onProgress) {
   const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
 
   const PW = 297, PH = 210
-  const HEADER_H = 22
-  const FOOTER_H = 8
-  const MARGIN_X = 8
-  const CONTENT_TOP = HEADER_H + 6          // where cards start
-  const CONTENT_BOT = PH - FOOTER_H - 4     // where cards end
-  const CELL_W = (PW - MARGIN_X * 2) / COLS
+  const HEADER_H   = 22
+  const FOOTER_H   = 8
+  const CONTENT_TOP = HEADER_H + 6
+  const CONTENT_BOT = PH - FOOTER_H - 4
+  const CELL_W = (PW - 16) / COLS
   const CELL_H = (CONTENT_BOT - CONTENT_TOP) / ROWS
 
-  const brandColor   = brand?.color      ?? '#6366f1'
-  const brandTextClr = brand?.text_color ?? '#ffffff'
-  const brandName    = brand?.name       ?? ''
-  const companyName  = company?.name     ?? ''
-  const companyWeb   = company?.website  ?? ''
+  const companyName = company?.name    ?? ''
+  const companyWeb  = company?.website ?? ''
 
-  const pages = Math.ceil(products.length / PER)
+  const totalProducts = brandGroups.reduce((n, g) => n + g.products.length, 0)
+  let globalIdx = 0
 
-  for (let pg = 0; pg < pages; pg++) {
-    if (pg > 0) doc.addPage()
+  let firstPage = true
 
-    // ── Header ──────────────────────────────────────
-    doc.setFillColor(brandColor)
-    doc.rect(0, 0, PW, HEADER_H, 'F')
-    doc.setFontSize(14)
-    doc.setFont('helvetica', 'bold')
-    doc.setTextColor(brandTextClr)
-    doc.text(brandName, 10, 14)
-    doc.setFontSize(11)
-    doc.setFont('helvetica', 'normal')
-    doc.text(companyName, PW / 2, 14, { align: 'center' })
-    if (companyWeb) doc.text(companyWeb, PW - 10, 14, { align: 'right' })
+  for (const { brand, products } of brandGroups) {
+    const brandColor   = brand.color      ?? '#6366f1'
+    const brandTextClr = brand.text_color ?? '#ffffff'
+    const brandName    = brand.name       ?? ''
+    const pages        = Math.ceil(products.length / PER)
 
-    // ── Footer ──────────────────────────────────────
-    doc.setFillColor(brandColor)
-    doc.rect(0, PH - FOOTER_H, PW, FOOTER_H, 'F')
-    doc.setFontSize(7)
-    doc.setTextColor(brandTextClr)
-    doc.text(`${pg + 1} / ${pages}`, PW / 2, PH - 2.5, { align: 'center' })
+    for (let pg = 0; pg < pages; pg++) {
+      if (!firstPage) doc.addPage()
+      firstPage = false
 
-    // ── Products ─────────────────────────────────────
-    const batch = products.slice(pg * PER, (pg + 1) * PER)
-
-    for (let ci = 0; ci < batch.length; ci++) {
-      const p   = batch[ci]
-      const col = ci % COLS
-      const row = Math.floor(ci / COLS)
-
-      const x = MARGIN_X + col * CELL_W
-      const y = CONTENT_TOP + row * CELL_H
-
-      onProgress && onProgress(pg * PER + ci + 1, products.length)
-
-      // Card background
-      doc.setFillColor('#f5f5f5')
-      doc.roundedRect(x + 1, y + 1, CELL_W - 2, CELL_H - 2, 3, 3, 'F')
-
-      const PAD = 4
-      const inner_w = CELL_W - PAD * 2
-
-      // Image area: 52% of cell height
-      const imgAreaH = CELL_H * 0.52
-      const imgSize  = Math.min(inner_w, imgAreaH) - 2
-      const imgX     = x + (CELL_W - imgSize) / 2
-      const imgY     = y + PAD
-
-      const b64 = await loadImageAsBase64(p.image_url)
-
-      if (b64) {
-        try {
-          doc.addImage(b64, 'JPEG', imgX, imgY, imgSize, imgSize, undefined, 'FAST')
-        } catch {
-          drawNoImage(doc, imgX, imgY, imgSize)
-        }
-      } else {
-        drawNoImage(doc, imgX, imgY, imgSize)
-      }
-
-      // Text area starts after image
-      let tY = imgY + imgSize + 3
-
-      // SKU badge
-      const SKU_H = 5.5
+      // ── Header ──────────────────────────────────────
       doc.setFillColor(brandColor)
-      doc.roundedRect(x + PAD, tY, inner_w, SKU_H, 1.5, 1.5, 'F')
-      doc.setFontSize(7)
+      doc.rect(0, 0, PW, HEADER_H, 'F')
+      doc.setFontSize(14)
       doc.setFont('helvetica', 'bold')
       doc.setTextColor(brandTextClr)
-      doc.text(String(p.sku ?? ''), x + CELL_W / 2, tY + 3.7, { align: 'center' })
-      tY += SKU_H + 4
+      doc.text(brandName, 10, 14)
+      doc.setFontSize(11)
+      doc.setFont('helvetica', 'normal')
+      doc.text(companyName, PW / 2, 14, { align: 'center' })
+      if (companyWeb) doc.text(companyWeb, PW - 10, 14, { align: 'right' })
 
-      // Product name (max 2 lines)
-      const remaining = (y + CELL_H - PAD) - tY
-      doc.setFontSize(7.5)
-      doc.setFont('helvetica', 'bold')
-      doc.setTextColor('#111111')
-      const nameLines = doc.splitTextToSize(String(p.name ?? ''), inner_w).slice(0, 2)
-      doc.text(nameLines, x + PAD, tY)
-      tY += nameLines.length * 4.2 + 1
+      // ── Footer ──────────────────────────────────────
+      doc.setFillColor(brandColor)
+      doc.rect(0, PH - FOOTER_H, PW, FOOTER_H, 'F')
+      doc.setFontSize(7)
+      doc.setTextColor(brandTextClr)
+      doc.text(`${brandName}  •  Pág. ${pg + 1} / ${pages}`, PW / 2, PH - 2.5, { align: 'center' })
 
-      // Description (max 2 lines, only if space)
-      if (tY + 5 < y + CELL_H - PAD) {
-        doc.setFontSize(6.5)
-        doc.setFont('helvetica', 'normal')
-        doc.setTextColor('#888888')
-        const descLines = doc.splitTextToSize(String(p.description ?? ''), inner_w).slice(0, 2)
-        doc.text(descLines, x + PAD, tY)
+      // ── Products ─────────────────────────────────────
+      const batch = products.slice(pg * PER, (pg + 1) * PER)
+
+      for (let ci = 0; ci < batch.length; ci++) {
+        const p   = batch[ci]
+        const col = ci % COLS
+        const row = Math.floor(ci / COLS)
+
+        const x = 8 + col * CELL_W
+        const y = CONTENT_TOP + row * CELL_H
+
+        globalIdx++
+        onProgress && onProgress(globalIdx, totalProducts)
+
+        const PAD     = 4
+        const inner_w = CELL_W - PAD * 2
+
+        // Card background
+        doc.setFillColor('#f5f5f5')
+        doc.roundedRect(x + 1, y + 1, CELL_W - 2, CELL_H - 2, 3, 3, 'F')
+
+        // Image area: 52% of cell height
+        const imgAreaH = CELL_H * 0.52
+        const imgSize  = Math.min(inner_w, imgAreaH) - 2
+        const imgX     = x + (CELL_W - imgSize) / 2
+        const imgY     = y + PAD
+
+        const b64 = await loadImageAsBase64(p.image_url)
+        if (b64) {
+          try { doc.addImage(b64, 'JPEG', imgX, imgY, imgSize, imgSize, undefined, 'FAST') }
+          catch { drawNoImage(doc, imgX, imgY, imgSize) }
+        } else {
+          drawNoImage(doc, imgX, imgY, imgSize)
+        }
+
+        let tY = imgY + imgSize + 3
+
+        // SKU badge
+        const SKU_H = 5.5
+        doc.setFillColor(brandColor)
+        doc.roundedRect(x + PAD, tY, inner_w, SKU_H, 1.5, 1.5, 'F')
+        doc.setFontSize(7)
+        doc.setFont('helvetica', 'bold')
+        doc.setTextColor(brandTextClr)
+        doc.text(String(p.sku ?? ''), x + CELL_W / 2, tY + 3.7, { align: 'center' })
+        tY += SKU_H + 4
+
+        // Product name
+        doc.setFontSize(7.5)
+        doc.setFont('helvetica', 'bold')
+        doc.setTextColor('#111111')
+        const nameLines = doc.splitTextToSize(String(p.name ?? ''), inner_w).slice(0, 2)
+        doc.text(nameLines, x + PAD, tY)
+        tY += nameLines.length * 4.2 + 1
+
+        // Description
+        if (tY + 5 < y + CELL_H - PAD) {
+          doc.setFontSize(6.5)
+          doc.setFont('helvetica', 'normal')
+          doc.setTextColor('#888888')
+          const descLines = doc.splitTextToSize(String(p.description ?? ''), inner_w).slice(0, 2)
+          doc.text(descLines, x + PAD, tY)
+        }
       }
     }
   }
 
   const date = new Date().toISOString().slice(0, 10)
-  doc.save(`Catalogo_${brandName.replace(/\s+/g, '_')}_${date}.pdf`)
+  const name = brandGroups.length === 1
+    ? brandGroups[0].brand.name
+    : companyName || 'Catalogo'
+  doc.save(`Catalogo_${name.replace(/\s+/g, '_')}_${date}.pdf`)
 }
 
 function drawNoImage(doc, x, y, size) {

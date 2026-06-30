@@ -15,7 +15,8 @@ export default function CatalogPage() {
   const [activeBrandId, setActiveBrandId] = useState(null)
   const [activeCatId, setActiveCatId]     = useState(null)
   const [search, setSearch]               = useState('')
-  const [selected, setSelected]           = useState([])
+  // selectedMap: { [productId]: product } — persiste al cambiar de marca
+  const [selectedMap, setSelectedMap]     = useState({})
   const [showPDF, setShowPDF]             = useState(false)
 
   const { data: brands = [] } = useQuery({
@@ -38,7 +39,7 @@ export default function CatalogPage() {
     queryFn: async () => {
       let q = supabase
         .from('products')
-        .select('id, sku, name, description, image_url, category_id, categories(name)')
+        .select('id, sku, name, description, image_url, category_id, brand_id, categories(name)')
         .eq('company_id', companyId)
         .eq('active', true)
         .is('deleted_at', null)
@@ -70,12 +71,49 @@ export default function CatalogPage() {
     enabled: !!companyId && !!activeBrandId,
   })
 
-  function toggleSelect(id) {
-    setSelected(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
+  function toggleSelect(product) {
+    setSelectedMap(prev => {
+      const next = { ...prev }
+      if (next[product.id]) delete next[product.id]
+      else next[product.id] = product
+      return next
+    })
   }
 
-  const activeBrand = brands.find(b => b.id === activeBrandId)
-  const selectedProducts = products.filter(p => selected.includes(p.id))
+  function selectAll() {
+    setSelectedMap(prev => {
+      const next = { ...prev }
+      for (const p of products) next[p.id] = p
+      return next
+    })
+  }
+
+  function deselectAll() {
+    setSelectedMap(prev => {
+      const next = { ...prev }
+      for (const p of products) delete next[p.id]
+      return next
+    })
+  }
+
+  function clearAll() {
+    setSelectedMap({})
+  }
+
+  const activeBrand    = brands.find(b => b.id === activeBrandId)
+  const totalSelected  = Object.keys(selectedMap).length
+  const allSelected    = products.length > 0 && products.every(p => selectedMap[p.id])
+  const someSelected   = products.some(p => selectedMap[p.id])
+
+  // Group selected products by brand for PDF
+  function buildBrandGroups() {
+    const groups = []
+    for (const brand of brands) {
+      const ps = Object.values(selectedMap).filter(p => p.brand_id === brand.id)
+      if (ps.length > 0) groups.push({ brand, products: ps })
+    }
+    return groups
+  }
 
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--bg)' }}>
@@ -95,9 +133,10 @@ export default function CatalogPage() {
         <nav style={{ flex: 1, overflowY: 'auto', padding: '6px 0' }}>
           {brands.map(brand => {
             const isActive = brand.id === activeBrandId
+            const countInBrand = Object.values(selectedMap).filter(p => p.brand_id === brand.id).length
             return (
               <button key={brand.id}
-                onClick={() => { setActiveBrandId(brand.id); setActiveCatId(null); setSelected([]) }}
+                onClick={() => { setActiveBrandId(brand.id); setActiveCatId(null); setSearch('') }}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 10,
                   width: '100%', padding: '10px 16px',
@@ -107,7 +146,13 @@ export default function CatalogPage() {
                   cursor: 'pointer', textAlign: 'left',
                 }}>
                 <span style={{ width: 10, height: 10, borderRadius: '50%', background: brand.color, flexShrink: 0 }} />
-                <span style={{ fontSize: 13, fontWeight: 500 }}>{brand.name}</span>
+                <span style={{ fontSize: 13, fontWeight: 500, flex: 1 }}>{brand.name}</span>
+                {countInBrand > 0 && (
+                  <span style={{
+                    fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 10,
+                    background: brand.color, color: '#fff', flexShrink: 0,
+                  }}>{countInBrand}</span>
+                )}
               </button>
             )
           })}
@@ -123,12 +168,13 @@ export default function CatalogPage() {
 
       {/* Main */}
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        {/* Toolbar */}
         <div style={{
           height: 60, padding: '0 20px', borderBottom: '1px solid var(--border)',
-          display: 'flex', alignItems: 'center', gap: 12, background: 'var(--bg-bar)'
+          display: 'flex', alignItems: 'center', gap: 10, background: 'var(--bg-bar)', flexWrap: 'wrap'
         }}>
           {activeBrand && (
-            <span style={{ fontSize: 15, fontWeight: 700, color: activeBrand.color }}>
+            <span style={{ fontSize: 15, fontWeight: 700, color: activeBrand.color, flexShrink: 0 }}>
               {activeBrand.name}
             </span>
           )}
@@ -137,7 +183,7 @@ export default function CatalogPage() {
             value={search} onChange={e => setSearch(e.target.value)}
             disabled={!activeBrandId}
             style={{
-              flex: 1, maxWidth: 300, padding: '7px 12px',
+              flex: 1, maxWidth: 260, padding: '7px 12px',
               background: 'var(--surface)', border: '1px solid var(--border)',
               borderRadius: 7, color: 'var(--text)', fontSize: 13, outline: 'none',
             }}
@@ -154,19 +200,25 @@ export default function CatalogPage() {
               {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           )}
-          {selected.length > 0 && (
+          {activeBrandId && products.length > 0 && (
+            <button onClick={allSelected ? deselectAll : selectAll} style={smallBtn}>
+              {allSelected ? 'Deseleccionar todos' : `Seleccionar todos (${products.length})`}
+            </button>
+          )}
+          {totalSelected > 0 && (
             <>
-              <button onClick={() => setSelected([])} style={smallBtn}>✕ Limpiar</button>
+              <button onClick={clearAll} style={smallBtn}>✕ Limpiar todo</button>
               <button onClick={() => setShowPDF(true)} style={{
                 padding: '7px 16px', background: 'var(--accent)', color: 'var(--accent-text)',
-                border: 'none', borderRadius: 7, fontWeight: 700, fontSize: 12, cursor: 'pointer',
+                border: 'none', borderRadius: 7, fontWeight: 700, fontSize: 12, cursor: 'pointer', flexShrink: 0,
               }}>
-                Generar PDF ({selected.length})
+                Generar PDF ({totalSelected})
               </button>
             </>
           )}
         </div>
 
+        {/* Grid */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
           {!activeBrandId ? (
             <EmptyState icon="👈" message="Seleccioná una marca del panel izquierdo" />
@@ -178,9 +230,9 @@ export default function CatalogPage() {
             }}>
               {products.map(product => (
                 <ProductCard key={product.id} product={product}
-                  selected={selected.includes(product.id)}
+                  selected={!!selectedMap[product.id]}
                   brandColor={activeBrand?.color}
-                  onClick={() => toggleSelect(product.id)} />
+                  onClick={() => toggleSelect(product)} />
               ))}
             </div>
           )}
@@ -189,8 +241,7 @@ export default function CatalogPage() {
 
       {showPDF && (
         <PDFPreviewModal
-          products={selectedProducts}
-          brand={activeBrand}
+          brandGroups={buildBrandGroups()}
           company={membership?.companies}
           onClose={() => setShowPDF(false)}
         />
@@ -205,13 +256,13 @@ function ProductCard({ product, selected, brandColor, onClick }) {
       background: 'var(--surface)', border: `1px solid ${selected ? brandColor : 'var(--border)'}`,
       boxShadow: selected ? `0 0 0 1px ${brandColor}` : 'none',
       borderRadius: 13, cursor: 'pointer', overflow: 'hidden', position: 'relative',
-      transition: 'border-color 0.15s, transform 0.15s',
+      transition: 'border-color 0.15s',
     }}>
       {selected && (
         <div style={{
           position: 'absolute', top: 7, left: 7, width: 20, height: 20,
           borderRadius: '50%', background: brandColor, display: 'flex',
-          alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800,
+          alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, color: '#fff',
         }}>✓</div>
       )}
       {product.image_url ? (
@@ -258,5 +309,5 @@ function EmptyState({ icon, message }) {
 const smallBtn = {
   padding: '7px 12px', background: 'var(--surface)',
   border: '1px solid var(--border)', color: 'var(--text2)',
-  borderRadius: 7, fontSize: 12, cursor: 'pointer',
+  borderRadius: 7, fontSize: 12, cursor: 'pointer', flexShrink: 0,
 }
