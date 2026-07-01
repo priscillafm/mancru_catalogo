@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/auth.store'
@@ -10,8 +10,10 @@ function slugify(str) {
 export default function Brands() {
   const companyId   = useAuthStore(s => s.membership?.company_id)
   const qc          = useQueryClient()
-  const [modal, setModal]   = useState(null)  // null | { id?, name, color, textColor, logoUrl }
-  const [search, setSearch] = useState('')
+  const [modal, setModal]     = useState(null)
+  const [search, setSearch]   = useState('')
+  const [uploading, setUploading] = useState(false)
+  const fileRef = useRef()
 
   const { data: brands = [] } = useQuery({
     queryKey: ['brands', companyId],
@@ -46,6 +48,24 @@ export default function Brands() {
     },
     onSuccess: () => qc.invalidateQueries(['brands', companyId]),
   })
+
+  async function handleLogoUpload(e) {
+    const file = e.target.files[0]
+    if (!file) return
+    setUploading(true)
+    try {
+      const ext  = file.name.split('.').pop()
+      const path = `logos/${slugify(modal.name || 'brand')}-${Date.now()}.${ext}`
+      const { error } = await supabase.storage.from('product-images').upload(path, file, { upsert: true })
+      if (error) throw error
+      const { data: { publicUrl } } = supabase.storage.from('product-images').getPublicUrl(path)
+      setModal(m => ({ ...m, logoUrl: publicUrl }))
+    } catch (err) {
+      alert('Error subiendo logo: ' + err.message)
+    } finally {
+      setUploading(false)
+    }
+  }
 
   const filtered = brands.filter(b => b.name.toLowerCase().includes(search.toLowerCase()))
 
@@ -98,12 +118,25 @@ export default function Brands() {
           <Field label="Color de texto">
             <input type="color" value={modal.textColor} onChange={e => setModal(m => ({ ...m, textColor: e.target.value }))} style={{ ...inputStyle, height: 40, padding: 4 }} />
           </Field>
-          <Field label="URL del logo (Drive o web)">
-            <input value={modal.logoUrl || ''} onChange={e => setModal(m => ({ ...m, logoUrl: e.target.value }))}
-              placeholder="https://drive.google.com/uc?id=..." style={inputStyle} />
-            {modal.logoUrl && (
-              <img src={modal.logoUrl} alt="preview" style={{ marginTop: 8, maxHeight: 40, objectFit: 'contain', mixBlendMode: 'screen' }} onError={e => e.target.style.display='none'} />
-            )}
+          <Field label="Logo">
+            <input ref={fileRef} type="file" accept=".svg,.png,.jpg,.jpeg,.webp" style={{ display: 'none' }} onChange={handleLogoUpload} />
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              {modal.logoUrl
+                ? <img src={modal.logoUrl} alt="logo" style={{ height: 36, maxWidth: 80, objectFit: 'contain', background: modal.color, borderRadius: 6, padding: 4 }} />
+                : <div style={{ width: 52, height: 36, background: 'var(--bg-panel)', borderRadius: 6, border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>🖼️</div>
+              }
+              <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading}
+                style={{ ...btnSm, padding: '6px 14px' }}>
+                {uploading ? 'Subiendo...' : modal.logoUrl ? 'Cambiar logo' : 'Subir logo'}
+              </button>
+              {modal.logoUrl && (
+                <button type="button" onClick={() => setModal(m => ({ ...m, logoUrl: '' }))}
+                  style={{ ...btnSm, color: '#ef4444', borderColor: 'rgba(239,68,68,.3)' }}>
+                  Quitar
+                </button>
+              )}
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 5 }}>SVG, PNG o JPG — se guarda en Supabase</div>
           </Field>
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 6 }}>
             <button onClick={() => setModal(null)} style={btnSm}>Cancelar</button>
