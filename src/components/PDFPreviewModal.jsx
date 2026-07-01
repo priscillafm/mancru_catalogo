@@ -20,6 +20,13 @@ export default function PDFPreviewModal({
   const [orientation, setOrientation] = useState('landscape')
   const [step, setStep] = useState('preview') // 'preview' | 'pricing' | 'saving'
 
+  // Cover page options
+  const [coverEnabled, setCoverEnabled] = useState(true)
+  const [coverColor1, setCoverColor1]   = useState('#6366f1')
+  const [coverColor2, setCoverColor2]   = useState('#D4FF3F')
+  const [contacto, setContacto]         = useState('')
+  const [showCoverPanel, setShowCoverPanel] = useState(false)
+
   // Pre-populate prices from saved catalog
   const [prices, setPrices] = useState(() => {
     const init = {}
@@ -66,11 +73,15 @@ export default function PDFPreviewModal({
     setGenerating(true)
     setProgress('Preparando...')
     try {
+      const coverOptions = coverEnabled
+        ? { enabled: true, color1: coverColor1, color2: coverColor2, contacto }
+        : null
       await generateCatalogPDF(
         buildGroupsWithPrices(),
         company,
         (current, total) => setProgress(`Procesando imagen ${current} de ${total}...`),
         orientation,
+        coverOptions,
       )
       setProgress('¡Listo!')
     } catch (err) {
@@ -188,6 +199,130 @@ export default function PDFPreviewModal({
 
         {/* Body */}
         <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
+
+          {/* Cover panel */}
+          {step === 'preview' && (
+            <div style={{ marginBottom: 20 }}>
+              <button
+                onClick={() => setShowCoverPanel(p => !p)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 8, background: 'none',
+                  border: '1px solid var(--border)', borderRadius: 9, padding: '8px 14px',
+                  color: 'var(--text2)', fontSize: 12, cursor: 'pointer', width: '100%',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{
+                    width: 28, height: 18, borderRadius: 4, flexShrink: 0,
+                    background: `linear-gradient(135deg, ${coverColor1}cc, ${coverColor2}88)`,
+                    border: '1px solid rgba(255,255,255,0.1)',
+                  }} />
+                  <span style={{ fontWeight: 600 }}>Portada del catálogo</span>
+                  {coverEnabled
+                    ? <span style={{ fontSize: 10, color: 'var(--success)', fontWeight: 600 }}>✓ Activa</span>
+                    : <span style={{ fontSize: 10, color: 'var(--text3)' }}>Desactivada</span>}
+                </span>
+                <span style={{ fontSize: 10, color: 'var(--text3)' }}>{showCoverPanel ? '▲' : '▼'}</span>
+              </button>
+
+              {showCoverPanel && (
+                <div style={{
+                  marginTop: 10, padding: '16px 18px',
+                  background: 'var(--bg-panel)', border: '1px solid var(--border)',
+                  borderRadius: 10, display: 'flex', flexDirection: 'column', gap: 14,
+                }}>
+                  {/* Enable toggle */}
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+                    <input type="checkbox" checked={coverEnabled} onChange={e => setCoverEnabled(e.target.checked)}
+                      style={{ width: 16, height: 16, accentColor: 'var(--accent)', cursor: 'pointer' }} />
+                    <span style={{ fontSize: 13, fontWeight: 500 }}>Incluir portada en el PDF</span>
+                  </label>
+
+                  {coverEnabled && (
+                    <>
+                      {/* Mini preview */}
+                      <div style={{
+                        width: '100%', height: 90, borderRadius: 8, overflow: 'hidden',
+                        position: 'relative', background: '#09090B',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                      }}>
+                        {/* Blob 1 */}
+                        <div style={{
+                          position: 'absolute', width: '70%', height: '70%',
+                          top: '-10%', left: '-10%', borderRadius: '50%',
+                          background: `radial-gradient(circle, ${coverColor1}88 0%, transparent 70%)`,
+                        }} />
+                        {/* Blob 2 */}
+                        <div style={{
+                          position: 'absolute', width: '65%', height: '65%',
+                          bottom: '-10%', right: '-5%', borderRadius: '50%',
+                          background: `radial-gradient(circle, ${coverColor2}77 0%, transparent 70%)`,
+                        }} />
+                        <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 4 }}>
+                          <span style={{ fontSize: 7, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase' }}>Propuesta Comercial</span>
+                          <span style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>{company?.name ?? 'Tu empresa'}</span>
+                          <span style={{ fontSize: 7, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>www.mancru.com</span>
+                        </div>
+                      </div>
+
+                      {/* Colors */}
+                      <div style={{ display: 'flex', gap: 20, alignItems: 'center', flexWrap: 'wrap' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--text2)', cursor: 'pointer' }}>
+                          <input type="color" value={coverColor1} onChange={e => setCoverColor1(e.target.value)}
+                            style={{ width: 32, height: 32, borderRadius: 6, border: '1px solid var(--border)', cursor: 'pointer', background: 'none' }} />
+                          Color 1
+                        </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--text2)', cursor: 'pointer' }}>
+                          <input type="color" value={coverColor2} onChange={e => setCoverColor2(e.target.value)}
+                            style={{ width: 32, height: 32, borderRadius: 6, border: '1px solid var(--border)', cursor: 'pointer', background: 'none' }} />
+                          Color 2
+                        </label>
+
+                        {/* Quick presets */}
+                        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                          {[
+                            { label: 'Índigo', c1: '#6366f1', c2: '#D4FF3F' },
+                            { label: 'Sunset', c1: '#f97316', c2: '#ec4899' },
+                            { label: 'Ocean',  c1: '#06b6d4', c2: '#6366f1' },
+                            { label: 'Forest', c1: '#22c55e', c2: '#06b6d4' },
+                            { label: 'Rose',   c1: '#f43f5e', c2: '#a855f7' },
+                          ].map(p => (
+                            <button key={p.label} onClick={() => { setCoverColor1(p.c1); setCoverColor2(p.c2) }}
+                              style={{
+                                width: 22, height: 22, borderRadius: 5, border: '1.5px solid rgba(255,255,255,0.15)',
+                                background: `linear-gradient(135deg, ${p.c1}, ${p.c2})`,
+                                cursor: 'pointer', padding: 0,
+                              }}
+                              title={p.label}
+                            />
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Contact field */}
+                      <div>
+                        <label style={{ display: 'block', fontSize: 11, color: 'var(--text3)', marginBottom: 5, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                          Contacto (opcional — aparece sutil en la portada)
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="Ej: María González · 099 123 456 · maria@empresa.com"
+                          value={contacto}
+                          onChange={e => setContacto(e.target.value)}
+                          style={{
+                            width: '100%', padding: '8px 12px',
+                            background: 'var(--surface)', border: '1px solid var(--border)',
+                            borderRadius: 8, color: 'var(--text)', fontSize: 12, outline: 'none',
+                          }}
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Preview */}
           {step === 'preview' && brandGroups.map(({ brand, products }) => (
