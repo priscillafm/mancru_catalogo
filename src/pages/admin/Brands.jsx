@@ -55,7 +55,7 @@ export default function Brands() {
     setUploading(true)
     try {
       const ext  = file.name.split('.').pop()
-      const path = `logos/${slugify(modal.name || 'brand')}-${Date.now()}.${ext}`
+      const path = `${companyId}/logos/${slugify(modal.name || 'brand')}-${Date.now()}.${ext}`
       const { error } = await supabase.storage.from('product-images').upload(path, file, { upsert: true })
       if (error) throw error
       const { data: { publicUrl } } = supabase.storage.from('product-images').getPublicUrl(path)
