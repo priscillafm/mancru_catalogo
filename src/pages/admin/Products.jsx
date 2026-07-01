@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/auth.store'
+import ImageCropModal from '@/components/ImageCropModal'
 
 const PAGE_SIZE = 50
 
@@ -15,6 +16,7 @@ export default function Products() {
   const [editing, setEditing]     = useState(null)
   const [confirmDel, setConfirmDel] = useState(null)
   const [imgUploading, setImgUploading] = useState(false)
+  const [cropFile, setCropFile] = useState(null)  // file pending crop
   const imgFileRef = useRef()
 
   // Load brands for filter
@@ -89,17 +91,26 @@ export default function Products() {
     onSuccess: () => { setConfirmDel(null); invalidate() },
   })
 
-  async function handleImgUpload(e) {
+  // Step 1: user picks a file → open crop modal
+  function handleImgUpload(e) {
     const file = e.target.files[0]
-    if (!file || !editing) return
+    if (!file) return
+    e.target.value = ''  // allow re-selecting same file
+    setCropFile(file)
+  }
+
+  // Step 2: user confirms crop → upload the canvas blob
+  async function handleCropConfirm(blob) {
+    setCropFile(null)
+    if (!editing) return
     setImgUploading(true)
     try {
-      const ext  = file.name.split('.').pop()
-      const path = `${companyId}/products/${editing.sku}.${ext}`
-      const { error } = await supabase.storage.from('product-images').upload(path, file, { upsert: true })
+      const path = `${companyId}/products/${editing.sku}.jpg`
+      const { error } = await supabase.storage.from('product-images').upload(path, blob, { upsert: true, contentType: 'image/jpeg' })
       if (error) throw error
       const { data: { publicUrl } } = supabase.storage.from('product-images').getPublicUrl(path)
-      setEditing(p => ({ ...p, image_url: publicUrl }))
+      // Add cache-bust so the browser shows the new image immediately
+      setEditing(p => ({ ...p, image_url: publicUrl + '?t=' + Date.now() }))
     } catch (err) {
       alert('Error subiendo imagen: ' + err.message)
     } finally {
@@ -297,6 +308,15 @@ export default function Products() {
             <div style={{ marginTop: 8, fontSize: 12, color: '#ef4444' }}>Error: {updateProduct.error?.message}</div>
           )}
         </Modal>
+      )}
+
+      {/* ── Image crop modal ── */}
+      {cropFile && (
+        <ImageCropModal
+          file={cropFile}
+          onConfirm={handleCropConfirm}
+          onCancel={() => setCropFile(null)}
+        />
       )}
 
       {/* ── Confirm delete modal ── */}
