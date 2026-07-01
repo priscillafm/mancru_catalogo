@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/auth.store'
@@ -12,8 +12,10 @@ export default function Products() {
   const [brandId, setBrandId]     = useState('all')
   const [categoryId, setCategoryId] = useState('all')
   const [page, setPage]           = useState(0)
-  const [editing, setEditing]     = useState(null)   // product being edited
-  const [confirmDel, setConfirmDel] = useState(null) // product pending delete
+  const [editing, setEditing]     = useState(null)
+  const [confirmDel, setConfirmDel] = useState(null)
+  const [imgUploading, setImgUploading] = useState(false)
+  const imgFileRef = useRef()
 
   // Load brands for filter
   const { data: brands = [] } = useQuery({
@@ -86,6 +88,24 @@ export default function Products() {
     },
     onSuccess: () => { setConfirmDel(null); invalidate() },
   })
+
+  async function handleImgUpload(e) {
+    const file = e.target.files[0]
+    if (!file || !editing) return
+    setImgUploading(true)
+    try {
+      const ext  = file.name.split('.').pop()
+      const path = `${companyId}/products/${editing.sku}.${ext}`
+      const { error } = await supabase.storage.from('product-images').upload(path, file, { upsert: true })
+      if (error) throw error
+      const { data: { publicUrl } } = supabase.storage.from('product-images').getPublicUrl(path)
+      setEditing(p => ({ ...p, image_url: publicUrl }))
+    } catch (err) {
+      alert('Error subiendo imagen: ' + err.message)
+    } finally {
+      setImgUploading(false)
+    }
+  }
 
   function resetFilters() {
     setSearch(''); setBrandId('all'); setCategoryId('all'); setPage(0)
@@ -224,6 +244,28 @@ export default function Products() {
           <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>Editar producto</h3>
           <code style={{ fontSize: 11, color: 'var(--accent)' }}>{editing.sku}</code>
 
+          {/* Imagen */}
+          <label style={labelStyle}>Imagen</label>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 6 }}>
+            <div style={{ width: 64, height: 64, borderRadius: 8, background: 'var(--bg-panel)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
+              {editing.image_url
+                ? <img src={editing.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                : <span style={{ fontSize: 22, color: 'var(--text3)' }}>📷</span>
+              }
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <input ref={imgFileRef} type="file" accept=".jpg,.jpeg,.png,.webp" style={{ display: 'none' }} onChange={handleImgUpload} />
+              <button type="button" onClick={() => imgFileRef.current?.click()} disabled={imgUploading} style={btnSecondary}>
+                {imgUploading ? 'Subiendo...' : editing.image_url ? 'Cambiar imagen' : 'Subir imagen'}
+              </button>
+              {editing.image_url && (
+                <button type="button" onClick={() => setEditing(p => ({ ...p, image_url: null }))} style={{ ...btnSecondary, fontSize: 11, color: '#ef4444', borderColor: 'rgba(239,68,68,.3)' }}>
+                  Quitar
+                </button>
+              )}
+            </div>
+          </div>
+
           <label style={labelStyle}>Nombre</label>
           <input value={editing.name} onChange={e => setEditing(p => ({ ...p, name: e.target.value }))} style={inputFull} />
 
@@ -245,7 +287,7 @@ export default function Products() {
           <div style={{ display: 'flex', gap: 8, marginTop: 20, justifyContent: 'flex-end' }}>
             <button onClick={() => setEditing(null)} style={btnSecondary}>Cancelar</button>
             <button
-              onClick={() => updateProduct.mutate({ id: editing.id, name: editing.name, category_id: editing.category_id, stock: editing.stock, active: editing.active })}
+              onClick={() => updateProduct.mutate({ id: editing.id, name: editing.name, category_id: editing.category_id, stock: editing.stock, active: editing.active, image_url: editing.image_url ?? null })}
               disabled={updateProduct.isPending}
               style={btnPrimary}>
               {updateProduct.isPending ? 'Guardando...' : 'Guardar'}
