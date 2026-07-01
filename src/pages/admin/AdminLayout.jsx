@@ -6,14 +6,16 @@ import Products from './Products'
 import Sync from './Sync'
 import Users from './Users'
 import ImportIto from './ImportIto'
+import Settings from './Settings'
 
 const NAV = [
-  { to: '', label: 'Resumen',    icon: '📊' },
-  { to: 'brands', label: 'Marcas', icon: '🏷️' },
+  { to: '', label: 'Resumen',       icon: '📊' },
+  { to: 'brands', label: 'Marcas',  icon: '🏷️' },
   { to: 'products', label: 'Productos', icon: '📦' },
   { to: 'sync', label: 'Sincronizar', icon: '🔄' },
   { to: 'import-ito', label: 'Importar ito', icon: '⬇️' },
   { to: 'users', label: 'Usuarios', icon: '👥' },
+  { to: 'settings', label: 'Configuración', icon: '⚙️' },
 ]
 
 export default function AdminLayout() {
@@ -66,7 +68,8 @@ export default function AdminLayout() {
           <Route path="products" element={<Products />} />
           <Route path="sync"       element={<Sync />} />
           <Route path="import-ito" element={<ImportIto />} />
-          <Route path="users"    element={<Users />} />
+          <Route path="users"      element={<Users />} />
+          <Route path="settings"   element={<Settings />} />
           <Route path="*"        element={<Navigate to="/admin" replace />} />
         </Routes>
       </div>
