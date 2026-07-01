@@ -5,6 +5,7 @@ import { useAuthStore } from '@/store/auth.store'
 import { useNavigate } from 'react-router-dom'
 import { signOut } from '@/lib/auth'
 import PDFPreviewModal from '@/components/PDFPreviewModal'
+import { PotatoMark } from '@/components/PotatoLogo'
 
 function useTheme() {
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') ?? 'dark')
@@ -116,18 +117,32 @@ export default function CatalogPage() {
         position: 'relative', zIndex: 10,
       }}>
         {/* Header */}
-        <div style={{ padding: '20px 16px 14px', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ fontSize: 10, color: 'var(--text3)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 6 }}>
+        <div style={{ padding: '16px 16px 14px', borderBottom: '1px solid var(--border)' }}>
+          {/* Potato branding */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+              <PotatoMark size={20} />
+              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.01em' }}>Potato</span>
+            </div>
+            <button
+              onClick={toggleTheme}
+              title={theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 5,
+                padding: '4px 9px', borderRadius: 20,
+                background: 'var(--surface-h)', border: '1px solid var(--border)',
+                color: 'var(--text3)', fontSize: 11, cursor: 'pointer',
+                letterSpacing: '0.02em', fontWeight: 500,
+              }}
+            >
+              {theme === 'dark' ? '☀ Claro' : '☾ Oscuro'}
+            </button>
+          </div>
+          {/* Company + page title */}
+          <div style={{ fontSize: 10, color: 'var(--text3)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 3 }}>
             {membership?.companies?.name ?? '—'}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <h1 style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.3px' }}>Catálogos</h1>
-            <button
-              className="theme-toggle"
-              onClick={toggleTheme}
-              title={theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
-            />
-          </div>
+          <h1 style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.3px' }}>Catálogos</h1>
         </div>
 
         {/* Brand list */}
