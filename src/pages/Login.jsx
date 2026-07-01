@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { signIn } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
+import { PotatoLockup } from '@/components/PotatoLogo'
 
 export default function LoginPage() {
   const [email, setEmail]       = useState('')
@@ -51,10 +52,13 @@ export default function LoginPage() {
       }}>
         {/* Logo / title */}
         <div style={{ marginBottom: 28 }}>
-          <div style={{ fontSize: 11, color: 'var(--text3)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 8 }}>
+          <div style={{ marginBottom: 18 }}>
+            <PotatoLockup height={34} />
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--text3)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 6 }}>
             Catálogos comerciales
           </div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.5px', color: 'var(--text)' }}>
+          <h1 style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.5px', color: 'var(--text)' }}>
             {mode === 'login' ? 'Bienvenido' : 'Recuperar contraseña'}
           </h1>
         </div>

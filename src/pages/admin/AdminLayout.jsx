@@ -1,5 +1,6 @@
 import { NavLink, Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/auth.store'
+import { PotatoMark } from '@/components/PotatoLogo'
 import Dashboard from './Dashboard'
 import Brands from './Brands'
 import Products from './Products'
@@ -28,11 +29,15 @@ export default function AdminLayout() {
         width: 220, minWidth: 220, background: 'var(--bg-bar)',
         borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column'
       }}>
-        <div style={{ padding: '18px 16px 12px', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ fontSize: 10, color: 'var(--text3)', letterSpacing: '0.1em', marginBottom: 3, textTransform: 'uppercase' }}>
-            Panel Admin
+        <div style={{ padding: '14px 16px 12px', borderBottom: '1px solid var(--border)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+            <PotatoMark size={22} />
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.01em' }}>Potato</span>
           </div>
-          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)' }}>
+          <div style={{ fontSize: 10, color: 'var(--text3)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 2 }}>
+            Empresa
+          </div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
             {company?.name ?? '—'}
           </div>
         </div>
