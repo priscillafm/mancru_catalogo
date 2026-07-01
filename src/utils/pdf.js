@@ -53,9 +53,10 @@ async function addCoverPage(doc, company, coverOptions, isLandscape) {
   const PW = isLandscape ? 297 : 210
   const PH = isLandscape ? 210 : 297
 
-  const color1 = coverOptions?.color1 ?? '#6366f1'
-  const color2 = coverOptions?.color2 ?? '#D4FF3F'
-  const contacto = (coverOptions?.contacto ?? '').trim()
+  const color1     = coverOptions?.color1     ?? '#6366f1'
+  const color2     = coverOptions?.color2     ?? '#D4FF3F'
+  const contacto   = (coverOptions?.contacto  ?? '').trim()
+  const clientName = (coverOptions?.clientName ?? '').trim()
 
   // High-DPI canvas (3× for sharpness at PDF scale)
   const scale = 3
@@ -127,12 +128,20 @@ async function addCoverPage(doc, company, coverOptions, isLandscape) {
   doc.line(centerX - lineW / 2, centerY - 8, centerX + lineW / 2, centerY - 8)
   doc.setLineDashPattern([], 0)
 
-  // Company name — large
+  // Company name — large bold
   const companyName = company?.name ?? ''
   doc.setFontSize(isLandscape ? 26 : 22)
   doc.setFont('helvetica', 'bold')
   doc.setTextColor(255, 255, 255)
   doc.text(companyName, centerX, centerY + 4, { align: 'center' })
+
+  // Client name — light, smaller, below company name
+  if (clientName) {
+    doc.setFontSize(isLandscape ? 11 : 10)
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(200, 200, 200)
+    doc.text(`para  ${clientName}`, centerX, centerY + 13, { align: 'center' })
+  }
 
   // Website at bottom center
   const website = company?.website ?? 'www.mancru.com'

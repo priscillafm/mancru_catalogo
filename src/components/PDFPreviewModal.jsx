@@ -25,6 +25,7 @@ export default function PDFPreviewModal({
   const [coverColor1, setCoverColor1]   = useState('#6366f1')
   const [coverColor2, setCoverColor2]   = useState('#D4FF3F')
   const [contacto, setContacto]         = useState('')
+  const [clientName, setClientName]     = useState('')
   const [showCoverPanel, setShowCoverPanel] = useState(false)
 
   // Pre-populate prices from saved catalog
@@ -74,7 +75,7 @@ export default function PDFPreviewModal({
     setProgress('Preparando...')
     try {
       const coverOptions = coverEnabled
-        ? { enabled: true, color1: coverColor1, color2: coverColor2, contacto }
+        ? { enabled: true, color1: coverColor1, color2: coverColor2, contacto, clientName }
         : null
       await generateCatalogPDF(
         buildGroupsWithPrices(),
@@ -262,6 +263,7 @@ export default function PDFPreviewModal({
                         <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 4 }}>
                           <span style={{ fontSize: 7, letterSpacing: '0.2em', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase' }}>Propuesta Comercial</span>
                           <span style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>{company?.name ?? 'Tu empresa'}</span>
+                          {clientName && <span style={{ fontSize: 9, fontWeight: 300, color: 'rgba(255,255,255,0.55)', marginTop: 1 }}>para {clientName}</span>}
                           <span style={{ fontSize: 7, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>www.mancru.com</span>
                         </div>
                       </div>
@@ -298,6 +300,24 @@ export default function PDFPreviewModal({
                             />
                           ))}
                         </div>
+                      </div>
+
+                      {/* Client name */}
+                      <div>
+                        <label style={{ display: 'block', fontSize: 11, color: 'var(--text3)', marginBottom: 5, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                          Presentado a (opcional)
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="Ej: Empresa XYZ"
+                          value={clientName}
+                          onChange={e => setClientName(e.target.value)}
+                          style={{
+                            width: '100%', padding: '8px 12px',
+                            background: 'var(--surface)', border: '1px solid var(--border)',
+                            borderRadius: 8, color: 'var(--text)', fontSize: 12, outline: 'none',
+                          }}
+                        />
                       </div>
 
                       {/* Contact field */}
