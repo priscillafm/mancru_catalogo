@@ -170,7 +170,9 @@ export default function CatalogPage() {
           {isAdmin && (
             <button onClick={() => navigate('/admin')} style={sideBtn}>Admin</button>
           )}
-          <button onClick={() => signOut()} style={{ ...sideBtn, marginLeft: 'auto' }}>Salir</button>
+          <button onClick={() => navigate('/profile')} style={{ ...sideBtn, marginLeft: 'auto' }} title="Mi perfil">
+            {(membership?.users?.name ?? membership?.companies?.name ?? '?')[0].toUpperCase()}
+          </button>
         </div>
       </aside>
 
