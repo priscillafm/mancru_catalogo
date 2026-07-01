@@ -1,4 +1,5 @@
 import { jsPDF } from 'jspdf'
+import { COVER_STYLES } from './coverStyles'
 
 const imgCache = new Map()
 
@@ -111,6 +112,18 @@ async function addCoverPage(doc, company, coverOptions, isLandscape) {
   const contacto   = (coverOptions?.contacto  ?? '').trim()
   const clientName = (coverOptions?.clientName ?? '').trim()
   const logoUrl    = (coverOptions?.logoUrl    ?? '').trim()
+  const theme      = coverOptions?.theme      ?? 'dark'   // 'dark' | 'light'
+  const styleName  = coverOptions?.style      ?? 'corners'
+
+  const isDark = theme === 'dark'
+  const bgColor    = isDark ? '#09090B' : '#F8F8F8'
+  const gridColor  = isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.04)'
+  const textWhite  = isDark ? [255,255,255] : [20,20,20]
+  const textLabel  = isDark ? [180,180,180] : [100,100,100]
+  const textSub    = isDark ? [160,160,160] : [130,130,130]
+  const textFaint  = isDark ? [120,120,120] : [160,160,160]
+  // Light mode: blobs are less opaque to avoid neon-on-white look
+  const blobMult   = isDark ? 1.0 : 0.55
 
   // ── Background canvas ──
   const scale = 3
@@ -121,33 +134,33 @@ async function addCoverPage(doc, company, coverOptions, isLandscape) {
   canvas.height = CH
   const ctx = canvas.getContext('2d')
 
-  ctx.fillStyle = '#09090B'
+  ctx.fillStyle = bgColor
   ctx.fillRect(0, 0, CW, CH)
 
+  // Draw blobs from style definition
+  const styleBlobs = (COVER_STYLES[styleName] ?? COVER_STYLES.corners).blobs
   const [r1, g1r, b1] = hexToRgb(color1)
-  const g1 = ctx.createRadialGradient(CW*0.18, CH*0.28, 0, CW*0.18, CH*0.28, CW*0.55)
-  g1.addColorStop(0,   `rgba(${r1},${g1r},${b1},0.55)`)
-  g1.addColorStop(0.5, `rgba(${r1},${g1r},${b1},0.15)`)
-  g1.addColorStop(1,   `rgba(${r1},${g1r},${b1},0)`)
-  ctx.fillStyle = g1
-  ctx.fillRect(0, 0, CW, CH)
-
   const [r2, g2r, b2] = hexToRgb(color2)
-  const g2 = ctx.createRadialGradient(CW*0.82, CH*0.78, 0, CW*0.82, CH*0.78, CW*0.5)
-  g2.addColorStop(0,   `rgba(${r2},${g2r},${b2},0.45)`)
-  g2.addColorStop(0.5, `rgba(${r2},${g2r},${b2},0.12)`)
-  g2.addColorStop(1,   `rgba(${r2},${g2r},${b2},0)`)
-  ctx.fillStyle = g2
-  ctx.fillRect(0, 0, CW, CH)
+  const mr = Math.round((r1+r2)/2), mg = Math.round((g1r+g2r)/2), mb = Math.round((b1+b2)/2)
 
-  const g3 = ctx.createRadialGradient(CW*0.5, CH*0.5, 0, CW*0.5, CH*0.5, CW*0.35)
-  g3.addColorStop(0, `rgba(${Math.round((r1+r2)/2)},${Math.round((g1r+g2r)/2)},${Math.round((b1+b2)/2)},0.10)`)
-  g3.addColorStop(1, 'rgba(0,0,0,0)')
-  ctx.fillStyle = g3
-  ctx.fillRect(0, 0, CW, CH)
+  for (const blob of styleBlobs) {
+    const [br, bg_, bb] = blob.color === 'c1' ? [r1,g1r,b1]
+                         : blob.color === 'c2' ? [r2,g2r,b2]
+                         : [mr,mg,mb]
+    const alpha = blob.alpha * blobMult
+    const gx = CW * blob.cx
+    const gy = CH * blob.cy
+    const gr = CW * blob.r
+    const grad = ctx.createRadialGradient(gx, gy, 0, gx, gy, gr)
+    grad.addColorStop(0,   `rgba(${br},${bg_},${bb},${alpha})`)
+    grad.addColorStop(0.45,`rgba(${br},${bg_},${bb},${(alpha*0.3).toFixed(3)})`)
+    grad.addColorStop(1,   `rgba(${br},${bg_},${bb},0)`)
+    ctx.fillStyle = grad
+    ctx.fillRect(0, 0, CW, CH)
+  }
 
   // Faint grid lines
-  ctx.strokeStyle = 'rgba(255,255,255,0.03)'
+  ctx.strokeStyle = gridColor
   ctx.lineWidth = 1
   for (let y = 0; y < CH; y += 28 * scale) {
     ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(CW, y); ctx.stroke()
@@ -183,10 +196,9 @@ async function addCoverPage(doc, company, coverOptions, isLandscape) {
     } catch { /* fallback to text */ }
   }
   if (!logoRendered) {
-    // Fallback: company name as text
     doc.setFontSize(isLandscape ? 26 : 22)
     doc.setFont('helvetica', 'bold')
-    doc.setTextColor(255, 255, 255)
+    doc.setTextColor(...textWhite)
     doc.text(company?.name ?? '', centerX, centerY - (clientName ? 8 : 4), { align: 'center' })
   }
 
@@ -196,27 +208,25 @@ async function addCoverPage(doc, company, coverOptions, isLandscape) {
     : centerY + (clientName ? 4 : 8)
   doc.setFontSize(8)
   doc.setFont('helvetica', 'normal')
-  doc.setTextColor(180, 180, 180)
+  doc.setTextColor(...textLabel)
   doc.setCharSpace(3.5)
   doc.text('PROPUESTA COMERCIAL', centerX, labelY, { align: 'center' })
   doc.setCharSpace(0)
 
   // ── Client name ──
+  const lineColor = isDark ? [255,255,255] : [180,180,180]
   if (clientName) {
-    // Thin separator line above client name
-    doc.setDrawColor(255, 255, 255)
+    doc.setDrawColor(...lineColor)
     doc.setLineWidth(0.2)
     doc.setLineDashPattern([1, 1.5], 0)
     doc.line(centerX - 28, labelY + 5, centerX + 28, labelY + 5)
     doc.setLineDashPattern([], 0)
-
     doc.setFontSize(isLandscape ? 13 : 11)
     doc.setFont('helvetica', 'normal')
-    doc.setTextColor(220, 220, 220)
+    doc.setTextColor(...textSub)
     doc.text(clientName, centerX, labelY + 12, { align: 'center' })
   } else {
-    // Line below label when no client
-    doc.setDrawColor(255, 255, 255)
+    doc.setDrawColor(...lineColor)
     doc.setLineWidth(0.2)
     doc.setLineDashPattern([1, 1.5], 0)
     doc.line(centerX - 28, labelY + 4, centerX + 28, labelY + 4)
@@ -226,13 +236,13 @@ async function addCoverPage(doc, company, coverOptions, isLandscape) {
   // ── Website ──
   doc.setFontSize(8)
   doc.setFont('helvetica', 'normal')
-  doc.setTextColor(160, 160, 160)
+  doc.setTextColor(...textFaint)
   doc.text(company?.website ?? 'www.mancru.com', centerX, PH - 10, { align: 'center' })
 
   // ── Contact ──
   if (contacto) {
     doc.setFontSize(7)
-    doc.setTextColor(120, 120, 120)
+    doc.setTextColor(...textFaint)
     doc.text(contacto, 12, PH - 10)
   }
 }
