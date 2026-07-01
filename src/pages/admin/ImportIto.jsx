@@ -79,7 +79,6 @@ export default function ImportIto() {
         const sku  = String(row.getCell(1).value ?? '').trim()
         const name = String(row.getCell(3).value ?? '').trim()
         const stockTotal = Number(row.getCell(6).value ?? 0)
-        const price      = Number(row.getCell(10).value ?? 0)
 
         // Include only ACC* and INF* — exclude SACC, SINF, HER, REP
         if (!sku) return
@@ -87,7 +86,7 @@ export default function ImportIto() {
         if (!/^(ACC|INF)/i.test(sku)) return
 
         const brand = detectBrand(name)
-        parsed.push({ sku, name, stock: stockTotal, price, brand })
+        parsed.push({ sku, name, stock: stockTotal, brand })
       })
 
       // Group summary
@@ -166,7 +165,6 @@ export default function ImportIto() {
           sku:        row.sku,
           name:       row.name,
           stock:      row.stock,
-          price:      row.price || null,
           brand_id:   brandId,
           active:     true,
         }
