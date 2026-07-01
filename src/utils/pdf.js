@@ -373,16 +373,28 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
       globalIdx++
       onProgress && onProgress(globalIdx, totalProducts)
 
-      const PAD     = 4
+      const PAD     = 3
+      const MARGIN  = 1.5
       const inner_w = CELL_W - PAD * 2
 
-      doc.setFillColor('#f5f5f5')
-      doc.roundedRect(x + 1, y + 1, CELL_W - 2, CELL_H - 2, 3, 3, 'F')
+      // ── Card shadow (offset grey rect) ──
+      doc.setFillColor('#DDDDDD')
+      doc.roundedRect(x + MARGIN + 1.2, y + MARGIN + 1.2, CELL_W - MARGIN * 2, CELL_H - MARGIN * 2, 4, 4, 'F')
 
-      const imgAreaH = CELL_H * 0.52
-      const imgSize  = Math.min(inner_w, imgAreaH) - 2
+      // ── Card white background ──
+      doc.setFillColor('#FFFFFF')
+      doc.roundedRect(x + MARGIN, y + MARGIN, CELL_W - MARGIN * 2, CELL_H - MARGIN * 2, 4, 4, 'F')
+
+      // ── Image area: white square, fills top portion ──
+      const imgAreaH = CELL_H * 0.54
+      const imgPad   = 2
+      const imgSize  = Math.min(inner_w - imgPad * 2, imgAreaH - imgPad * 2)
       const imgX     = x + (CELL_W - imgSize) / 2
-      const imgY     = y + PAD
+      const imgY     = y + MARGIN + imgPad + 2
+
+      // White bg for image (clip any bg artifacts)
+      doc.setFillColor('#FFFFFF')
+      doc.rect(x + MARGIN, y + MARGIN, CELL_W - MARGIN * 2, imgAreaH, 'F')
 
       const b64 = await loadImageAsBase64(p.image_url)
       if (b64) {
@@ -392,38 +404,52 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
         drawNoImage(doc, imgX, imgY, imgSize)
       }
 
-      let tY = imgY + imgSize + 3
+      // Thin separator line below image area
+      doc.setDrawColor('#EEEEEE')
+      doc.setLineWidth(0.3)
+      doc.line(x + MARGIN + 2, y + MARGIN + imgAreaH, x + CELL_W - MARGIN - 2, y + MARGIN + imgAreaH)
 
-      // SKU badge — use gradient bar too
-      const skuBarImg = makeGradientBar(inner_w, 5.5, brandColor)
-      doc.addImage(skuBarImg, 'JPEG', x + PAD, tY, inner_w, 5.5)
-      doc.setFontSize(7)
+      let tY = y + MARGIN + imgAreaH + 4
+
+      // ── SKU badge: pill shape with brand color ──
+      const skuText  = String(p.sku ?? '')
+      const skuW     = Math.min(inner_w - 4, 28)
+      const skuH     = 5
+      const skuX     = x + (CELL_W - skuW) / 2
+      const [sr, sg, sb] = hexToRgb(brandColor)
+      doc.setFillColor(sr, sg, sb)
+      doc.roundedRect(skuX, tY, skuW, skuH, 2.5, 2.5, 'F')
+      doc.setFontSize(6.5)
       doc.setFont('helvetica', 'bold')
       doc.setTextColor(brandTextClr)
-      doc.text(String(p.sku ?? ''), x + CELL_W / 2, tY + 3.7, { align: 'center' })
-      tY += 5.5 + 4
+      doc.text(skuText, x + CELL_W / 2, tY + 3.5, { align: 'center' })
+      tY += skuH + 3
 
-      doc.setFontSize(7.5)
+      // ── Product name ──
+      const textW = CELL_W - MARGIN * 2 - PAD * 2
+      doc.setFontSize(7)
       doc.setFont('helvetica', 'bold')
       doc.setTextColor('#111111')
-      const nameLines = doc.splitTextToSize(String(p.name ?? ''), inner_w).slice(0, 2)
-      doc.text(nameLines, x + PAD, tY)
-      tY += nameLines.length * 4.2 + 1
+      const nameLines = doc.splitTextToSize(String(p.name ?? ''), textW).slice(0, 2)
+      doc.text(nameLines, x + CELL_W / 2, tY, { align: 'center' })
+      tY += nameLines.length * 4 + 1
 
-      if (tY + 5 < y + CELL_H - PAD) {
-        doc.setFontSize(6.5)
+      // ── Description ──
+      if (tY + 4 < y + CELL_H - 6) {
+        doc.setFontSize(6)
         doc.setFont('helvetica', 'normal')
-        doc.setTextColor('#888888')
-        const descLines = doc.splitTextToSize(String(p.description ?? ''), inner_w).slice(0, 2)
-        doc.text(descLines, x + PAD, tY)
+        doc.setTextColor('#999999')
+        const descLines = doc.splitTextToSize(String(p.description ?? ''), textW).slice(0, 2)
+        doc.text(descLines, x + CELL_W / 2, tY, { align: 'center' })
       }
 
+      // ── Price pinned at bottom ──
       if (p._price) {
         const curLabel = (p._currency ?? '$') === '$' ? '$ UYU' : 'USD'
         doc.setFontSize(11)
         doc.setFont('helvetica', 'bold')
         doc.setTextColor('#111111')
-        doc.text(`${curLabel} ${p._price}`, x + CELL_W / 2, y + CELL_H - 4, { align: 'center' })
+        doc.text(`${curLabel} ${p._price}`, x + CELL_W / 2, y + CELL_H - 3, { align: 'center' })
       }
 
       slot++
