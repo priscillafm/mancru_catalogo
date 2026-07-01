@@ -32,6 +32,12 @@ async function loadImageAsBase64(url) {
       'Authorization': `Bearer ${SUPABASE_ANON}`,
       'apikey': SUPABASE_ANON,
     })
+    // If it's an SVG, rasterize via canvas so jsPDF can embed it
+    if (b64.startsWith('data:image/svg')) {
+      const png = await svgDataUrlToPng(b64)
+      imgCache.set(url, png)
+      return png
+    }
     imgCache.set(url, b64)
     return b64
   } catch {
@@ -39,16 +45,63 @@ async function loadImageAsBase64(url) {
   }
 }
 
-// Parse hex color → [r, g, b] 0-255
-function hexToRgb(hex) {
-  const h = hex.replace('#', '')
-  if (h.length === 3) {
-    return [parseInt(h[0]+h[0], 16), parseInt(h[1]+h[1], 16), parseInt(h[2]+h[2], 16)]
-  }
-  return [parseInt(h.slice(0,2), 16), parseInt(h.slice(2,4), 16), parseInt(h.slice(4,6), 16)]
+// Convert an SVG data-URL to a PNG data-URL via off-screen canvas
+function svgDataUrlToPng(svgDataUrl, targetW = 600, targetH = 300) {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => {
+      const w = img.naturalWidth  || targetW
+      const h = img.naturalHeight || targetH
+      // Keep aspect ratio but cap at target
+      const scale = Math.min(targetW / w, targetH / h, 1)
+      const cw = Math.round(w * scale)
+      const ch = Math.round(h * scale)
+      const canvas = document.createElement('canvas')
+      canvas.width  = cw
+      canvas.height = ch
+      const ctx = canvas.getContext('2d')
+      ctx.drawImage(img, 0, 0, cw, ch)
+      resolve(canvas.toDataURL('image/png'))
+    }
+    img.onerror = reject
+    img.src = svgDataUrl
+  })
 }
 
-// Build the cover page as a canvas → base64 and embed
+function hexToRgb(hex) {
+  const h = hex.replace('#', '')
+  if (h.length === 3) return [parseInt(h[0]+h[0],16), parseInt(h[1]+h[1],16), parseInt(h[2]+h[2],16)]
+  return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)]
+}
+
+// Generate a horizontal gradient bar as a JPEG data-URL (synchronous)
+function makeGradientBar(w, h, brandColor) {
+  const scale = 3
+  const cw = Math.ceil(w * scale)
+  const ch = Math.ceil(h * scale)
+  const canvas = document.createElement('canvas')
+  canvas.width  = cw
+  canvas.height = ch
+  const ctx = canvas.getContext('2d')
+  const [r, g, b] = hexToRgb(brandColor)
+
+  // Dark base
+  ctx.fillStyle = '#09090B'
+  ctx.fillRect(0, 0, cw, ch)
+
+  // Brand color sweep — peaks at ~40% then fades out to the right
+  const grad = ctx.createLinearGradient(0, 0, cw, 0)
+  grad.addColorStop(0,    `rgba(${r},${g},${b},0.55)`)
+  grad.addColorStop(0.30, `rgba(${r},${g},${b},1)`)
+  grad.addColorStop(0.55, `rgba(${r},${g},${b},0.85)`)
+  grad.addColorStop(1,    `rgba(${r},${g},${b},0.15)`)
+  ctx.fillStyle = grad
+  ctx.fillRect(0, 0, cw, ch)
+
+  return canvas.toDataURL('image/jpeg', 0.92)
+}
+
+// Cover page
 async function addCoverPage(doc, company, coverOptions, isLandscape) {
   const PW = isLandscape ? 297 : 210
   const PH = isLandscape ? 210 : 297
@@ -57,120 +110,135 @@ async function addCoverPage(doc, company, coverOptions, isLandscape) {
   const color2     = coverOptions?.color2     ?? '#D4FF3F'
   const contacto   = (coverOptions?.contacto  ?? '').trim()
   const clientName = (coverOptions?.clientName ?? '').trim()
+  const logoUrl    = (coverOptions?.logoUrl    ?? '').trim()
 
-  // High-DPI canvas (3× for sharpness at PDF scale)
+  // ── Background canvas ──
   const scale = 3
   const CW = PW * scale
   const CH = PH * scale
-
   const canvas = document.createElement('canvas')
   canvas.width  = CW
   canvas.height = CH
   const ctx = canvas.getContext('2d')
 
-  // Dark background
   ctx.fillStyle = '#09090B'
   ctx.fillRect(0, 0, CW, CH)
 
-  // ── Glow blobs (tech difuminado) ──
-  // Blob 1: top-left area, color1
-  const g1 = ctx.createRadialGradient(CW * 0.18, CH * 0.28, 0, CW * 0.18, CH * 0.28, CW * 0.55)
   const [r1, g1r, b1] = hexToRgb(color1)
+  const g1 = ctx.createRadialGradient(CW*0.18, CH*0.28, 0, CW*0.18, CH*0.28, CW*0.55)
   g1.addColorStop(0,   `rgba(${r1},${g1r},${b1},0.55)`)
   g1.addColorStop(0.5, `rgba(${r1},${g1r},${b1},0.15)`)
   g1.addColorStop(1,   `rgba(${r1},${g1r},${b1},0)`)
   ctx.fillStyle = g1
   ctx.fillRect(0, 0, CW, CH)
 
-  // Blob 2: bottom-right area, color2
-  const g2 = ctx.createRadialGradient(CW * 0.82, CH * 0.78, 0, CW * 0.82, CH * 0.78, CW * 0.5)
   const [r2, g2r, b2] = hexToRgb(color2)
+  const g2 = ctx.createRadialGradient(CW*0.82, CH*0.78, 0, CW*0.82, CH*0.78, CW*0.5)
   g2.addColorStop(0,   `rgba(${r2},${g2r},${b2},0.45)`)
   g2.addColorStop(0.5, `rgba(${r2},${g2r},${b2},0.12)`)
   g2.addColorStop(1,   `rgba(${r2},${g2r},${b2},0)`)
   ctx.fillStyle = g2
   ctx.fillRect(0, 0, CW, CH)
 
-  // Blob 3: subtle center accent (mix of both colors, faint)
-  const g3 = ctx.createRadialGradient(CW * 0.5, CH * 0.5, 0, CW * 0.5, CH * 0.5, CW * 0.35)
-  g3.addColorStop(0,   `rgba(${Math.round((r1+r2)/2)},${Math.round((g1r+g2r)/2)},${Math.round((b1+b2)/2)},0.10)`)
-  g3.addColorStop(1,   `rgba(0,0,0,0)`)
+  const g3 = ctx.createRadialGradient(CW*0.5, CH*0.5, 0, CW*0.5, CH*0.5, CW*0.35)
+  g3.addColorStop(0, `rgba(${Math.round((r1+r2)/2)},${Math.round((g1r+g2r)/2)},${Math.round((b1+b2)/2)},0.10)`)
+  g3.addColorStop(1, 'rgba(0,0,0,0)')
   ctx.fillStyle = g3
   ctx.fillRect(0, 0, CW, CH)
 
-  // Subtle noise-like horizontal lines (very faint grid feel)
+  // Faint grid lines
   ctx.strokeStyle = 'rgba(255,255,255,0.03)'
   ctx.lineWidth = 1
   for (let y = 0; y < CH; y += 28 * scale) {
     ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(CW, y); ctx.stroke()
   }
 
-  const imgData = canvas.toDataURL('image/jpeg', 0.94)
-  doc.addImage(imgData, 'JPEG', 0, 0, PW, PH)
+  doc.addImage(canvas.toDataURL('image/jpeg', 0.94), 'JPEG', 0, 0, PW, PH)
 
-  // ── Text overlay ──
   const centerX = PW / 2
   const centerY = PH / 2
 
-  // "PROPUESTA COMERCIAL" label
-  doc.setFontSize(9)
-  doc.setFont('helvetica', 'normal')
-  doc.setTextColor(200, 200, 200)
-  doc.setCharSpace(3)
-  doc.text('PROPUESTA COMERCIAL', centerX, centerY - 14, { align: 'center' })
-  doc.setCharSpace(0)
-
-  // Separator line
-  const lineW = 60
-  doc.setDrawColor(255, 255, 255)
-  doc.setLineWidth(0.3)
-  doc.setLineDashPattern([1, 1.5], 0)
-  doc.line(centerX - lineW / 2, centerY - 8, centerX + lineW / 2, centerY - 8)
-  doc.setLineDashPattern([], 0)
-
-  // Company name — large bold
-  const companyName = company?.name ?? ''
-  doc.setFontSize(isLandscape ? 26 : 22)
-  doc.setFont('helvetica', 'bold')
-  doc.setTextColor(255, 255, 255)
-  doc.text(companyName, centerX, centerY + 4, { align: 'center' })
-
-  // Client name — light, smaller, below company name
-  if (clientName) {
-    doc.setFontSize(isLandscape ? 11 : 10)
-    doc.setFont('helvetica', 'normal')
-    doc.setTextColor(200, 200, 200)
-    doc.text(`para  ${clientName}`, centerX, centerY + 13, { align: 'center' })
+  // ── Logo ──
+  let logoRendered = false
+  if (logoUrl) {
+    try {
+      const logoPng = await loadImageAsBase64(logoUrl)
+      if (logoPng) {
+        const dims = await new Promise(res => {
+          const img = new Image()
+          img.onload = () => res({ w: img.naturalWidth, h: img.naturalHeight })
+          img.onerror = () => res(null)
+          img.src = logoPng
+        })
+        if (dims) {
+          const maxW = isLandscape ? 80 : 60
+          const maxH = isLandscape ? 28 : 22
+          const ratio = dims.w / dims.h
+          let w = maxW, h = w / ratio
+          if (h > maxH) { h = maxH; w = h * ratio }
+          doc.addImage(logoPng, 'PNG', centerX - w/2, centerY - (clientName ? 22 : 16), w, h, undefined, 'NONE')
+          logoRendered = true
+        }
+      }
+    } catch { /* fallback to text */ }
+  }
+  if (!logoRendered) {
+    // Fallback: company name as text
+    doc.setFontSize(isLandscape ? 26 : 22)
+    doc.setFont('helvetica', 'bold')
+    doc.setTextColor(255, 255, 255)
+    doc.text(company?.name ?? '', centerX, centerY - (clientName ? 8 : 4), { align: 'center' })
   }
 
-  // Website at bottom center
-  const website = company?.website ?? 'www.mancru.com'
+  // ── "PROPUESTA COMERCIAL" label ──
+  const labelY = logoRendered
+    ? centerY + (clientName ? 11 : 7)
+    : centerY + (clientName ? 4 : 8)
   doc.setFontSize(8)
   doc.setFont('helvetica', 'normal')
   doc.setTextColor(180, 180, 180)
-  doc.text(website, centerX, PH - 10, { align: 'center' })
+  doc.setCharSpace(3.5)
+  doc.text('PROPUESTA COMERCIAL', centerX, labelY, { align: 'center' })
+  doc.setCharSpace(0)
 
-  // Separator line above footer text
-  doc.setDrawColor(255, 255, 255)
-  doc.setLineWidth(0.2)
-  doc.line(centerX - 30, PH - 13, centerX + 30, PH - 13)
+  // ── Client name ──
+  if (clientName) {
+    // Thin separator line above client name
+    doc.setDrawColor(255, 255, 255)
+    doc.setLineWidth(0.2)
+    doc.setLineDashPattern([1, 1.5], 0)
+    doc.line(centerX - 28, labelY + 5, centerX + 28, labelY + 5)
+    doc.setLineDashPattern([], 0)
 
-  // Contact info — subtle, bottom-left
+    doc.setFontSize(isLandscape ? 13 : 11)
+    doc.setFont('helvetica', 'normal')
+    doc.setTextColor(220, 220, 220)
+    doc.text(clientName, centerX, labelY + 12, { align: 'center' })
+  } else {
+    // Line below label when no client
+    doc.setDrawColor(255, 255, 255)
+    doc.setLineWidth(0.2)
+    doc.setLineDashPattern([1, 1.5], 0)
+    doc.line(centerX - 28, labelY + 4, centerX + 28, labelY + 4)
+    doc.setLineDashPattern([], 0)
+  }
+
+  // ── Website ──
+  doc.setFontSize(8)
+  doc.setFont('helvetica', 'normal')
+  doc.setTextColor(160, 160, 160)
+  doc.text(company?.website ?? 'www.mancru.com', centerX, PH - 10, { align: 'center' })
+
+  // ── Contact ──
   if (contacto) {
     doc.setFontSize(7)
-    doc.setFont('helvetica', 'normal')
-    doc.setTextColor(140, 140, 140)
+    doc.setTextColor(120, 120, 120)
     doc.text(contacto, 12, PH - 10)
   }
 }
 
 /**
  * Generates a multi-brand PDF catalog.
- * @param {Array<{brand, products[]}>} brandGroups
- * @param {Object} company
- * @param {Function} onProgress - (current, total) => void
- * @param {'landscape'|'portrait'} orientation
- * @param {Object|null} coverOptions - { enabled, color1, color2, contacto }
  */
 export async function generateCatalogPDF(brandGroups, company, onProgress, orientation = 'landscape', coverOptions = null) {
   const isLandscape = orientation === 'landscape'
@@ -186,7 +254,6 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
   const ROWS_PDF    = isLandscape ? 2 : 4
   const CELL_W = (PW - 16) / COLS_PDF
   const CELL_H = (CONTENT_BOT - CONTENT_TOP) / ROWS_PDF
-  const PER_PAGE = COLS_PDF * ROWS_PDF
 
   const companyName = company?.name    ?? ''
   const companyWeb  = company?.website ?? ''
@@ -194,7 +261,6 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
   const totalProducts = brandGroups.reduce((n, g) => n + g.products.length, 0)
   let globalIdx = 0
 
-  // Cover page (first page of the doc)
   if (coverOptions?.enabled) {
     await addCoverPage(doc, company, coverOptions, isLandscape)
   }
@@ -205,6 +271,7 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
     const brandColor   = brand.color      ?? '#6366f1'
     const brandTextClr = brand.text_color ?? '#ffffff'
     const brandName    = brand.name       ?? ''
+
     let brandLogo = null
     if (brand.logo_url) {
       try { brandLogo = await loadImageAsBase64(brand.logo_url) } catch { brandLogo = null }
@@ -219,22 +286,30 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
     let slot = 0
     let pageNum = 0
 
+    // Pre-generate gradient bars (sync — canvas.toDataURL is synchronous)
+    const headerBarImg = makeGradientBar(PW, HEADER_H, brandColor)
+    const footerBarImg = makeGradientBar(PW, FOOTER_H, brandColor)
+
     const renderHeaderFooter = (pg) => {
-      doc.setFillColor(brandColor)
-      doc.rect(0, 0, PW, HEADER_H, 'F')
+      // Gradient header
+      doc.addImage(headerBarImg, 'JPEG', 0, 0, PW, HEADER_H)
+      // Company name centered
       doc.setFontSize(11)
       doc.setFont('helvetica', 'normal')
       doc.setTextColor(brandTextClr)
       doc.text(companyName, PW / 2, 14, { align: 'center' })
-      if (companyWeb) doc.text(companyWeb, PW - 10, 14, { align: 'right' })
-      doc.setFillColor(brandColor)
-      doc.rect(0, PH - FOOTER_H, PW, FOOTER_H, 'F')
+      if (companyWeb) {
+        doc.setFontSize(7)
+        doc.text(companyWeb, PW - 10, 14, { align: 'right' })
+      }
+      // Gradient footer
+      doc.addImage(footerBarImg, 'JPEG', 0, PH - FOOTER_H, PW, FOOTER_H)
       doc.setFontSize(7)
       doc.setTextColor(brandTextClr)
       doc.text(`${brandName}  •  Pág. ${pg + 1}`, PW / 2, PH - 2.5, { align: 'center' })
     }
 
-    const renderLogo = async () => {
+    const renderBrandLogo = async () => {
       if (brandLogo && typeof brandLogo === 'string' && brandLogo.startsWith('data:image')) {
         try {
           const fmt = brandLogo.startsWith('data:image/png') ? 'PNG' : 'JPEG'
@@ -254,7 +329,7 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
           }
         } catch { /* skip */ }
       }
-      doc.setFontSize(14)
+      doc.setFontSize(13)
       doc.setFont('helvetica', 'bold')
       doc.setTextColor(brandTextClr)
       doc.text(brandName, 10, 14)
@@ -263,23 +338,21 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
     if (!firstContentPage || coverOptions?.enabled) doc.addPage()
     firstContentPage = false
     renderHeaderFooter(pageNum)
-    await renderLogo()
+    await renderBrandLogo()
 
     for (let si = 0; si < sorted.length; si++) {
       const p = sorted[si]
 
       if (si > 0 && sorted[si].category_id !== sorted[si - 1].category_id) {
-        if (slot % COLS_PDF !== 0) {
-          slot = Math.ceil(slot / COLS_PDF) * COLS_PDF
-        }
+        if (slot % COLS_PDF !== 0) slot = Math.ceil(slot / COLS_PDF) * COLS_PDF
       }
 
-      if (slot >= PER_PAGE) {
+      if (slot >= COLS_PDF * ROWS_PDF) {
         slot = 0
         pageNum++
         doc.addPage()
         renderHeaderFooter(pageNum)
-        await renderLogo()
+        await renderBrandLogo()
       }
 
       const col = slot % COLS_PDF
@@ -311,14 +384,14 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
 
       let tY = imgY + imgSize + 3
 
-      const SKU_H = 5.5
-      doc.setFillColor(brandColor)
-      doc.roundedRect(x + PAD, tY, inner_w, SKU_H, 1.5, 1.5, 'F')
+      // SKU badge — use gradient bar too
+      const skuBarImg = makeGradientBar(inner_w, 5.5, brandColor)
+      doc.addImage(skuBarImg, 'JPEG', x + PAD, tY, inner_w, 5.5)
       doc.setFontSize(7)
       doc.setFont('helvetica', 'bold')
       doc.setTextColor(brandTextClr)
       doc.text(String(p.sku ?? ''), x + CELL_W / 2, tY + 3.7, { align: 'center' })
-      tY += SKU_H + 4
+      tY += 5.5 + 4
 
       doc.setFontSize(7.5)
       doc.setFont('helvetica', 'bold')
@@ -348,9 +421,7 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
   }
 
   const date = new Date().toISOString().slice(0, 10)
-  const name = brandGroups.length === 1
-    ? brandGroups[0].brand.name
-    : companyName || 'Catalogo'
+  const name = brandGroups.length === 1 ? brandGroups[0].brand.name : companyName || 'Catalogo'
   doc.save(`Catalogo_${name.replace(/\s+/g, '_')}_${date}.pdf`)
 }
 
