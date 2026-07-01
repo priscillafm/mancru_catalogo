@@ -277,6 +277,12 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
 
   let firstContentPage = true
 
+  // Load company logo once for all pages
+  let companyLogo = null
+  if (company?.logo_url) {
+    try { companyLogo = await loadImageAsBase64(company.logo_url) } catch { companyLogo = null }
+  }
+
   for (const { brand, products } of brandGroups) {
     const brandColor   = brand.color      ?? '#6366f1'
     const brandTextClr = brand.text_color ?? '#ffffff'
@@ -301,22 +307,50 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
     const footerBarImg = makeGradientBar(PW, FOOTER_H, brandColor)
 
     const renderHeaderFooter = (pg) => {
-      // Gradient header
+      // Gradient header bar (always dark bg)
       doc.addImage(headerBarImg, 'JPEG', 0, 0, PW, HEADER_H)
-      // Company name centered
-      doc.setFontSize(11)
-      doc.setFont('helvetica', 'normal')
-      doc.setTextColor(brandTextClr)
-      doc.text(companyName, PW / 2, 14, { align: 'center' })
+
+      // Website — always white since header is always dark
       if (companyWeb) {
         doc.setFontSize(7)
+        doc.setFont('helvetica', 'normal')
+        doc.setTextColor('#ffffff')
         doc.text(companyWeb, PW - 10, 14, { align: 'right' })
       }
+
       // Gradient footer
       doc.addImage(footerBarImg, 'JPEG', 0, PH - FOOTER_H, PW, FOOTER_H)
       doc.setFontSize(7)
-      doc.setTextColor(brandTextClr)
+      doc.setTextColor('#ffffff')
       doc.text(`${brandName}  •  Pág. ${pg + 1}`, PW / 2, PH - 2.5, { align: 'center' })
+    }
+
+    // Render company logo (center) or text — called after header so it draws on top
+    const renderCompanyCenter = async () => {
+      if (companyLogo && typeof companyLogo === 'string' && companyLogo.startsWith('data:image')) {
+        try {
+          const dims = await new Promise(res => {
+            const img = new Image()
+            img.onload = () => res({ w: img.naturalWidth, h: img.naturalHeight })
+            img.onerror = () => res(null)
+            img.src = companyLogo
+          })
+          if (dims) {
+            const maxH = HEADER_H - 6
+            const maxW = isLandscape ? 60 : 45
+            const ratio = dims.w / dims.h
+            let w = maxW, h = w / ratio
+            if (h > maxH) { h = maxH; w = h * ratio }
+            const fmt = companyLogo.startsWith('data:image/png') ? 'PNG' : 'JPEG'
+            doc.addImage(companyLogo, fmt, PW / 2 - w / 2, (HEADER_H - h) / 2, w, h, undefined, 'NONE')
+            return
+          }
+        } catch { /* fallback to text */ }
+      }
+      doc.setFontSize(11)
+      doc.setFont('helvetica', 'normal')
+      doc.setTextColor('#ffffff')
+      doc.text(companyName, PW / 2, 14, { align: 'center' })
     }
 
     const renderBrandLogo = async () => {
@@ -330,7 +364,8 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
             img.src = brandLogo
           })
           if (dims) {
-            const maxH = HEADER_H - 6, maxW = 24
+            const maxH = HEADER_H - 4
+            const maxW = isLandscape ? 42 : 32
             const ratio = dims.w / dims.h
             let w = maxW, h = w / ratio
             if (h > maxH) { h = maxH; w = h * ratio }
@@ -348,6 +383,7 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
     if (!firstContentPage || coverOptions?.enabled) doc.addPage()
     firstContentPage = false
     renderHeaderFooter(pageNum)
+    await renderCompanyCenter()
     await renderBrandLogo()
 
     for (let si = 0; si < sorted.length; si++) {
@@ -362,6 +398,7 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
         pageNum++
         doc.addPage()
         renderHeaderFooter(pageNum)
+        await renderCompanyCenter()
         await renderBrandLogo()
       }
 
