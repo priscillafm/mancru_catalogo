@@ -156,24 +156,23 @@ export default function ImportIto() {
       let skipped = 0
 
       for (const row of rows) {
-        if (!row.brand) { skipped++; continue }
-        const brandId = brandMap[row.brand]
-        if (!brandId) { skipped++; continue }
-
-        const payload = {
-          company_id: companyId,
-          sku:        row.sku,
-          name:       row.name,
-          stock:      row.stock,
-          brand_id:   brandId,
-          active:     true,
-        }
-
+        const brandId = row.brand ? brandMap[row.brand] : null
         const existingId = existingSkuMap[row.sku.toUpperCase()]
+
         if (existingId) {
-          toUpdate.push({ id: existingId, ...payload })
+          // Update: only touch stock and name — never overwrite brand/category/image
+          toUpdate.push({ id: existingId, name: row.name, stock: row.stock, active: true })
         } else {
-          toInsert.push(payload)
+          // New product: requires a brand to be inserted
+          if (!brandId) { skipped++; continue }
+          toInsert.push({
+            company_id: companyId,
+            sku:        row.sku,
+            name:       row.name,
+            stock:      row.stock,
+            brand_id:   brandId,
+            active:     true,
+          })
         }
       }
 
