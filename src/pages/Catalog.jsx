@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/auth.store'
@@ -6,20 +6,30 @@ import { useNavigate } from 'react-router-dom'
 import { signOut } from '@/lib/auth'
 import PDFPreviewModal from '@/components/PDFPreviewModal'
 
+function useTheme() {
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') ?? 'dark')
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    localStorage.setItem('theme', theme)
+  }, [theme])
+  const toggle = () => setTheme(t => t === 'dark' ? 'light' : 'dark')
+  return { theme, toggle }
+}
+
 export default function CatalogPage() {
   const membership = useAuthStore(s => s.membership)
   const companyId  = membership?.company_id
   const isAdmin    = ['super_admin','company_admin'].includes(membership?.role)
   const navigate   = useNavigate()
+  const { theme, toggle: toggleTheme } = useTheme()
 
   const [activeBrandId, setActiveBrandId] = useState(null)
   const [activeCatId, setActiveCatId]     = useState(null)
   const [search, setSearch]               = useState('')
-  // selectedMap: { [productId]: product } — persiste al cambiar de marca
   const [selectedMap, setSelectedMap]     = useState({})
   const [showPDF, setShowPDF]             = useState(false)
 
-  const { data: brands = [] } = useQuery({
+  const { data: brands = [], isLoading: brandsLoading } = useQuery({
     queryKey: ['brands', companyId],
     queryFn: async () => {
       const { data } = await supabase
@@ -34,12 +44,12 @@ export default function CatalogPage() {
     enabled: !!companyId,
   })
 
-  const { data: products = [] } = useQuery({
+  const { data: products = [], isLoading: productsLoading } = useQuery({
     queryKey: ['products', companyId, activeBrandId, activeCatId, search],
     queryFn: async () => {
       let q = supabase
         .from('products')
-        .select('id, sku, name, description, image_url, category_id, brand_id, stock, categories(name)')
+        .select('id, sku, name, description, image_url, category_id, brand_id, categories(name)')
         .eq('company_id', companyId)
         .eq('active', true)
         .is('deleted_at', null)
@@ -64,9 +74,7 @@ export default function CatalogPage() {
         .is('deleted_at', null)
         .not('category_id', 'is', null)
       const seen = new Set()
-      return (data ?? [])
-        .map(p => p.categories)
-        .filter(c => c && !seen.has(c.id) && seen.add(c.id))
+      return (data ?? []).map(p => p.categories).filter(c => c && !seen.has(c.id) && seen.add(c.id))
     },
     enabled: !!companyId && !!activeBrandId,
   })
@@ -81,180 +89,171 @@ export default function CatalogPage() {
   }
 
   function selectAll() {
-    setSelectedMap(prev => {
-      const next = { ...prev }
-      for (const p of products) next[p.id] = p
-      return next
-    })
+    setSelectedMap(prev => { const n = {...prev}; products.forEach(p => n[p.id]=p); return n })
   }
-
   function deselectAll() {
-    setSelectedMap(prev => {
-      const next = { ...prev }
-      for (const p of products) delete next[p.id]
-      return next
-    })
+    setSelectedMap(prev => { const n = {...prev}; products.forEach(p => delete n[p.id]); return n })
   }
+  function clearAll() { setSelectedMap({}) }
 
-  function clearAll() {
-    setSelectedMap({})
-  }
+  const activeBrand   = brands.find(b => b.id === activeBrandId)
+  const totalSelected = Object.keys(selectedMap).length
+  const allSelected   = products.length > 0 && products.every(p => selectedMap[p.id])
 
-  const activeBrand    = brands.find(b => b.id === activeBrandId)
-  const totalSelected  = Object.keys(selectedMap).length
-  const allSelected    = products.length > 0 && products.every(p => selectedMap[p.id])
-  const someSelected   = products.some(p => selectedMap[p.id])
-
-  // Group selected products by brand for PDF
   function buildBrandGroups() {
-    const groups = []
-    for (const brand of brands) {
-      const ps = Object.values(selectedMap)
-        .filter(p => p.brand_id === brand.id)
-        .sort((a, b) => (a.categories?.name ?? '').localeCompare(b.categories?.name ?? '', 'es') || (a.name ?? '').localeCompare(b.name ?? '', 'es'))
-      if (ps.length > 0) groups.push({ brand, products: ps })
-    }
-    return groups
+    return brands
+      .map(brand => ({ brand, products: Object.values(selectedMap).filter(p => p.brand_id === brand.id) }))
+      .filter(g => g.products.length > 0)
   }
 
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--bg)' }}>
 
-      {/* Sidebar */}
-      <aside style={{
-        width: 250, minWidth: 250, background: 'var(--bg-bar)',
-        borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column'
+      {/* ── Sidebar ── */}
+      <aside className="glass" style={{
+        width: 248, minWidth: 248,
+        display: 'flex', flexDirection: 'column',
+        position: 'relative', zIndex: 10,
       }}>
+        {/* Header */}
         <div style={{ padding: '20px 16px 14px', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 5 }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 17, fontWeight: 700, color: 'var(--text)', letterSpacing: '-.01em' }}>
-              potato
-            </span>
-            <span style={{
-              width: 7, height: 17, borderRadius: 2, flexShrink: 0,
-              background: 'var(--accent)',
-              animation: 'blink 1.15s steps(1) infinite',
-              display: 'inline-block',
-            }} />
+          <div style={{ fontSize: 10, color: 'var(--text3)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 6 }}>
+            {membership?.companies?.name ?? '—'}
           </div>
-          <div style={{ fontSize: 9, fontFamily: 'var(--font-mono)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--text3)' }}>
-            {membership?.companies?.name ?? '—'} · Catálogos
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <h1 style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.3px' }}>Catálogos</h1>
+            <button
+              className="theme-toggle"
+              onClick={toggleTheme}
+              title={theme === 'dark' ? 'Modo claro' : 'Modo oscuro'}
+            />
           </div>
         </div>
 
-        <nav style={{ flex: 1, overflowY: 'auto', padding: '6px 0' }}>
-          {brands.map(brand => {
+        {/* Brand list */}
+        <nav style={{ flex: 1, overflowY: 'auto', padding: '8px 6px' }}>
+          {brandsLoading ? (
+            [1,2,3].map(i => (
+              <div key={i} className="skeleton" style={{ height: 38, margin: '3px 10px', borderRadius: 8 }} />
+            ))
+          ) : brands.map(brand => {
             const isActive = brand.id === activeBrandId
-            const countInBrand = Object.values(selectedMap).filter(p => p.brand_id === brand.id).length
+            const count = Object.values(selectedMap).filter(p => p.brand_id === brand.id).length
             return (
-              <button key={brand.id}
-                onClick={() => { setActiveBrandId(brand.id); setActiveCatId(null); setSearch('') }}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 10,
-                  width: '100%', padding: '10px 16px',
-                  background: isActive ? 'var(--surface-h)' : 'transparent',
-                  border: 'none', borderLeft: `3px solid ${isActive ? brand.color : 'transparent'}`,
-                  color: isActive ? 'var(--text)' : 'var(--text2)',
-                  cursor: 'pointer', textAlign: 'left',
-                }}>
-                <span style={{ width: 28, height: 28, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  {brand.logo_url
-                    ? <img src={brand.logo_url} alt=""
-                        style={{ maxWidth: 28, maxHeight: 28, objectFit: 'contain', mixBlendMode: 'screen', filter: 'brightness(1.1)' }}
-                        onError={e => { e.target.style.display='none'; e.target.insertAdjacentHTML('afterend',`<span style="width:10px;height:10px;border-radius:50%;background:${brand.color};display:inline-block"></span>`) }}
-                      />
-                    : <span style={{ width: 10, height: 10, borderRadius: '50%', background: brand.color, display: 'inline-block' }} />
-                  }
-                </span>
-                <span style={{ fontSize: 13, fontWeight: 500, flex: 1 }}>{brand.name}</span>
-                {countInBrand > 0 && (
+              <button key={brand.id} className={`brand-btn ${isActive ? 'active' : ''}`}
+                style={{ borderLeftColor: isActive ? brand.color : 'transparent' }}
+                onClick={() => { setActiveBrandId(brand.id); setActiveCatId(null); setSearch('') }}>
+                <span style={{
+                  width: 9, height: 9, borderRadius: '50%',
+                  background: brand.color, flexShrink: 0,
+                  boxShadow: isActive ? `0 0 8px ${brand.color}88` : 'none',
+                  transition: 'box-shadow 0.2s',
+                }} />
+                <span style={{ fontSize: 13, fontWeight: isActive ? 600 : 400, flex: 1 }}>{brand.name}</span>
+                {count > 0 && (
                   <span style={{
-                    fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 10,
-                    background: brand.color, color: '#fff', flexShrink: 0,
-                  }}>{countInBrand}</span>
+                    fontSize: 10, fontWeight: 700, padding: '1px 7px', borderRadius: 999,
+                    background: brand.color, color: '#000', flexShrink: 0,
+                    animation: 'popIn 0.2s ease',
+                  }}>{count}</span>
                 )}
               </button>
             )
           })}
         </nav>
 
-        <div style={{ padding: '10px 14px', borderTop: '1px solid var(--border)', display: 'flex', gap: 6 }}>
+        {/* Footer */}
+        <div style={{
+          padding: '10px 12px', borderTop: '1px solid var(--border)',
+          display: 'flex', gap: 6, alignItems: 'center',
+        }}>
           {isAdmin && (
-            <button onClick={() => navigate('/admin')} style={smallBtn}>Admin</button>
+            <button onClick={() => navigate('/admin')} style={sideBtn}>Admin</button>
           )}
-          <button onClick={() => signOut()} style={{ ...smallBtn, marginLeft: 'auto' }}>Salir</button>
+          <button onClick={() => signOut()} style={{ ...sideBtn, marginLeft: 'auto' }}>Salir</button>
         </div>
       </aside>
 
-      {/* Main */}
-      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      {/* ── Main ── */}
+      <main style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
+
         {/* Toolbar */}
         <div style={{
-          minHeight: 60, padding: '0 20px', borderBottom: '1px solid var(--border)',
-          display: 'flex', alignItems: 'center', gap: 10, background: 'var(--bg-bar)', flexWrap: 'wrap',
-          rowGap: 8, paddingTop: 8, paddingBottom: 8,
+          minHeight: 58, padding: '0 20px',
+          borderBottom: '1px solid var(--border)',
+          display: 'flex', alignItems: 'center', gap: 10,
+          background: 'var(--bg-bar)',
+          backdropFilter: 'blur(20px)',
+          flexWrap: 'wrap', rowGap: 8, paddingTop: 8, paddingBottom: 8,
         }}>
           {activeBrand && (
-            <span style={{ fontSize: 15, fontWeight: 700, color: activeBrand.color, flexShrink: 0 }}>
+            <span style={{
+              fontSize: 14, fontWeight: 700, color: activeBrand.color,
+              letterSpacing: '-0.3px', flexShrink: 0,
+            }}>
               {activeBrand.name}
             </span>
           )}
-          <input
-            type="text" placeholder="Buscar producto..."
-            value={search} onChange={e => setSearch(e.target.value)}
-            disabled={!activeBrandId}
-            style={{
-              flex: 1, maxWidth: 260, padding: '7px 12px',
-              background: 'var(--surface)', border: '1px solid var(--border)',
-              borderRadius: 7, color: 'var(--text)', fontSize: 13, outline: 'none',
-            }}
-          />
+
+          <div style={{ position: 'relative', flex: 1, maxWidth: 260 }}>
+            <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text3)', fontSize: 13 }}>⌕</span>
+            <input
+              type="text" placeholder="Buscar producto..."
+              value={search} onChange={e => setSearch(e.target.value)}
+              disabled={!activeBrandId}
+              style={{
+                width: '100%', padding: '7px 12px 7px 28px',
+                background: 'var(--surface)', border: '1px solid var(--border)',
+                borderRadius: 8, color: 'var(--text)', fontSize: 13, outline: 'none',
+              }}
+            />
+          </div>
+
           {categories.length > 0 && (
-            <select value={activeCatId ?? ''}
-              onChange={e => setActiveCatId(e.target.value || null)}
+            <select value={activeCatId ?? ''} onChange={e => setActiveCatId(e.target.value || null)}
               style={{
                 padding: '7px 10px', background: 'var(--surface)',
-                border: '1px solid var(--border)', borderRadius: 7,
+                border: '1px solid var(--border)', borderRadius: 8,
                 color: 'var(--text)', fontSize: 13, outline: 'none', cursor: 'pointer',
               }}>
               <option value="">Todas las categorías</option>
               {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
           )}
+
           {activeBrandId && products.length > 0 && (
-            <button onClick={allSelected ? deselectAll : selectAll} style={smallBtn}>
+            <button onClick={allSelected ? deselectAll : selectAll} style={toolBtn}>
               {allSelected ? 'Deseleccionar todos' : `Seleccionar todos (${products.length})`}
             </button>
           )}
+
           {totalSelected > 0 && (
-            <>
-              <button onClick={clearAll} style={smallBtn}>✕ Limpiar todo</button>
-              <button onClick={() => setShowPDF(true)} style={{
-                padding: '7px 16px', background: 'var(--accent)', color: 'var(--accent-text)',
-                border: 'none', borderRadius: 7, fontWeight: 700, fontSize: 12, cursor: 'pointer', flexShrink: 0,
-              }}>
-                Generar PDF ({totalSelected})
-              </button>
-            </>
+            <button onClick={clearAll} style={toolBtn}>✕ Limpiar</button>
           )}
         </div>
 
         {/* Grid */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '24px 24px 80px' }}>
           {!activeBrandId ? (
-            <EmptyState icon="👈" message="Seleccioná una marca del panel izquierdo" />
+            <EmptyState icon="←" message="Seleccioná una marca" sub="Tus marcas aparecen en el panel izquierdo" />
+          ) : productsLoading ? (
+            <SkeletonGrid />
           ) : products.length === 0 ? (
-            <EmptyState icon="🔍" message="Sin resultados" />
+            <EmptyState icon="○" message="Sin resultados" sub="Probá con otro término o categoría" />
           ) : (
-            <ProductGrid
-              products={products}
-              selectedMap={selectedMap}
-              brandColor={activeBrand?.color}
-              onToggle={toggleSelect}
-            />
+            <ProductGrid products={products} selectedMap={selectedMap} brandColor={activeBrand?.color} onToggle={toggleSelect} />
           )}
         </div>
       </main>
+
+      {/* ── Floating PDF pill ── */}
+      <button
+        className={`pdf-pill ${totalSelected > 0 ? 'visible' : ''}`}
+        onClick={() => totalSelected > 0 && setShowPDF(true)}
+      >
+        ↓ Generar PDF
+        <span className="pill-count">{totalSelected}</span>
+      </button>
 
       {showPDF && (
         <PDFPreviewModal
@@ -267,70 +266,7 @@ export default function CatalogPage() {
   )
 }
 
-function ProductCard({ product, selected, brandColor, onClick }) {
-  const [hovered, setHovered] = React.useState(false)
-  const noStock = product.stock === 0
-  return (
-    <div
-      onClick={noStock ? undefined : onClick}
-      onMouseEnter={() => !noStock && setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{
-        background: noStock ? 'var(--bg-panel)' : hovered && !selected ? 'var(--surface-h)' : 'var(--surface)',
-        border: `1px solid ${selected ? brandColor : noStock ? 'var(--border)' : hovered ? 'var(--accent)' : 'var(--border)'}`,
-        boxShadow: selected ? `0 0 0 1px ${brandColor}` : 'none',
-        borderRadius: 13, cursor: noStock ? 'default' : 'pointer', overflow: 'hidden', position: 'relative',
-        transition: 'border-color 0.15s, background 0.15s, transform 0.15s',
-        transform: hovered && !selected && !noStock ? 'translateY(-3px)' : 'none',
-        opacity: noStock ? 0.6 : 1,
-      }}>
-      {selected && (
-        <div style={{
-          position: 'absolute', top: 7, left: 7, width: 20, height: 20,
-          borderRadius: '50%', background: brandColor, display: 'flex',
-          alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, color: '#fff',
-        }}>✓</div>
-      )}
-      {noStock && (
-        <div style={{
-          position: 'absolute', top: 7, right: 7,
-          padding: '2px 7px', borderRadius: 6,
-          background: 'rgba(0,0,0,0.55)', color: '#fff',
-          fontSize: 9, fontWeight: 700, letterSpacing: '.05em', textTransform: 'uppercase',
-        }}>Sin stock</div>
-      )}
-      {product.image_url ? (
-        <img src={product.image_url} alt=""
-          style={{ width: '100%', aspectRatio: '1', objectFit: 'contain', background: 'var(--bg-panel)', display: 'block', filter: noStock ? 'grayscale(1)' : 'none' }}
-          onError={e => { e.target.style.display = 'none' }} />
-      ) : (
-        <div style={{ width: '100%', aspectRatio: '1', background: 'var(--bg-panel)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text3)', fontSize: 28 }}>
-          📷
-        </div>
-      )}
-      <div style={{ padding: '10px 11px 11px' }}>
-        {product.categories?.name && (
-          <span style={{
-            display: 'inline-block', padding: '2px 7px', borderRadius: 10,
-            fontSize: 10, fontWeight: 600, marginBottom: 5,
-            background: 'var(--surface-h)', color: 'var(--text2)',
-          }}>
-            {product.categories.name}
-          </span>
-        )}
-        <div style={{ fontSize: 12, fontWeight: 600, lineHeight: 1.35, marginBottom: 3, color: 'var(--text)' }}>
-          {product.name}
-        </div>
-        <div style={{ fontSize: 9.5, color: 'var(--accent)', fontFamily: 'var(--font-mono)', fontWeight: 500, letterSpacing: '.04em' }}>
-          {product.sku}
-        </div>
-      </div>
-    </div>
-  )
-}
-
 function ProductGrid({ products, selectedMap, brandColor, onToggle }) {
-  // Group by category
   const groups = []
   let lastCatId = undefined
   for (const p of products) {
@@ -342,20 +278,11 @@ function ProductGrid({ products, selectedMap, brandColor, onToggle }) {
   }
 
   return (
-    <div>
+    <div className="fade-up">
       {groups.map((g, gi) => (
-        <div key={gi} style={{ marginBottom: 24 }}>
-          {g.catName && (
-            <div style={{
-              fontSize: 11, fontWeight: 700, color: 'var(--text3)',
-              letterSpacing: '0.08em', textTransform: 'uppercase',
-              marginBottom: 10, paddingBottom: 6,
-              borderBottom: '1px solid var(--border)',
-            }}>
-              {g.catName}
-            </div>
-          )}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: 14 }}>
+        <div key={gi} style={{ marginBottom: 28 }}>
+          {g.catName && <div className="cat-divider">{g.catName}</div>}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(168px, 1fr))', gap: 12 }}>
             {g.items.map(product => (
               <ProductCard key={product.id} product={product}
                 selected={!!selectedMap[product.id]}
@@ -369,19 +296,74 @@ function ProductGrid({ products, selectedMap, brandColor, onToggle }) {
   )
 }
 
-function EmptyState({ icon, message }) {
+function ProductCard({ product, selected, brandColor, onClick }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-      <div style={{ textAlign: 'center', color: 'var(--text3)' }}>
-        <div style={{ fontSize: 40, marginBottom: 12 }}>{icon}</div>
-        <p>{message}</p>
+    <div onClick={onClick} className={`product-card ${selected ? 'selected' : ''}`}>
+      {selected && (
+        <div className="check-badge" style={{ background: brandColor }}>✓</div>
+      )}
+      {product.image_url ? (
+        <img src={product.image_url} alt=""
+          style={{ width: '100%', aspectRatio: '1', objectFit: 'contain', background: 'var(--bg-panel)', display: 'block', transition: 'transform 0.2s' }}
+          onError={e => { e.target.style.display = 'none' }} />
+      ) : (
+        <div style={{ width: '100%', aspectRatio: '1', background: 'var(--bg-panel)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text3)', fontSize: 26 }}>
+          ◻
+        </div>
+      )}
+      <div style={{ padding: '10px 11px 12px' }}>
+        {product.categories?.name && (
+          <span style={{
+            display: 'inline-block', padding: '2px 7px', borderRadius: 999,
+            fontSize: 9, fontWeight: 600, marginBottom: 5, letterSpacing: '0.05em',
+            background: 'var(--surface-h)', color: 'var(--text3)', textTransform: 'uppercase',
+          }}>
+            {product.categories.name}
+          </span>
+        )}
+        <div style={{ fontSize: 12, fontWeight: 600, lineHeight: 1.4, marginBottom: 4, color: 'var(--text)' }}>
+          {product.name}
+        </div>
+        <div style={{ fontSize: 10, color: brandColor, fontFamily: 'var(--font-mono)', fontWeight: 500, opacity: 0.8 }}>
+          {product.sku}
+        </div>
       </div>
     </div>
   )
 }
 
-const smallBtn = {
+function SkeletonGrid() {
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(168px, 1fr))', gap: 12 }}>
+      {Array.from({ length: 12 }).map((_, i) => (
+        <div key={i} className="skeleton" style={{ borderRadius: 12, aspectRatio: '0.75' }} />
+      ))}
+    </div>
+  )
+}
+
+function EmptyState({ icon, message, sub }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: 300 }}>
+      <div style={{ textAlign: 'center', color: 'var(--text3)' }}>
+        <div style={{ fontSize: 32, marginBottom: 12, opacity: 0.3, fontWeight: 200 }}>{icon}</div>
+        <p style={{ fontWeight: 600, color: 'var(--text2)', margin: 0 }}>{message}</p>
+        {sub && <p style={{ fontSize: 12, marginTop: 4, margin: '4px 0 0' }}>{sub}</p>}
+      </div>
+    </div>
+  )
+}
+
+const sideBtn = {
+  padding: '6px 12px', background: 'var(--surface)',
+  border: '1px solid var(--border)', color: 'var(--text2)',
+  borderRadius: 7, fontSize: 11, cursor: 'pointer',
+  transition: 'all 0.15s',
+}
+
+const toolBtn = {
   padding: '7px 12px', background: 'var(--surface)',
   border: '1px solid var(--border)', color: 'var(--text2)',
-  borderRadius: 7, fontSize: 12, cursor: 'pointer', flexShrink: 0,
+  borderRadius: 8, fontSize: 12, cursor: 'pointer', flexShrink: 0,
+  transition: 'all 0.15s',
 }
