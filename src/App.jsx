@@ -6,6 +6,7 @@ import CatalogPage from '@/pages/Catalog'
 import AdminLayout from '@/pages/admin/AdminLayout'
 import ResetPasswordPage from '@/pages/ResetPassword'
 import ProfilePage from '@/pages/Profile'
+import CatalogsPage from '@/pages/Catalogs'
 
 function PrivateRoute({ children, requireAdmin = false }) {
   const { session, membership, loading } = useAuthStore()
@@ -34,6 +35,7 @@ export default function App() {
       <Route path="/login"          element={<LoginPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/profile"        element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
+      <Route path="/catalogs"       element={<PrivateRoute><CatalogsPage /></PrivateRoute>} />
       <Route path="/" element={
         <PrivateRoute><CatalogPage /></PrivateRoute>
       } />

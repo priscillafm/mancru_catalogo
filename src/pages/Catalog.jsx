@@ -167,6 +167,7 @@ export default function CatalogPage() {
           padding: '10px 12px', borderTop: '1px solid var(--border)',
           display: 'flex', gap: 6, alignItems: 'center',
         }}>
+          <button onClick={() => navigate('/catalogs')} style={sideBtn} title="Mis catálogos guardados">📄</button>
           {isAdmin && (
             <button onClick={() => navigate('/admin')} style={sideBtn}>Admin</button>
           )}
@@ -262,6 +263,7 @@ export default function CatalogPage() {
           brandGroups={buildBrandGroups()}
           company={membership?.companies}
           onClose={() => setShowPDF(false)}
+          onSaved={() => setShowPDF(false)}
         />
       )}
     </div>

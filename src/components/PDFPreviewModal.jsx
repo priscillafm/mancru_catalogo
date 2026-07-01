@@ -1,14 +1,38 @@
 import { useState } from 'react'
 import { generateCatalogPDF } from '@/utils/pdf'
+import { supabase } from '@/lib/supabase'
+import { useAuthStore } from '@/store/auth.store'
 
-export default function PDFPreviewModal({ brandGroups, company, onClose }) {
+export default function PDFPreviewModal({
+  brandGroups,
+  company,
+  onClose,
+  // Saved-catalog props (optional)
+  initialPrices = {},
+  catalogId     = null,   // null = new catalog
+  catalogName   = '',
+  onSaved       = null,   // callback after saving
+}) {
+  const membership = useAuthStore(s => s.membership)
+
   const [generating, setGenerating] = useState(false)
   const [progress, setProgress]     = useState('')
   const [orientation, setOrientation] = useState('landscape')
-  const [step, setStep] = useState('preview') // 'preview' | 'pricing'
+  const [step, setStep] = useState('preview') // 'preview' | 'pricing' | 'saving'
 
-  // prices: { [productId]: { amount: '', currency: '$' } }
-  const [prices, setPrices] = useState({})
+  // Pre-populate prices from saved catalog
+  const [prices, setPrices] = useState(() => {
+    const init = {}
+    for (const [id, val] of Object.entries(initialPrices)) {
+      init[id] = typeof val === 'object' ? val : { amount: val, currency: '$' }
+    }
+    return init
+  })
+
+  // Save-dialog state
+  const [saveName, setSaveName] = useState(catalogName)
+  const [saving, setSaving]     = useState(false)
+  const [saveErr, setSaveErr]   = useState('')
 
   const totalProducts = brandGroups.reduce((n, g) => n + g.products.length, 0)
   const allProducts   = brandGroups.flatMap(g => g.products)
@@ -56,6 +80,66 @@ export default function PDFPreviewModal({ brandGroups, company, onClose }) {
     }
   }
 
+  async function handleSave() {
+    if (!saveName.trim()) { setSaveErr('Ingresá un nombre para el catálogo'); return }
+    setSaving(true); setSaveErr('')
+
+    const companyId = membership?.company_id
+    const userId    = membership?.user_id
+
+    // snapshot_data stores brandGroups + prices
+    const snapshotData = {
+      brandGroups,
+      prices,
+      orientation,
+    }
+
+    try {
+      let cid = catalogId
+
+      if (!cid) {
+        // Create new catalog
+        const { data, error } = await supabase.from('catalogs').insert({
+          company_id:    companyId,
+          created_by:    userId,
+          name:          saveName.trim(),
+          status:        'draft',
+          snapshot_data: snapshotData,
+        }).select('id').single()
+        if (error) throw error
+        cid = data.id
+      } else {
+        // Update existing
+        const { error } = await supabase.from('catalogs').update({
+          name:          saveName.trim(),
+          status:        'draft',
+          snapshot_data: snapshotData,
+          updated_at:    new Date().toISOString(),
+        }).eq('id', cid)
+        if (error) throw error
+      }
+
+      // Upsert catalog_products rows
+      await supabase.from('catalog_products').delete().eq('catalog_id', cid)
+      const cpRows = allProducts.map((p, i) => ({
+        catalog_id:       cid,
+        product_id:       p.id,
+        sort_order:       i,
+        product_snapshot: { sku: p.sku, name: p.name, image_url: p.image_url, brand_id: p.brand_id, category: p.categories?.name },
+      }))
+      if (cpRows.length > 0) {
+        const { error } = await supabase.from('catalog_products').insert(cpRows)
+        if (error) throw error
+      }
+
+      onSaved?.()
+    } catch (err) {
+      setSaveErr(err.message ?? 'Error al guardar')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return (
     <div style={{
       position: 'fixed', inset: 0, background: 'rgba(0,0,0,.85)',
@@ -73,27 +157,31 @@ export default function PDFPreviewModal({ brandGroups, company, onClose }) {
         }}>
           <div>
             <h3 style={{ fontSize: 16, fontWeight: 700 }}>
-              {step === 'preview' ? 'Vista previa del catálogo' : 'Precios (opcional)'}
+              {step === 'preview' ? 'Vista previa del catálogo'
+               : step === 'pricing' ? 'Precios (opcional)'
+               : 'Guardar catálogo'}
             </h3>
             <p style={{ fontSize: 12, color: 'var(--text3)', marginTop: 3 }}>
               {brandGroups.length} marca{brandGroups.length !== 1 ? 's' : ''} — {totalProducts} producto{totalProducts !== 1 ? 's' : ''}
             </p>
           </div>
-          <div style={{ display: 'flex', gap: 6, marginLeft: 'auto', marginRight: 16 }}>
-            {step === 'preview' && ['landscape','portrait'].map(o => (
-              <button key={o} onClick={() => setOrientation(o)} style={{
-                padding: '6px 14px', borderRadius: 7, fontSize: 12, cursor: 'pointer',
-                border: `1px solid ${orientation === o ? 'var(--accent)' : 'var(--border)'}`,
-                background: orientation === o ? 'var(--accent)' : 'var(--surface)',
-                color: orientation === o ? 'var(--accent-text)' : 'var(--text2)',
-                fontWeight: orientation === o ? 700 : 400,
-              }}>
-                {o === 'landscape' ? '⬛ Horizontal' : '▯ Vertical'}
-              </button>
-            ))}
-          </div>
+          {step === 'preview' && (
+            <div style={{ display: 'flex', gap: 6, marginLeft: 'auto', marginRight: 16 }}>
+              {['landscape','portrait'].map(o => (
+                <button key={o} onClick={() => setOrientation(o)} style={{
+                  padding: '6px 14px', borderRadius: 7, fontSize: 12, cursor: 'pointer',
+                  border: `1px solid ${orientation === o ? 'var(--accent)' : 'var(--border)'}`,
+                  background: orientation === o ? 'var(--accent)' : 'var(--surface)',
+                  color: orientation === o ? 'var(--accent-text)' : 'var(--text2)',
+                  fontWeight: orientation === o ? 700 : 400,
+                }}>
+                  {o === 'landscape' ? '⬛ Horizontal' : '▯ Vertical'}
+                </button>
+              ))}
+            </div>
+          )}
           <button onClick={onClose}
-            style={{ background: 'none', border: 'none', color: 'var(--text3)', fontSize: 20, cursor: 'pointer' }}>
+            style={{ background: 'none', border: 'none', color: 'var(--text3)', fontSize: 20, cursor: 'pointer', marginLeft: step !== 'preview' ? 'auto' : 0 }}>
             ✕
           </button>
         </div>
@@ -101,6 +189,7 @@ export default function PDFPreviewModal({ brandGroups, company, onClose }) {
         {/* Body */}
         <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
 
+          {/* Preview */}
           {step === 'preview' && brandGroups.map(({ brand, products }) => (
             <div key={brand.id} style={{ marginBottom: 28 }}>
               <div style={{
@@ -136,6 +225,7 @@ export default function PDFPreviewModal({ brandGroups, company, onClose }) {
             </div>
           ))}
 
+          {/* Pricing */}
           {step === 'pricing' && (
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
@@ -182,51 +272,94 @@ export default function PDFPreviewModal({ brandGroups, company, onClose }) {
             </div>
           )}
 
+          {/* Save dialog */}
+          {step === 'saving' && (
+            <div style={{ maxWidth: 480, margin: '0 auto', paddingTop: 16 }}>
+              <p style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 20 }}>
+                Guardá este catálogo para poder volver a abrirlo, modificar precios y regenerar el PDF sin tener que seleccionar los productos de nuevo.
+              </p>
+              <label style={{ display: 'block', fontSize: 11, color: 'var(--text3)', marginBottom: 6, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                Nombre del catálogo
+              </label>
+              <input
+                autoFocus
+                value={saveName}
+                onChange={e => setSaveName(e.target.value)}
+                placeholder="Ej: Catálogo Verano 2025"
+                style={{
+                  width: '100%', padding: '10px 13px',
+                  background: 'var(--bg-panel)', border: '1px solid var(--border)',
+                  borderRadius: 9, color: 'var(--text)', fontSize: 14, outline: 'none',
+                  marginBottom: saveErr ? 8 : 0,
+                }}
+              />
+              {saveErr && <p style={{ fontSize: 12, color: 'var(--danger)', marginTop: 6 }}>{saveErr}</p>}
+
+              <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
+                <button onClick={() => { setStep('preview'); setSaveErr('') }} style={{
+                  flex: 1, padding: '10px', borderRadius: 9, cursor: 'pointer',
+                  background: 'var(--surface-h)', border: '1px solid var(--border)', color: 'var(--text2)', fontSize: 13,
+                }}>
+                  Cancelar
+                </button>
+                <button onClick={handleSave} disabled={saving} style={{
+                  flex: 2, padding: '10px', borderRadius: 9, cursor: saving ? 'not-allowed' : 'pointer',
+                  background: 'var(--accent)', border: 'none', color: 'var(--accent-text)',
+                  fontWeight: 700, fontSize: 13, opacity: saving ? 0.7 : 1,
+                }}>
+                  {saving ? 'Guardando...' : catalogId ? 'Actualizar catálogo' : 'Guardar catálogo'}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Footer */}
-        <div style={{
-          padding: '14px 20px', borderTop: '1px solid var(--border)',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0
-        }}>
-          <span style={{ fontSize: 12, color: 'var(--text3)' }}>{progress}</span>
-          <div style={{ display: 'flex', gap: 10 }}>
-            <button onClick={onClose} style={{
-              padding: '8px 18px', background: 'var(--surface-h)',
-              border: '1px solid var(--border)', color: 'var(--text2)',
-              borderRadius: 7, cursor: 'pointer', fontSize: 13
-            }}>
-              Cerrar
-            </button>
-            {step === 'preview' && (
-              <button onClick={() => setStep('pricing')} style={{
-                padding: '8px 18px', background: 'var(--surface-h)',
-                border: '1px solid var(--border)', color: 'var(--text2)',
-                borderRadius: 7, cursor: 'pointer', fontSize: 13
+        {step !== 'saving' && (
+          <div style={{
+            padding: '14px 20px', borderTop: '1px solid var(--border)',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0
+          }}>
+            <span style={{ fontSize: 12, color: 'var(--text3)' }}>{progress}</span>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button onClick={onClose} style={secondaryBtn}>Cerrar</button>
+
+              {step === 'preview' && (
+                <button onClick={() => setStep('pricing')} style={secondaryBtn}>
+                  $ Agregar precios
+                </button>
+              )}
+              {step === 'pricing' && (
+                <button onClick={() => setStep('preview')} style={secondaryBtn}>
+                  ← Volver
+                </button>
+              )}
+
+              {/* Save button — only when onSaved is provided */}
+              {onSaved && (
+                <button onClick={() => { setSaveName(catalogName); setStep('saving') }} style={secondaryBtn}>
+                  💾 {catalogId ? 'Actualizar' : 'Guardar'}
+                </button>
+              )}
+
+              <button onClick={handleDownload} disabled={generating} style={{
+                padding: '8px 22px', background: 'var(--accent)', color: 'var(--accent-text)',
+                border: 'none', borderRadius: 7, fontWeight: 700,
+                cursor: generating ? 'not-allowed' : 'pointer', fontSize: 13,
+                opacity: generating ? 0.7 : 1
               }}>
-                $ Agregar precios
+                {generating ? progress || 'Generando...' : '⬇ Descargar PDF'}
               </button>
-            )}
-            {step === 'pricing' && (
-              <button onClick={() => setStep('preview')} style={{
-                padding: '8px 18px', background: 'var(--surface-h)',
-                border: '1px solid var(--border)', color: 'var(--text2)',
-                borderRadius: 7, cursor: 'pointer', fontSize: 13
-              }}>
-                ← Volver
-              </button>
-            )}
-            <button onClick={handleDownload} disabled={generating} style={{
-              padding: '8px 22px', background: 'var(--accent)', color: 'var(--accent-text)',
-              border: 'none', borderRadius: 7, fontWeight: 700,
-              cursor: generating ? 'not-allowed' : 'pointer', fontSize: 13,
-              opacity: generating ? 0.7 : 1
-            }}>
-              {generating ? progress || 'Generando...' : '⬇ Descargar PDF'}
-            </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   )
+}
+
+const secondaryBtn = {
+  padding: '8px 16px', background: 'var(--surface-h)',
+  border: '1px solid var(--border)', color: 'var(--text2)',
+  borderRadius: 7, cursor: 'pointer', fontSize: 13,
 }
