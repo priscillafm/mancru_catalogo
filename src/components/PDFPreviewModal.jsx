@@ -29,7 +29,8 @@ export default function PDFPreviewModal({
   const [coverColor2, setCoverColor2]   = useState('#D4FF3F')
   const [contacto, setContacto]         = useState('')
   const [clientName, setClientName]     = useState('')
-  const [logoUrl, setLogoUrl]           = useState('https://www.mancru.com/artworks/artworks_mancru2021comuy/logo.svg')
+  const [logoUrlDark, setLogoUrlDark]   = useState('https://www.mancru.com/artworks/artworks_mancru2021comuy/logo.svg')
+  const [logoUrlLight, setLogoUrlLight] = useState('')
   const [showCoverPanel, setShowCoverPanel] = useState(false)
 
   // Pre-populate prices from saved catalog
@@ -79,7 +80,7 @@ export default function PDFPreviewModal({
     setProgress('Preparando...')
     try {
       const coverOptions = coverEnabled
-        ? { enabled: true, theme: coverTheme, style: coverStyle, color1: coverColor1, color2: coverColor2, contacto, clientName, logoUrl }
+        ? { enabled: true, theme: coverTheme, style: coverStyle, color1: coverColor1, color2: coverColor2, contacto, clientName, logoUrlDark, logoUrlLight }
         : null
       await generateCatalogPDF(
         buildGroupsWithPrices(),
@@ -250,7 +251,8 @@ export default function PDFPreviewModal({
                       <CoverPreview
                         theme={coverTheme} style={coverStyle}
                         color1={coverColor1} color2={coverColor2}
-                        logoUrl={logoUrl} clientName={clientName}
+                        logoUrl={coverTheme === 'dark' ? logoUrlDark : (logoUrlLight || logoUrlDark)}
+                        clientName={clientName}
                         companyName={company?.name}
                         website={company?.website ?? 'www.mancru.com'}
                       />
@@ -331,11 +333,18 @@ export default function PDFPreviewModal({
                         </div>
                       </div>
 
-                      {/* ── Logo URL ── */}
-                      <div>
-                        <label style={labelStyle}>Logo (URL de imagen)</label>
-                        <input type="text" placeholder="https://..." value={logoUrl}
-                          onChange={e => setLogoUrl(e.target.value)} style={inputStyle} />
+                      {/* ── Logo URLs ── */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        <div>
+                          <label style={labelStyle}>Logo fondo oscuro (blanco / claro)</label>
+                          <input type="text" placeholder="https://..." value={logoUrlDark}
+                            onChange={e => setLogoUrlDark(e.target.value)} style={inputStyle} />
+                        </div>
+                        <div>
+                          <label style={labelStyle}>Logo fondo claro (color / oscuro) — opcional</label>
+                          <input type="text" placeholder="Usa el mismo si no tenés versión clara" value={logoUrlLight}
+                            onChange={e => setLogoUrlLight(e.target.value)} style={inputStyle} />
+                        </div>
                       </div>
 
                       {/* ── Client name ── */}

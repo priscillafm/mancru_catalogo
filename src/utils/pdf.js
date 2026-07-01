@@ -111,11 +111,14 @@ async function addCoverPage(doc, company, coverOptions, isLandscape) {
   const color2     = coverOptions?.color2     ?? '#D4FF3F'
   const contacto   = (coverOptions?.contacto  ?? '').trim()
   const clientName = (coverOptions?.clientName ?? '').trim()
-  const logoUrl    = (coverOptions?.logoUrl    ?? '').trim()
   const theme      = coverOptions?.theme      ?? 'dark'   // 'dark' | 'light'
+  const isDark = theme === 'dark'
+  // Auto-select logo based on theme
+  const logoUrl = isDark
+    ? (coverOptions?.logoUrlDark ?? coverOptions?.logoUrl ?? '').trim()
+    : (coverOptions?.logoUrlLight ?? coverOptions?.logoUrlDark ?? coverOptions?.logoUrl ?? '').trim()
   const styleName  = coverOptions?.style      ?? 'corners'
 
-  const isDark = theme === 'dark'
   const bgColor    = isDark ? '#09090B' : '#F8F8F8'
   const gridColor  = isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.04)'
   const textWhite  = isDark ? [255,255,255] : [20,20,20]
@@ -173,6 +176,7 @@ async function addCoverPage(doc, company, coverOptions, isLandscape) {
 
   // ── Logo ──
   let logoRendered = false
+  let logoH = 0
   if (logoUrl) {
     try {
       const logoPng = await loadImageAsBase64(logoUrl)
@@ -189,7 +193,9 @@ async function addCoverPage(doc, company, coverOptions, isLandscape) {
           const ratio = dims.w / dims.h
           let w = maxW, h = w / ratio
           if (h > maxH) { h = maxH; w = h * ratio }
-          doc.addImage(logoPng, 'PNG', centerX - w/2, centerY - (clientName ? 22 : 16), w, h, undefined, 'NONE')
+          logoH = h
+          const logoY = centerY - h / 2 - (clientName ? 14 : 10)
+          doc.addImage(logoPng, 'PNG', centerX - w/2, logoY, w, h, undefined, 'NONE')
           logoRendered = true
         }
       }
@@ -202,14 +208,14 @@ async function addCoverPage(doc, company, coverOptions, isLandscape) {
     doc.text(company?.name ?? '', centerX, centerY - (clientName ? 8 : 4), { align: 'center' })
   }
 
-  // ── "PROPUESTA COMERCIAL" label ──
+  // ── "PROPUESTA COMERCIAL" label — 14mm below logo bottom ──
   const labelY = logoRendered
-    ? centerY + (clientName ? 11 : 7)
+    ? centerY - logoH / 2 - (clientName ? 14 : 10) + logoH + 14
     : centerY + (clientName ? 4 : 8)
-  doc.setFontSize(8)
+  doc.setFontSize(7.5)
   doc.setFont('helvetica', 'normal')
   doc.setTextColor(...textLabel)
-  doc.setCharSpace(3.5)
+  doc.setCharSpace(4)
   doc.text('PROPUESTA COMERCIAL', centerX, labelY, { align: 'center' })
   doc.setCharSpace(0)
 
@@ -336,8 +342,8 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
             img.src = companyLogo
           })
           if (dims) {
-            const maxH = HEADER_H - 6
-            const maxW = isLandscape ? 60 : 45
+            const maxH = HEADER_H - 8
+            const maxW = isLandscape ? 36 : 28
             const ratio = dims.w / dims.h
             let w = maxW, h = w / ratio
             if (h > maxH) { h = maxH; w = h * ratio }
@@ -446,21 +452,23 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
       doc.setLineWidth(0.3)
       doc.line(x + MARGIN + 2, y + MARGIN + imgAreaH, x + CELL_W - MARGIN - 2, y + MARGIN + imgAreaH)
 
-      let tY = y + MARGIN + imgAreaH + 4
+      let tY = y + MARGIN + imgAreaH + 5
 
       // ── SKU badge: pill shape with brand color ──
       const skuText  = String(p.sku ?? '')
-      const skuW     = Math.min(inner_w - 4, 28)
-      const skuH     = 5
+      const skuW     = Math.min(inner_w - 4, 30)
+      const skuH     = 5.5
       const skuX     = x + (CELL_W - skuW) / 2
       const [sr, sg, sb] = hexToRgb(brandColor)
       doc.setFillColor(sr, sg, sb)
       doc.roundedRect(skuX, tY, skuW, skuH, 2.5, 2.5, 'F')
-      doc.setFontSize(6.5)
-      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(6)
+      doc.setFont('courier', 'bold')
       doc.setTextColor(brandTextClr)
-      doc.text(skuText, x + CELL_W / 2, tY + 3.5, { align: 'center' })
-      tY += skuH + 3
+      doc.setCharSpace(0.5)
+      doc.text(skuText, x + CELL_W / 2, tY + 3.8, { align: 'center' })
+      doc.setCharSpace(0)
+      tY += skuH + 4.5
 
       // ── Product name ──
       const textW = CELL_W - MARGIN * 2 - PAD * 2
@@ -468,25 +476,29 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
       doc.setFont('helvetica', 'bold')
       doc.setTextColor('#111111')
       const nameLines = doc.splitTextToSize(String(p.name ?? ''), textW).slice(0, 2)
-      doc.text(nameLines, x + CELL_W / 2, tY, { align: 'center' })
-      tY += nameLines.length * 4 + 1
+      doc.text(nameLines, x + CELL_W / 2, tY, { align: 'center', lineHeightFactor: 1.4 })
+      tY += nameLines.length * 4.5 + 2
 
       // ── Description ──
-      if (tY + 4 < y + CELL_H - 6) {
-        doc.setFontSize(6)
+      if (tY + 4 < y + CELL_H - 8) {
+        doc.setFontSize(5.5)
         doc.setFont('helvetica', 'normal')
-        doc.setTextColor('#999999')
+        doc.setTextColor('#888888')
+        doc.setCharSpace(0.2)
         const descLines = doc.splitTextToSize(String(p.description ?? ''), textW).slice(0, 2)
-        doc.text(descLines, x + CELL_W / 2, tY, { align: 'center' })
+        doc.text(descLines, x + CELL_W / 2, tY, { align: 'center', lineHeightFactor: 1.5 })
+        doc.setCharSpace(0)
       }
 
       // ── Price pinned at bottom ──
       if (p._price) {
         const curLabel = (p._currency ?? '$') === '$' ? '$ UYU' : 'USD'
-        doc.setFontSize(11)
-        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(10)
+        doc.setFont('courier', 'bold')
         doc.setTextColor('#111111')
-        doc.text(`${curLabel} ${p._price}`, x + CELL_W / 2, y + CELL_H - 3, { align: 'center' })
+        doc.setCharSpace(0.5)
+        doc.text(`${curLabel} ${p._price}`, x + CELL_W / 2, y + CELL_H - 4, { align: 'center' })
+        doc.setCharSpace(0)
       }
 
       slot++
