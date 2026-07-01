@@ -83,9 +83,24 @@ const CATEGORY_RULES = [
     keywords: ['filamento', 'impresora 3d', 'bambu lab', 'bambu'],
   },
   {
+    name: 'Filamentos',
+    slug: 'filamentos',
+    keywords: ['filamento'],
+  },
+  {
+    name: 'Mouse',
+    slug: 'mouse',
+    keywords: ['mouse '],
+  },
+  {
+    name: 'Teclados',
+    slug: 'teclados',
+    keywords: ['teclado'],
+  },
+  {
     name: 'Periféricos',
     slug: 'perifericos',
-    keywords: ['teclado', 'mouse ', 'mousepad', 'webcam', 'micrófono', 'microfono', 'auricular gamer', 'headset gamer', 'gamepad', 'joystick'],
+    keywords: ['mousepad', 'webcam', 'micrófono', 'microfono', 'auricular gamer', 'headset gamer', 'gamepad', 'joystick'],
   },
   {
     name: 'Informática',
