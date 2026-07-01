@@ -3,26 +3,26 @@
 
 /* ── Tokens: Dark (default) ─────────────────────────────── */
 :root {
-  --bg:          #08080A;
-  --bg-bar:      rgba(10,10,13,0.85);
-  --bg-panel:    #0D0D10;
-  --surface:     #111116;
-  --surface-h:   #18181f;
+  --bg:          #0C0A07;
+  --bg-bar:      rgba(12,10,7,0.85);
+  --bg-panel:    #110E0A;
+  --surface:     #171310;
+  --surface-h:   #1E1914;
   --border:      rgba(255,255,255,0.07);
   --border-str:  rgba(255,255,255,0.12);
-  --text:        #F0F0F2;
-  --text2:       #8B8B96;
-  --text3:       #54545C;
-  --accent:      #D4FF3F;
-  --accent-h:    #C4F52A;
-  --accent-text: #0A0A0B;
+  --text:        #F2EDE6;
+  --text2:       #8A7F72;
+  --text3:       #524840;
+  --accent:      #E0B15B;
+  --accent-h:    #D4A045;
+  --accent-text: #1A1208;
   --danger:      #FF4D4D;
   --success:     #22c55e;
-  --amber:       #F5A623;
-  --glass:       rgba(15,15,20,0.7);
-  --glass-border: rgba(255,255,255,0.08);
-  --shadow:      0 8px 32px rgba(0,0,0,0.6);
-  --shadow-sm:   0 2px 8px rgba(0,0,0,0.4);
+  --amber:       #E0B15B;
+  --glass:       rgba(18,14,9,0.72);
+  --glass-border: rgba(255,255,255,0.07);
+  --shadow:      0 8px 32px rgba(0,0,0,0.7);
+  --shadow-sm:   0 2px 8px rgba(0,0,0,0.45);
   --font:        'Inter', 'Geist', system-ui, sans-serif;
   --font-mono:   'JetBrains Mono', monospace;
   --radius:      12px;
@@ -32,23 +32,23 @@
 
 /* ── Tokens: Light ──────────────────────────────────────── */
 [data-theme="light"] {
-  --bg:          #F5F5F7;
-  --bg-bar:      rgba(245,245,247,0.85);
-  --bg-panel:    #EBEBED;
-  --surface:     #FFFFFF;
-  --surface-h:   #F0F0F2;
+  --bg:          #F4EFE6;
+  --bg-bar:      rgba(244,239,230,0.88);
+  --bg-panel:    #EAE4D8;
+  --surface:     #FDFAF5;
+  --surface-h:   #F0EAE0;
   --border:      rgba(0,0,0,0.08);
   --border-str:  rgba(0,0,0,0.14);
-  --text:        #111116;
-  --text2:       #6B6B73;
-  --text3:       #9B9BA3;
-  --accent:      #7C3AED;
-  --accent-h:    #6D28D9;
+  --text:        #1A1208;
+  --text2:       #6B5E4E;
+  --text3:       #9C8E7E;
+  --accent:      #C4893A;
+  --accent-h:    #B37830;
   --accent-text: #FFFFFF;
-  --glass:       rgba(255,255,255,0.7);
-  --glass-border: rgba(0,0,0,0.08);
+  --glass:       rgba(253,250,245,0.78);
+  --glass-border: rgba(0,0,0,0.07);
   --shadow:      0 8px 32px rgba(0,0,0,0.1);
-  --shadow-sm:   0 2px 8px rgba(0,0,0,0.06);
+  --shadow-sm:   0 2px 8px rgba(0,0,0,0.07);
 }
 
 /* ── Base ───────────────────────────────────────────────── */
