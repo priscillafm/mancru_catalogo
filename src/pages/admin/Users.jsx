@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/auth.store'
+import { usePlanLimits } from '@/hooks/usePlanLimits'
 
 const ROLE_LABELS = { super_admin: 'Super Admin', company_admin: 'Administrador', vendor: 'Vendedor' }
 const ROLE_COLORS = { super_admin: '#ef4444', company_admin: '#3b82f6', vendor: '#22c55e' }
@@ -9,6 +10,7 @@ const ROLE_COLORS = { super_admin: '#ef4444', company_admin: '#3b82f6', vendor: 
 export default function Users() {
   const companyId = useAuthStore(s => s.membership?.company_id)
   const qc = useQueryClient()
+  const { canAddUser, usage, limits } = usePlanLimits()
 
   const [newEmail, setNewEmail]   = useState('')
   const [newPass, setNewPass]     = useState('')
@@ -98,7 +100,12 @@ export default function Users() {
 
   return (
     <div style={{ padding: 28, overflowY: 'auto', flex: 1 }}>
-      <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>Usuarios</h2>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
+        <h2 style={{ fontSize: 18, fontWeight: 700 }}>Usuarios</h2>
+        <span style={{ fontSize: 12, color: 'var(--text3)' }}>
+          {usage.users}/{limits.max_users === null ? '∞' : limits.max_users} usuarios
+        </span>
+      </div>
       <p style={{ color: 'var(--text2)', fontSize: 13, marginBottom: 24 }}>
         Invitá usuarios por email. Recibirán un link para ingresar a la plataforma.
       </p>
@@ -107,9 +114,16 @@ export default function Users() {
       <div style={{
         background: 'var(--surface)', border: '1px solid var(--border)',
         borderRadius: 12, padding: 20, marginBottom: 28,
+        opacity: canAddUser ? 1 : 0.6,
       }}>
-        <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 14 }}>Crear usuario</h3>
-        <form onSubmit={handleInvite} style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
+        <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>Crear usuario</h3>
+        {!canAddUser && (
+          <p style={{ fontSize: 12, color: '#f97316', marginBottom: 12 }}>
+            ⚠️ Alcanzaste el límite de {limits.max_users} usuario{limits.max_users !== 1 ? 's' : ''} de tu plan.{' '}
+            <a href="/pricing" style={{ color: 'var(--accent)', textDecoration: 'none' }}>Actualizar plan →</a>
+          </p>
+        )}
+        <form onSubmit={e => { if (!canAddUser) { e.preventDefault(); return }; handleInvite(e) }} style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
           <div style={{ flex: 1, minWidth: 200 }}>
             <label style={{ fontSize: 11, color: 'var(--text3)', display: 'block', marginBottom: 5 }}>EMAIL</label>
             <input

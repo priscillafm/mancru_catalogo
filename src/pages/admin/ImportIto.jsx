@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { useAuthStore } from '@/store/auth.store'
 import { supabase } from '@/lib/supabase'
 import ExcelJS from 'exceljs'
+import { usePlanLimits } from '@/hooks/usePlanLimits'
 
 // Order matters: more specific first (e.g. "Bloox to Go" before "Bloox")
 const BRAND_PATTERNS = [
@@ -53,6 +54,7 @@ const DEFAULT_COLORS = [
 export default function ImportIto() {
   const companyId = useAuthStore(s => s.membership?.company_id)
   const fileRef   = useRef()
+  const { canAddProducts, usage, limits } = usePlanLimits()
 
   const [step, setStep]       = useState('idle') // idle | parsing | preview | importing | done
   const [rows, setRows]       = useState([])
@@ -176,6 +178,14 @@ export default function ImportIto() {
         }
       }
 
+      // Enforce plan limit: only insert up to the remaining quota
+      const remaining = limits.max_products === null ? Infinity : Math.max(0, limits.max_products - usage.products)
+      if (toInsert.length > remaining) {
+        const trimmed = toInsert.length - remaining
+        toInsert.splice(remaining)
+        addLog(`⚠️ Límite del plan: se omiten ${trimmed} productos nuevos (cupo lleno). Actualizaciones continúan.`)
+      }
+
       addLog(`${toInsert.length} nuevos · ${toUpdate.length} a actualizar · ${skipped} sin marca (omitidos)`)
 
       // Insert in batches of 100
@@ -276,6 +286,23 @@ export default function ImportIto() {
               ))}
             </div>
           </div>
+
+          {limits.max_products !== null && (() => {
+            const newCount = summary.byBrand
+              .filter(([b]) => b !== '(sin marca detectada)')
+              .reduce((acc, [, c]) => acc + c, 0)
+            const remaining = Math.max(0, limits.max_products - usage.products)
+            if (newCount > remaining) return (
+              <div style={{
+                padding: '10px 14px', marginBottom: 14,
+                background: 'rgba(249,115,22,.1)', border: '1px solid rgba(249,115,22,.3)',
+                borderRadius: 8, fontSize: 13, color: '#f97316',
+              }}>
+                ⚠️ Tu plan permite {limits.max_products} productos en total. Tenés {usage.products} cargados — solo se importarán {remaining} de los {newCount} nuevos. Las actualizaciones de stock no tienen límite.
+              </div>
+            )
+            return null
+          })()}
 
           <div style={{ display: 'flex', gap: 10 }}>
             <button onClick={() => { setStep('idle'); setRows([]); setSummary(null); fileRef.current.value = '' }}

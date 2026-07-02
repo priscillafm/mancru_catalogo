@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/auth.store'
 import PDFPreviewModal from '@/components/PDFPreviewModal'
+import { usePlanLimits } from '@/hooks/usePlanLimits'
 
 export default function CatalogsPage() {
   const membership  = useAuthStore(s => s.membership)
@@ -12,6 +13,7 @@ export default function CatalogsPage() {
   const qc          = useQueryClient()
 
   const [openCatalog, setOpenCatalog] = useState(null) // catalog to reopen in PDF modal
+  const { canAddCatalog, usage, limits } = usePlanLimits()
 
   const { data: catalogs = [], isLoading } = useQuery({
     queryKey: ['catalogs', companyId],
@@ -95,12 +97,32 @@ export default function CatalogsPage() {
                 Abrí un catálogo para modificar precios o regenerar el PDF.
               </p>
             </div>
-            <button onClick={() => navigate('/')} style={{
-              padding: '9px 18px', background: 'var(--accent)', color: 'var(--accent-text)',
-              border: 'none', borderRadius: 9, fontWeight: 700, fontSize: 13, cursor: 'pointer',
-            }}>
-              + Nuevo catálogo
-            </button>
+            <div style={{ textAlign: 'right' }}>
+              <button
+                onClick={() => {
+                  if (!canAddCatalog) {
+                    alert(`Tu plan permite ${limits.max_catalogs_active} catálogo${limits.max_catalogs_active !== 1 ? 's' : ''} compartido${limits.max_catalogs_active !== 1 ? 's' : ''} a la vez. Desactivá uno antes de crear otro, o actualizá tu plan.`)
+                    return
+                  }
+                  navigate('/')
+                }}
+                style={{
+                  padding: '9px 18px',
+                  background: canAddCatalog ? 'var(--accent)' : 'var(--surface-h)',
+                  color: canAddCatalog ? 'var(--accent-text)' : 'var(--text3)',
+                  border: canAddCatalog ? 'none' : '1px solid var(--border)',
+                  borderRadius: 9, fontWeight: 700, fontSize: 13, cursor: 'pointer',
+                }}
+                title={!canAddCatalog ? `Límite: ${usage.catalogs_active}/${limits.max_catalogs_active} catálogos activos` : undefined}
+              >
+                + Nuevo catálogo
+              </button>
+              {!canAddCatalog && (
+                <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 4 }}>
+                  {usage.catalogs_active}/{limits.max_catalogs_active} activos — <a href="/pricing" style={{ color: 'var(--accent)', textDecoration: 'none' }}>Actualizar plan</a>
+                </div>
+              )}
+            </div>
           </div>
 
           {isLoading ? (

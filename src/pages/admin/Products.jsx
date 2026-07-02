@@ -3,12 +3,15 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/auth.store'
 import ImageCropModal from '@/components/ImageCropModal'
+import { usePlanLimits } from '@/hooks/usePlanLimits'
+import PlanLimitBar from '@/components/PlanLimitBar'
 
 const PAGE_SIZE = 50
 
 export default function Products() {
   const companyId   = useAuthStore(s => s.membership?.company_id)
   const qc          = useQueryClient()
+  const { canAddProducts, usage, limits, pctProducts } = usePlanLimits()
   const [search, setSearch]       = useState('')
   const [brandId, setBrandId]     = useState('all')
   const [categoryId, setCategoryId] = useState('all')
@@ -158,9 +161,9 @@ export default function Products() {
           {(search || brandId !== 'all' || categoryId !== 'all') && (
             <button onClick={resetFilters} style={{ ...btnSecondary, whiteSpace: 'nowrap' }}>✕ Limpiar</button>
           )}
-          <span style={{ fontSize: 12, color: 'var(--text3)', marginLeft: 'auto', whiteSpace: 'nowrap' }}>
-            {total} productos
-          </span>
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 12 }}>
+            <PlanLimitBar used={usage.products} max={limits.max_products} label="productos" pct={pctProducts} />
+          </div>
         </div>
 
         {/* Table */}

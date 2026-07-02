@@ -2,6 +2,8 @@ import { useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/auth.store'
 import LoginPage from '@/pages/Login'
+import RegisterPage from '@/pages/Register'
+import OnboardingPage from '@/pages/Onboarding'
 import CatalogPage from '@/pages/Catalog'
 import AdminLayout from '@/pages/admin/AdminLayout'
 import ResetPasswordPage from '@/pages/ResetPassword'
@@ -35,6 +37,8 @@ export default function App() {
     <Routes>
       <Route path="/c/:id"           element={<PublicCatalog />} />
       <Route path="/login"          element={<LoginPage />} />
+      <Route path="/register"       element={<RegisterPage />} />
+      <Route path="/onboarding"     element={<PrivateRoute><OnboardingPage /></PrivateRoute>} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/profile"        element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
       <Route path="/catalogs"       element={<PrivateRoute><CatalogsPage /></PrivateRoute>} />
