@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { signIn } from '@/lib/auth'
 import { supabase } from '@/lib/supabase'
 import { PotatoLockup } from '@/components/PotatoLogo'
@@ -94,6 +94,13 @@ export default function LoginPage() {
             <button type="submit" disabled={loading} style={primaryBtn(loading)}>
               {loading ? 'Ingresando...' : 'Ingresar'}
             </button>
+
+            <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--text3)', marginTop: 16 }}>
+              ¿No tenés cuenta?{' '}
+              <Link to="/register" style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: 600 }}>
+                Registrarse gratis
+              </Link>
+            </p>
           </form>
         ) : (
           <form onSubmit={handleReset}>
