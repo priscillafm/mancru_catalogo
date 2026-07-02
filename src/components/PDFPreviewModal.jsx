@@ -29,8 +29,10 @@ export default function PDFPreviewModal({
   const [coverColor2, setCoverColor2]   = useState('#D4FF3F')
   const [contacto, setContacto]         = useState('')
   const [clientName, setClientName]     = useState('')
-  const [logoUrlDark, setLogoUrlDark]   = useState('https://www.mancru.com/artworks/artworks_mancru2021comuy/logo.svg')
-  const [logoUrlLight, setLogoUrlLight] = useState('')
+  const LOGO_WHITE = 'https://wmzqpblqorfuawubryvt.supabase.co/storage/v1/object/public/product-images/00000000-0000-0000-0000-000000000001/logos/mancru-white.svg'
+  const LOGO_COLOR = 'https://www.mancru.com/artworks/artworks_mancru2021comuy/logo.svg'
+  const [logoUrlDark, setLogoUrlDark]   = useState(LOGO_WHITE)
+  const [logoUrlLight, setLogoUrlLight] = useState(LOGO_COLOR)
   const [showCoverPanel, setShowCoverPanel] = useState(false)
 
   // Pre-populate prices from saved catalog
@@ -265,7 +267,11 @@ export default function PDFPreviewModal({
                             { key: 'dark',  label: '● Oscura', bg: '#09090B', fg: '#fff' },
                             { key: 'light', label: '○ Clara',  bg: '#F8F8F8', fg: '#111' },
                           ].map(t => (
-                            <button key={t.key} onClick={() => setCoverTheme(t.key)} style={{
+                            <button key={t.key} onClick={() => {
+                              setCoverTheme(t.key)
+                              if (t.key === 'dark')  { setLogoUrlDark(LOGO_WHITE); setLogoUrlLight(LOGO_COLOR) }
+                              if (t.key === 'light') { setLogoUrlDark(LOGO_WHITE); setLogoUrlLight(LOGO_COLOR) }
+                            }} style={{
                               flex: 1, padding: '8px 0', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 600,
                               background: t.bg, color: t.fg,
                               border: coverTheme === t.key ? `2px solid ${coverColor1}` : '2px solid var(--border)',
@@ -336,7 +342,23 @@ export default function PDFPreviewModal({
                       {/* ── Logo URLs ── */}
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                         <div>
-                          <label style={labelStyle}>Logo fondo oscuro (blanco / claro)</label>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                            <label style={labelStyle}>Logo fondo oscuro (blanco / claro)</label>
+                            <div style={{ display: 'flex', gap: 5 }}>
+                              <button
+                                onClick={() => setLogoUrlDark('https://wmzqpblqorfuawubryvt.supabase.co/storage/v1/object/public/product-images/00000000-0000-0000-0000-000000000001/logos/mancru-white.svg')}
+                                style={presetBtn}
+                                title="Logo blanco (fondo oscuro)"
+                              >⬜ Blanco</button>
+                              {company?.logo_url && (
+                                <button
+                                  onClick={() => setLogoUrlDark(company.logo_url)}
+                                  style={presetBtn}
+                                  title="Logo de la empresa (configurado en Ajustes)"
+                                >🏢 Empresa</button>
+                              )}
+                            </div>
+                          </div>
                           <input type="text" placeholder="https://..." value={logoUrlDark}
                             onChange={e => setLogoUrlDark(e.target.value)} style={inputStyle} />
                         </div>
@@ -550,6 +572,11 @@ const inputStyle = {
   width: '100%', padding: '8px 12px',
   background: 'var(--surface)', border: '1px solid var(--border)',
   borderRadius: 8, color: 'var(--text)', fontSize: 12, outline: 'none',
+}
+const presetBtn = {
+  padding: '3px 9px', fontSize: 11, fontWeight: 600,
+  background: 'var(--surface-h)', border: '1px solid var(--border)',
+  borderRadius: 6, color: 'var(--text2)', cursor: 'pointer',
 }
 
 // ── Mini live preview of the cover ──

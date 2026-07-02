@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/auth.store'
@@ -6,6 +6,16 @@ import { useNavigate } from 'react-router-dom'
 import { signOut } from '@/lib/auth'
 import PDFPreviewModal from '@/components/PDFPreviewModal'
 import { PotatoMark } from '@/components/PotatoLogo'
+
+function useIsMobile() {
+  const [mobile, setMobile] = useState(() => window.innerWidth < 768)
+  useEffect(() => {
+    const fn = () => setMobile(window.innerWidth < 768)
+    window.addEventListener('resize', fn)
+    return () => window.removeEventListener('resize', fn)
+  }, [])
+  return mobile
+}
 
 function useTheme() {
   const [theme, setTheme] = useState(() => localStorage.getItem('theme') ?? 'dark')
@@ -23,6 +33,9 @@ export default function CatalogPage() {
   const isAdmin    = ['super_admin','company_admin'].includes(membership?.role)
   const navigate   = useNavigate()
   const { theme, toggle: toggleTheme } = useTheme()
+
+  const isMobile = useIsMobile()
+  const [sidebarOpen, setSidebarOpen] = useState(true)
 
   const [activeBrandId, setActiveBrandId] = useState(null)
   const [activeCatId, setActiveCatId]     = useState(null)
@@ -110,11 +123,22 @@ export default function CatalogPage() {
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--bg)' }}>
 
+      {/* Mobile overlay */}
+      {isMobile && sidebarOpen && (
+        <div onClick={() => setSidebarOpen(false)} style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', zIndex: 19,
+        }} />
+      )}
+
       {/* ── Sidebar ── */}
       <aside className="glass" style={{
         width: 248, minWidth: 248,
         display: 'flex', flexDirection: 'column',
-        position: 'relative', zIndex: 10,
+        position: isMobile ? 'fixed' : 'relative',
+        top: 0, left: 0, height: '100%',
+        zIndex: isMobile ? 20 : 10,
+        transform: isMobile && !sidebarOpen ? 'translateX(-100%)' : 'translateX(0)',
+        transition: 'transform 0.25s ease',
       }}>
         {/* Header */}
         <div style={{ padding: '16px 16px 14px', borderBottom: '1px solid var(--border)' }}>
@@ -157,7 +181,7 @@ export default function CatalogPage() {
             return (
               <button key={brand.id} className={`brand-btn ${isActive ? 'active' : ''}`}
                 style={{ borderLeftColor: isActive ? brand.color : 'transparent' }}
-                onClick={() => { setActiveBrandId(brand.id); setActiveCatId(null); setSearch('') }}>
+                onClick={() => { setActiveBrandId(brand.id); setActiveCatId(null); setSearch(''); if (isMobile) setSidebarOpen(false) }}>
                 <span style={{
                   width: 9, height: 9, borderRadius: '50%',
                   background: brand.color, flexShrink: 0,
@@ -186,8 +210,9 @@ export default function CatalogPage() {
           {isAdmin && (
             <button onClick={() => navigate('/admin')} style={sideBtn}>Admin</button>
           )}
-          <button onClick={() => navigate('/profile')} style={{ ...sideBtn, marginLeft: 'auto' }} title="Mi perfil">
-            {(membership?.users?.name ?? membership?.companies?.name ?? '?')[0].toUpperCase()}
+          <button onClick={() => navigate('/profile')} style={{ ...sideBtn, marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5 }} title="Mi perfil">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+            Perfil
           </button>
         </div>
       </aside>
@@ -204,6 +229,12 @@ export default function CatalogPage() {
           backdropFilter: 'blur(20px)',
           flexWrap: 'wrap', rowGap: 8, paddingTop: 8, paddingBottom: 8,
         }}>
+          {isMobile && (
+            <button onClick={() => setSidebarOpen(true)} style={{ ...toolBtn, padding: '7px 10px', flexShrink: 0 }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+          )}
+
           {activeBrand && (
             <span style={{
               fontSize: 14, fontWeight: 700, color: activeBrand.color,
@@ -253,7 +284,7 @@ export default function CatalogPage() {
         {/* Grid */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '24px 24px 80px' }}>
           {!activeBrandId ? (
-            <EmptyState icon="←" message="Seleccioná una marca" sub="Tus marcas aparecen en el panel izquierdo" />
+            <CatalogInstructions />
           ) : productsLoading ? (
             <SkeletonGrid />
           ) : products.length === 0 ? (
@@ -334,16 +365,20 @@ function ProductCard({ product, selected, brandColor, onClick }) {
         {product.categories?.name && (
           <span style={{
             display: 'inline-block', padding: '2px 7px', borderRadius: 999,
-            fontSize: 9, fontWeight: 600, marginBottom: 5, letterSpacing: '0.05em',
+            fontSize: 9, fontWeight: 600, marginBottom: 6, letterSpacing: '0.05em',
             background: 'var(--surface-h)', color: 'var(--text3)', textTransform: 'uppercase',
           }}>
             {product.categories.name}
           </span>
         )}
-        <div style={{ fontSize: 12, fontWeight: 600, lineHeight: 1.4, marginBottom: 4, color: 'var(--text)' }}>
+        <div style={{ fontSize: 12, fontWeight: 600, lineHeight: 1.4, marginBottom: 8, color: 'var(--text)' }}>
           {product.name}
         </div>
-        <div style={{ fontSize: 10, color: brandColor, fontFamily: 'var(--font-mono)', fontWeight: 500, opacity: 0.8 }}>
+        <div style={{
+          display: 'inline-block', padding: '3px 10px', borderRadius: 999,
+          fontSize: 11, fontWeight: 700, letterSpacing: '0.04em',
+          background: brandColor ?? 'var(--accent)', color: '#fff',
+        }}>
           {product.sku}
         </div>
       </div>
@@ -357,6 +392,38 @@ function SkeletonGrid() {
       {Array.from({ length: 12 }).map((_, i) => (
         <div key={i} className="skeleton" style={{ borderRadius: 12, aspectRatio: '0.75' }} />
       ))}
+    </div>
+  )
+}
+
+function CatalogInstructions() {
+  const steps = [
+    { n: '1', title: 'Elegí una marca', desc: 'Seleccioná una marca del panel izquierdo para ver sus productos.' },
+    { n: '2', title: 'Seleccioná productos', desc: 'Hacé clic en los productos que querés incluir en el catálogo. Podés filtrar por categoría o buscar por nombre.' },
+    { n: '3', title: 'Ajustá los precios', desc: 'Con productos seleccionados, editá los precios directamente en el panel de exportación.' },
+    { n: '4', title: 'Exportá el PDF', desc: 'Configurá la portada, el tema y el formato, y descargá el catálogo listo para compartir.' },
+  ]
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: 340, padding: '0 48px' }}>
+      <div style={{ maxWidth: 480, width: '100%' }}>
+        <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 20 }}>Cómo armar tu catálogo</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {steps.map(s => (
+            <div key={s.n} style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+              <div style={{
+                width: 26, height: 26, borderRadius: '50%', flexShrink: 0,
+                background: 'var(--accent)', color: 'var(--accent-text)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 11, fontWeight: 700,
+              }}>{s.n}</div>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 2 }}>{s.title}</div>
+                <div style={{ fontSize: 12, color: 'var(--text3)', lineHeight: 1.5 }}>{s.desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   )
 }

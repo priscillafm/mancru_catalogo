@@ -14,7 +14,7 @@ const https = require('https')
 
 // ── CONFIG ──────────────────────────────────────────────────────────────────
 const SUPABASE_URL     = 'https://wmzqpblqorfuawubryvt.supabase.co'
-const SERVICE_ROLE_KEY = 'PASTE_YOUR_SERVICE_ROLE_KEY'   // ← cambiá esto
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY
 const MANCRU_BASE      = 'https://www.mancru.com'
 const DELAY_MS         = 700   // ms entre requests (no sobrecargar el servidor)
 // ────────────────────────────────────────────────────────────────────────────

@@ -125,13 +125,7 @@ function extractFromPage(html) {
 }
 
 async function main() {
-  if (!SERVICE_ROLE_KEY) {
-    console.error('✗ Falta variable de entorno SUPABASE_SERVICE_ROLE_KEY')
-    console.error('  Correlo así: SUPABASE_SERVICE_ROLE_KEY=sb_secret_... node scripts/scrape-images.cjs')
-    process.exit(1)
-  }
-
-  console.log('🥔 potato — Image Scraper (name-match mode)')
+console.log('🥔 potato — Image Scraper (name-match mode)')
   console.log('═══════════════════════════════════════════════')
 
   // 1. Load products from Supabase

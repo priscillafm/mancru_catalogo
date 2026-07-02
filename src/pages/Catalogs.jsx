@@ -31,6 +31,19 @@ export default function CatalogsPage() {
     enabled: !!companyId,
   })
 
+  async function shareCatalog(cat) {
+    await supabase.from('catalogs').update({ status: 'shared' }).eq('id', cat.id)
+    qc.invalidateQueries(['catalogs', companyId])
+    const url = `${window.location.origin}/c/${cat.id}`
+    await navigator.clipboard.writeText(url)
+    alert(`Link copiado:\n${url}`)
+  }
+
+  async function unshareCatalog(id) {
+    await supabase.from('catalogs').update({ status: 'draft' }).eq('id', id)
+    qc.invalidateQueries(['catalogs', companyId])
+  }
+
   async function deleteCatalog(id) {
     if (!confirm('¿Eliminar este catálogo?')) return
     await supabase.from('catalogs').update({ deleted_at: new Date().toISOString() }).eq('id', id)
@@ -111,44 +124,49 @@ export default function CatalogsPage() {
                 return (
                   <div key={cat.id} style={{
                     background: 'var(--surface)', border: '1px solid var(--border)',
-                    borderRadius: 12, padding: '16px 20px',
-                    display: 'flex', alignItems: 'center', gap: 16,
+                    borderRadius: 12, padding: '14px 18px',
                     transition: 'border-color 0.15s, transform 0.15s',
                   }}
                     onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--border-str)'; e.currentTarget.style.transform = 'translateY(-1px)' }}
                     onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.transform = 'translateY(0)' }}
                   >
-                    {/* Icon */}
-                    <div style={{
-                      width: 44, height: 44, borderRadius: 10, flexShrink: 0,
-                      background: 'var(--surface-h)', display: 'flex', alignItems: 'center',
-                      justifyContent: 'center', fontSize: 20,
-                    }}>📄</div>
-
-                    {/* Info */}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 3 }}>{cat.name}</div>
-                      <div style={{ fontSize: 12, color: 'var(--text3)', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                        <span>{productCount} producto{productCount !== 1 ? 's' : ''}</span>
-                        {brandNames.length > 0 && <span>{brandNames.join(' · ')}</span>}
-                        <span>{new Date(cat.updated_at).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                    {/* Top row */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+                      <div style={{
+                        width: 36, height: 36, borderRadius: 8, flexShrink: 0,
+                        background: 'var(--surface-h)', display: 'flex', alignItems: 'center',
+                        justifyContent: 'center', fontSize: 18,
+                      }}>📄</div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: 700, fontSize: 14 }}>{cat.name}</div>
+                        <div style={{ fontSize: 12, color: 'var(--text3)', display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 2 }}>
+                          <span>{productCount} producto{productCount !== 1 ? 's' : ''}</span>
+                          {brandNames.length > 0 && <span>{brandNames.join(' · ')}</span>}
+                          <span>{new Date(cat.updated_at).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                        </div>
                       </div>
+                      <span style={{
+                        fontSize: 11, fontWeight: 600, padding: '3px 10px',
+                        borderRadius: 999, background: 'var(--surface-h)', color: st.color, flexShrink: 0,
+                      }}>{st.label}</span>
                     </div>
 
-                    {/* Status */}
-                    <span style={{
-                      fontSize: 11, fontWeight: 600, padding: '3px 10px',
-                      borderRadius: 999, background: 'var(--surface-h)', color: st.color, flexShrink: 0,
-                    }}>{st.label}</span>
-
-                    {/* Actions */}
-                    <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-                      <button onClick={() => handleOpen(cat)} style={actionBtn('#3b82f6')}>
-                        Abrir
-                      </button>
-                      <button onClick={() => deleteCatalog(cat.id)} style={actionBtn('var(--danger)')}>
-                        ✕
-                      </button>
+                    {/* Actions row */}
+                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      <button onClick={() => handleOpen(cat)} style={actionBtn('#3b82f6')}>Abrir</button>
+                      {cat.status === 'shared' ? (
+                        <button onClick={() => {
+                          const url = `${window.location.origin}/c/${cat.id}`
+                          navigator.clipboard.writeText(url)
+                          alert(`Link copiado:\n${url}`)
+                        }} style={actionBtn('var(--accent)')}>🔗 Copiar link</button>
+                      ) : (
+                        <button onClick={() => shareCatalog(cat)} style={actionBtn('#10b981')}>Compartir link</button>
+                      )}
+                      {cat.status === 'shared' && (
+                        <button onClick={() => unshareCatalog(cat.id)} style={actionBtn('var(--text3)')}>Desactivar</button>
+                      )}
+                      <button onClick={() => deleteCatalog(cat.id)} style={{ ...actionBtn('var(--danger)'), marginLeft: 'auto' }}>✕ Eliminar</button>
                     </div>
                   </div>
                 )

@@ -10,6 +10,12 @@ function proxyUrl(url) {
   return `${SUPABASE_URL}/functions/v1/img-proxy?url=${encodeURIComponent(url)}`
 }
 
+// serif (times) for content, sans (helvetica) for UI chrome, mono (courier) for codes
+function setFont(doc, style) {
+  const bold = style === 'bold' || style === 'uibold' || style === 'mono' || style === 'bolditalic'
+  doc.setFont('helvetica', bold ? 'bold' : 'normal')
+}
+
 async function fetchBlob(url, headers = {}) {
   const resp = await Promise.race([
     fetch(url, { headers }),
@@ -203,7 +209,7 @@ async function addCoverPage(doc, company, coverOptions, isLandscape) {
   }
   if (!logoRendered) {
     doc.setFontSize(isLandscape ? 26 : 22)
-    doc.setFont('helvetica', 'bold')
+    setFont(doc, 'bold')
     doc.setTextColor(...textWhite)
     doc.text(company?.name ?? '', centerX, centerY - (clientName ? 8 : 4), { align: 'center' })
   }
@@ -213,7 +219,7 @@ async function addCoverPage(doc, company, coverOptions, isLandscape) {
     ? centerY - logoH / 2 - (clientName ? 14 : 10) + logoH + 14
     : centerY + (clientName ? 4 : 8)
   doc.setFontSize(7.5)
-  doc.setFont('helvetica', 'normal')
+  setFont(doc, 'ui')
   doc.setTextColor(...textLabel)
   doc.setCharSpace(4)
   doc.text('PROPUESTA COMERCIAL', centerX, labelY, { align: 'center' })
@@ -228,7 +234,7 @@ async function addCoverPage(doc, company, coverOptions, isLandscape) {
     doc.line(centerX - 28, labelY + 5, centerX + 28, labelY + 5)
     doc.setLineDashPattern([], 0)
     doc.setFontSize(isLandscape ? 13 : 11)
-    doc.setFont('helvetica', 'normal')
+    setFont(doc, 'italic')
     doc.setTextColor(...textSub)
     doc.text(clientName, centerX, labelY + 12, { align: 'center' })
   } else {
@@ -241,7 +247,7 @@ async function addCoverPage(doc, company, coverOptions, isLandscape) {
 
   // ── Website ──
   doc.setFontSize(8)
-  doc.setFont('helvetica', 'normal')
+  setFont(doc, 'ui')
   doc.setTextColor(...textFaint)
   doc.text(company?.website ?? 'www.mancru.com', centerX, PH - 10, { align: 'center' })
 
@@ -319,7 +325,7 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
       // Website — always white since header is always dark
       if (companyWeb) {
         doc.setFontSize(7)
-        doc.setFont('helvetica', 'normal')
+        setFont(doc, 'ui')
         doc.setTextColor('#ffffff')
         doc.text(companyWeb, PW - 10, 14, { align: 'right' })
       }
@@ -327,6 +333,7 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
       // Gradient footer
       doc.addImage(footerBarImg, 'JPEG', 0, PH - FOOTER_H, PW, FOOTER_H)
       doc.setFontSize(7)
+      setFont(doc, 'ui')
       doc.setTextColor('#ffffff')
       doc.text(`${brandName}  •  Pág. ${pg + 1}`, PW / 2, PH - 2.5, { align: 'center' })
     }
@@ -354,7 +361,7 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
         } catch { /* fallback to text */ }
       }
       doc.setFontSize(11)
-      doc.setFont('helvetica', 'normal')
+      setFont(doc, 'ui')
       doc.setTextColor('#ffffff')
       doc.text(companyName, PW / 2, 14, { align: 'center' })
     }
@@ -381,7 +388,7 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
         } catch { /* skip */ }
       }
       doc.setFontSize(13)
-      doc.setFont('helvetica', 'bold')
+      setFont(doc, 'uibold')
       doc.setTextColor(brandTextClr)
       doc.text(brandName, 10, 14)
     }
@@ -447,58 +454,46 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
         drawNoImage(doc, imgX, imgY, imgSize)
       }
 
-      // Thin separator line below image area
-      doc.setDrawColor('#EEEEEE')
-      doc.setLineWidth(0.3)
-      doc.line(x + MARGIN + 2, y + MARGIN + imgAreaH, x + CELL_W - MARGIN - 2, y + MARGIN + imgAreaH)
-
-      let tY = y + MARGIN + imgAreaH + 5
-
-      // ── SKU badge: pill shape with brand color ──
-      const skuText  = String(p.sku ?? '')
-      const skuW     = Math.min(inner_w - 4, 30)
-      const skuH     = 5.5
-      const skuX     = x + (CELL_W - skuW) / 2
-      const [sr, sg, sb] = hexToRgb(brandColor)
-      doc.setFillColor(sr, sg, sb)
-      doc.roundedRect(skuX, tY, skuW, skuH, 2.5, 2.5, 'F')
-      doc.setFontSize(6)
-      doc.setFont('courier', 'bold')
-      doc.setTextColor(brandTextClr)
-      doc.setCharSpace(0.5)
-      doc.text(skuText, x + CELL_W / 2, tY + 3.8, { align: 'center' })
-      doc.setCharSpace(0)
-      tY += skuH + 4.5
-
-      // ── Product name ──
+      // ── Text area (mirrors web card: name → SKU pill → price) ──
       const textW = CELL_W - MARGIN * 2 - PAD * 2
-      doc.setFontSize(7)
-      doc.setFont('helvetica', 'bold')
+      const textTop = y + MARGIN + imgAreaH + 4
+
+      // Name — bold, 2 lines max
+      doc.setFontSize(7.5)
+      setFont(doc, 'bold')
       doc.setTextColor('#111111')
       const nameLines = doc.splitTextToSize(String(p.name ?? ''), textW).slice(0, 2)
-      doc.text(nameLines, x + CELL_W / 2, tY, { align: 'center', lineHeightFactor: 1.4 })
-      tY += nameLines.length * 4.5 + 2
+      doc.text(nameLines, x + CELL_W / 2, textTop, { align: 'center', lineHeightFactor: 1.4 })
+      const nameBottom = textTop + nameLines.length * 4.8
 
-      // ── Description ──
-      if (tY + 4 < y + CELL_H - 8) {
-        doc.setFontSize(5.5)
-        doc.setFont('helvetica', 'normal')
-        doc.setTextColor('#888888')
-        doc.setCharSpace(0.2)
-        const descLines = doc.splitTextToSize(String(p.description ?? ''), textW).slice(0, 2)
-        doc.text(descLines, x + CELL_W / 2, tY, { align: 'center', lineHeightFactor: 1.5 })
-        doc.setCharSpace(0)
-      }
+      // SKU pill — below name
+      const skuText = String(p.sku ?? '')
+      const skuH    = 6
+      const skuW    = Math.min(doc.getTextWidth(skuText) + 10, inner_w - 2)
+      const skuX    = x + (CELL_W - skuW) / 2
+      const skuY    = nameBottom + 3
+      const [sr, sg, sb] = hexToRgb(brandColor)
+      doc.setFillColor(sr, sg, sb)
+      doc.roundedRect(skuX, skuY, skuW, skuH, 3, 3, 'F')
+      doc.setFontSize(6.5)
+      setFont(doc, 'bold')
+      doc.setTextColor(brandTextClr)
+      doc.text(skuText, x + CELL_W / 2, skuY + 4.2, { align: 'center' })
+      doc.setCharSpace(0)
 
-      // ── Price pinned at bottom ──
+      // Price — inside card, above bottom border
       if (p._price) {
+        const cardBottom = y + CELL_H - MARGIN
+        const priceY = cardBottom - 5
         const curLabel = (p._currency ?? '$') === '$' ? '$ UYU' : 'USD'
-        doc.setFontSize(10)
-        doc.setFont('courier', 'bold')
+        // separator line above price
+        doc.setDrawColor('#EEEEEE')
+        doc.setLineWidth(0.3)
+        doc.line(x + MARGIN + 3, priceY - 4, x + CELL_W - MARGIN - 3, priceY - 4)
+        doc.setFontSize(9.5)
+        setFont(doc, 'bold')
         doc.setTextColor('#111111')
-        doc.setCharSpace(0.5)
-        doc.text(`${curLabel} ${p._price}`, x + CELL_W / 2, y + CELL_H - 4, { align: 'center' })
-        doc.setCharSpace(0)
+        doc.text(`${curLabel} ${p._price}`, x + CELL_W / 2, priceY, { align: 'center' })
       }
 
       slot++
