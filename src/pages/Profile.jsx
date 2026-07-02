@@ -51,8 +51,8 @@ export default function ProfilePage() {
   }
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--bg)' }}>
-      <div style={{ width: '100%', maxWidth: 440 }}>
+    <div style={{ minHeight: '100vh', background: 'var(--bg)', overflowY: 'auto', padding: '32px 16px 48px' }}>
+      <div style={{ width: '100%', maxWidth: 440, margin: '0 auto' }}>
 
         {/* Back */}
         <button onClick={() => navigate('/')} style={{

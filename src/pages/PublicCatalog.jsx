@@ -224,7 +224,7 @@ export default function PublicCatalog() {
         }} onClick={e => { if (e.target === e.currentTarget) setShowModal(false) }}>
           <div style={{
             background: '#fff', borderRadius: '20px 20px 0 0', width: '100%', maxWidth: 560,
-            padding: '24px 24px 36px', maxHeight: '85vh', overflowY: 'auto',
+            padding: '24px 24px calc(40px + env(safe-area-inset-bottom, 16px))', maxHeight: '85vh', overflowY: 'auto',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
               <h2 style={{ fontSize: 18, fontWeight: 700, color: '#111' }}>Tu pedido</h2>
