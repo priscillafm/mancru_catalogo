@@ -12,6 +12,7 @@ import Sync from './Sync'
 import Users from './Users'
 import ImportIto from './ImportIto'
 import Settings from './Settings'
+import SuperAdmin from './SuperAdmin'
 
 // line-only icons stay outline but get accent color + pill bg when active
 const NAV = [
@@ -25,8 +26,9 @@ const NAV = [
 ]
 
 export default function AdminLayout() {
-  const membership = useAuthStore(s => s.membership)
-  const company    = membership?.companies
+  const membership  = useAuthStore(s => s.membership)
+  const company     = membership?.companies
+  const isSuperAdmin = membership?.role === 'super_admin'
 
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
@@ -76,6 +78,22 @@ export default function AdminLayout() {
           ))}
         </nav>
 
+        {isSuperAdmin && (
+          <div style={{ padding: '8px 10px', borderTop: '1px solid var(--border)' }}>
+            <NavLink
+              to="/admin/super"
+              style={({ isActive }) => ({
+                display: 'flex', alignItems: 'center', gap: 8,
+                padding: '8px 10px', textDecoration: 'none', borderRadius: 8,
+                color: isActive ? 'var(--accent)' : 'var(--text3)',
+                background: isActive ? 'color-mix(in srgb, var(--accent) 10%, transparent)' : 'transparent',
+                fontSize: 12, fontWeight: 600,
+              })}
+            >
+              🥔 Potato Admin
+            </NavLink>
+          </div>
+        )}
         <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)' }}>
           <NavLink to="/" style={{ fontSize: 12, color: 'var(--text3)', textDecoration: 'none' }}>
             ← Volver al catálogo
@@ -92,6 +110,7 @@ export default function AdminLayout() {
           <Route path="import-ito" element={<ImportIto />} />
           <Route path="users"      element={<Users />} />
           <Route path="settings"   element={<Settings />} />
+          {isSuperAdmin && <Route path="super" element={<SuperAdmin />} />}
           <Route path="*"          element={<Navigate to="/admin" replace />} />
         </Routes>
       </div>
