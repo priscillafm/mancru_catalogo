@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom'
 import { signOut } from '@/lib/auth'
 import PDFPreviewModal from '@/components/PDFPreviewModal'
 import { PotatoMark } from '@/components/PotatoLogo'
+import NotificationBell from '@/components/NotificationBell'
 
 function useIsMobile() {
   const [mobile, setMobile] = useState(() => window.innerWidth < 768)
@@ -210,6 +211,7 @@ export default function CatalogPage() {
           {isAdmin && (
             <button onClick={() => navigate('/admin')} style={sideBtn}>Admin</button>
           )}
+          <NotificationBell />
           <button onClick={() => navigate('/profile')} style={{ ...sideBtn, marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5 }} title="Mi perfil">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
             Perfil
