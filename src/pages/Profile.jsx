@@ -8,6 +8,7 @@ export default function ProfilePage() {
   const navigate  = useNavigate()
   const membership = useAuthStore(s => s.membership)
   const user       = useAuthStore(s => s.user)
+  const loadMembership = useAuthStore(s => s.loadMembership)
 
   const [currentPass, setCurrentPass] = useState('')
   const [newPass, setNewPass]         = useState('')
@@ -15,6 +16,19 @@ export default function ProfilePage() {
   const [error, setError]             = useState('')
   const [success, setSuccess]         = useState('')
   const [loading, setLoading]         = useState(false)
+
+  const [whatsapp, setWhatsapp]       = useState(user?.whatsapp ?? '')
+  const [wappSaving, setWappSaving]   = useState(false)
+  const [wappMsg, setWappMsg]         = useState('')
+
+  async function handleSaveWhatsapp(e) {
+    e.preventDefault()
+    setWappSaving(true); setWappMsg('')
+    const { error } = await supabase.from('users').update({ whatsapp: whatsapp.trim() || null }).eq('id', user.id)
+    setWappSaving(false)
+    if (error) setWappMsg('Error al guardar')
+    else { setWappMsg('Guardado'); loadMembership(user.id) }
+  }
 
   const ROLE_LABELS = { super_admin: 'Super Admin', company_admin: 'Administrador', vendor: 'Vendedor' }
 
@@ -74,6 +88,25 @@ export default function ProfilePage() {
             <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 4 }}>EMPRESA</div>
             <div style={{ fontSize: 14, fontWeight: 500 }}>{membership?.companies?.name ?? '—'}</div>
           </div>
+        </div>
+
+        {/* WhatsApp */}
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: '24px 28px', boxShadow: 'var(--shadow)', marginBottom: 16 }}>
+          <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>WhatsApp de ventas</h2>
+          <p style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 18 }}>
+            Los clientes te contactarán a este número cuando armen un pedido desde el catálogo.
+          </p>
+          <form onSubmit={handleSaveWhatsapp}>
+            <Field label="Número (ej: 59899123456)" type="tel" value={whatsapp} onChange={e => setWhatsapp(e.target.value)} />
+            {wappMsg && <p style={{ fontSize: 12, color: wappMsg === 'Guardado' ? 'var(--success)' : 'var(--danger)', marginBottom: 10 }}>{wappMsg === 'Guardado' ? '✓ ' : ''}{wappMsg}</p>}
+            <button type="submit" disabled={wappSaving} style={{
+              width: '100%', padding: '10px', background: 'var(--accent)', color: 'var(--accent-text)',
+              border: 'none', borderRadius: 9, fontWeight: 700, fontSize: 13,
+              cursor: wappSaving ? 'not-allowed' : 'pointer', opacity: wappSaving ? 0.7 : 1,
+            }}>
+              {wappSaving ? 'Guardando...' : 'Guardar WhatsApp'}
+            </button>
+          </form>
         </div>
 
         {/* Change password */}

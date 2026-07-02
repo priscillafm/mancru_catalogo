@@ -15,6 +15,7 @@ export default function PDFPreviewModal({
   onSaved       = null,   // callback after saving
 }) {
   const membership = useAuthStore(s => s.membership)
+  const authUser   = useAuthStore(s => s.user)
 
   const [generating, setGenerating] = useState(false)
   const [progress, setProgress]     = useState('')
@@ -111,6 +112,7 @@ export default function PDFPreviewModal({
       brandGroups,
       prices,
       orientation,
+      vendorWhatsapp: authUser?.whatsapp ?? null,
     }
 
     try {
