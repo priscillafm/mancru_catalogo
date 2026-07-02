@@ -21,7 +21,8 @@ export default function CatalogsPage() {
         .select(`
           id, name, status, created_at, updated_at, snapshot_data,
           users!catalogs_created_by_fkey(name, email),
-          catalog_products(product_id, sort_order, product_snapshot)
+          catalog_products(product_id, sort_order, product_snapshot),
+          catalog_views(viewed_at)
         `)
         .eq('company_id', companyId)
         .is('deleted_at', null)
@@ -120,6 +121,11 @@ export default function CatalogsPage() {
                 const productCount = cat.catalog_products?.length ?? 0
                 const snap = cat.snapshot_data ?? {}
                 const brandNames = (snap.brandGroups ?? []).map(g => g.brand?.name).filter(Boolean)
+                const views = cat.catalog_views ?? []
+                const viewCount = views.length
+                const lastView = views.length > 0
+                  ? new Date(views.sort((a,b) => new Date(b.viewed_at) - new Date(a.viewed_at))[0].viewed_at)
+                  : null
 
                 return (
                   <div key={cat.id} style={{
@@ -143,6 +149,12 @@ export default function CatalogsPage() {
                           <span>{productCount} producto{productCount !== 1 ? 's' : ''}</span>
                           {brandNames.length > 0 && <span>{brandNames.join(' · ')}</span>}
                           <span>{new Date(cat.updated_at).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                          {viewCount > 0 && (
+                            <span style={{ color: 'var(--accent)' }}>
+                              👁 {viewCount} vista{viewCount !== 1 ? 's' : ''}
+                              {lastView && ` · última ${lastView.toLocaleDateString('es-AR', { day: '2-digit', month: 'short' })} ${lastView.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}`}
+                            </span>
+                          )}
                         </div>
                       </div>
                       <span style={{

@@ -20,8 +20,12 @@ export default function PublicCatalog() {
         .eq('status', 'shared')
         .is('deleted_at', null)
         .single()
-      console.log('[PublicCatalog] data:', data, 'error:', error)
       if (error || !data) throw new Error(error?.message ?? 'Catálogo no encontrado')
+      // Registrar visita
+      supabase.from('catalog_views').insert({
+        catalog_id: data.id,
+        user_agent: navigator.userAgent,
+      })
       return data
     },
   })
