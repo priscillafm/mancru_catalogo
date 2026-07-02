@@ -224,75 +224,109 @@ export default function CatalogPage() {
 
         {/* Toolbar */}
         <div style={{
-          minHeight: 58, padding: '0 20px',
           borderBottom: '1px solid var(--border)',
-          display: 'flex', alignItems: 'center', gap: 10,
           background: 'var(--bg-bar)',
           backdropFilter: 'blur(20px)',
-          flexWrap: 'wrap', rowGap: 8, paddingTop: 8, paddingBottom: 8,
+          flexShrink: 0,
         }}>
-          {isMobile && (
-            <button onClick={() => setSidebarOpen(true)} style={{ ...toolBtn, padding: '7px 10px', flexShrink: 0 }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-            </button>
-          )}
+          {/* Row 1 */}
+          <div style={{
+            padding: isMobile ? '10px 12px' : '0 20px',
+            minHeight: isMobile ? 'auto' : 58,
+            display: 'flex', alignItems: 'center', gap: 8,
+            paddingTop: isMobile ? 10 : 8, paddingBottom: isMobile ? 8 : 8,
+          }}>
+            {isMobile && (
+              <button onClick={() => setSidebarOpen(true)} style={{ ...toolBtn, padding: '8px 10px', flexShrink: 0 }}>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+              </button>
+            )}
 
-          {activeBrand && (
-            <span style={{
-              fontSize: 14, fontWeight: 700, color: activeBrand.color,
-              letterSpacing: '-0.3px', flexShrink: 0,
-            }}>
-              {activeBrand.name}
-            </span>
-          )}
+            {activeBrand && (
+              <span style={{
+                fontSize: isMobile ? 15 : 14, fontWeight: 700, color: activeBrand.color,
+                letterSpacing: '-0.3px', flexShrink: 0,
+              }}>
+                {activeBrand.name}
+              </span>
+            )}
 
-          <div style={{ position: 'relative', flex: 1, maxWidth: 260 }}>
-            <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text3)', fontSize: 13 }}>⌕</span>
-            <input
-              type="text" placeholder="Buscar producto..."
-              value={search} onChange={e => setSearch(e.target.value)}
-              disabled={!activeBrandId}
-              style={{
-                width: '100%', padding: '7px 12px 7px 28px',
-                background: 'var(--surface)', border: '1px solid var(--border)',
-                borderRadius: 8, color: 'var(--text)', fontSize: 13, outline: 'none',
-              }}
-            />
+            <div style={{ position: 'relative', flex: 1 }}>
+              <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text3)', fontSize: 13 }}>⌕</span>
+              <input
+                type="text" placeholder="Buscar..."
+                value={search} onChange={e => setSearch(e.target.value)}
+                disabled={!activeBrandId}
+                style={{
+                  width: '100%', padding: isMobile ? '9px 12px 9px 30px' : '7px 12px 7px 28px',
+                  background: 'var(--surface)', border: '1px solid var(--border)',
+                  borderRadius: 8, color: 'var(--text)', fontSize: 14, outline: 'none',
+                  boxSizing: 'border-box',
+                }}
+              />
+            </div>
+
+            {!isMobile && categories.length > 0 && (
+              <select value={activeCatId ?? ''} onChange={e => setActiveCatId(e.target.value || null)}
+                style={{
+                  padding: '7px 10px', background: 'var(--surface)',
+                  border: '1px solid var(--border)', borderRadius: 8,
+                  color: 'var(--text)', fontSize: 13, outline: 'none', cursor: 'pointer',
+                }}>
+                <option value="">Todas las categorías</option>
+                {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            )}
+
+            {!isMobile && activeBrandId && products.length > 0 && (
+              <button onClick={allSelected ? deselectAll : selectAll} style={toolBtn}>
+                {allSelected ? 'Deseleccionar' : `Sel. todos (${products.length})`}
+              </button>
+            )}
+
+            {!isMobile && totalSelected > 0 && (
+              <button onClick={clearAll} style={toolBtn}>✕ Limpiar</button>
+            )}
           </div>
 
-          {categories.length > 0 && (
-            <select value={activeCatId ?? ''} onChange={e => setActiveCatId(e.target.value || null)}
-              style={{
-                padding: '7px 10px', background: 'var(--surface)',
-                border: '1px solid var(--border)', borderRadius: 8,
-                color: 'var(--text)', fontSize: 13, outline: 'none', cursor: 'pointer',
-              }}>
-              <option value="">Todas las categorías</option>
-              {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-          )}
-
-          {activeBrandId && products.length > 0 && (
-            <button onClick={allSelected ? deselectAll : selectAll} style={toolBtn}>
-              {allSelected ? 'Deseleccionar todos' : `Seleccionar todos (${products.length})`}
-            </button>
-          )}
-
-          {totalSelected > 0 && (
-            <button onClick={clearAll} style={toolBtn}>✕ Limpiar</button>
+          {/* Row 2 — mobile only: category + select all */}
+          {isMobile && activeBrandId && (
+            <div style={{
+              padding: '0 12px 10px', display: 'flex', gap: 8, alignItems: 'center',
+            }}>
+              {categories.length > 0 && (
+                <select value={activeCatId ?? ''} onChange={e => setActiveCatId(e.target.value || null)}
+                  style={{
+                    flex: 1, padding: '8px 10px', background: 'var(--surface)',
+                    border: '1px solid var(--border)', borderRadius: 8,
+                    color: 'var(--text)', fontSize: 13, outline: 'none', cursor: 'pointer',
+                  }}>
+                  <option value="">Todas las categorías</option>
+                  {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+              )}
+              {products.length > 0 && (
+                <button onClick={allSelected ? deselectAll : selectAll} style={{ ...toolBtn, whiteSpace: 'nowrap', padding: '8px 12px' }}>
+                  {allSelected ? 'Quitar todos' : `Sel. todos (${products.length})`}
+                </button>
+              )}
+              {totalSelected > 0 && (
+                <button onClick={clearAll} style={{ ...toolBtn, padding: '8px 10px' }}>✕</button>
+              )}
+            </div>
           )}
         </div>
 
         {/* Grid */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '24px 24px 80px' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '16px 12px 100px' : '24px 24px 80px' }}>
           {!activeBrandId ? (
-            <CatalogInstructions />
+            <CatalogInstructions isMobile={isMobile} />
           ) : productsLoading ? (
-            <SkeletonGrid />
+            <SkeletonGrid isMobile={isMobile} />
           ) : products.length === 0 ? (
             <EmptyState icon="○" message="Sin resultados" sub="Probá con otro término o categoría" />
           ) : (
-            <ProductGrid products={products} selectedMap={selectedMap} brandColor={activeBrand?.color} onToggle={toggleSelect} />
+            <ProductGrid products={products} selectedMap={selectedMap} brandColor={activeBrand?.color} onToggle={toggleSelect} isMobile={isMobile} />
           )}
         </div>
       </main>
@@ -301,8 +335,14 @@ export default function CatalogPage() {
       <button
         className={`pdf-pill ${totalSelected > 0 ? 'visible' : ''}`}
         onClick={() => totalSelected > 0 && setShowPDF(true)}
+        style={isMobile ? {
+          bottom: 20, left: '50%', transform: totalSelected > 0 ? 'translateX(-50%) translateY(0)' : 'translateX(-50%) translateY(100px)',
+          width: 'calc(100% - 32px)', maxWidth: 360,
+          padding: '14px 20px', fontSize: 15,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+        } : undefined}
       >
-        ↓ Generar PDF
+        {isMobile ? `Generar catálogo` : '↓ Generar PDF'}
         <span className="pill-count">{totalSelected}</span>
       </button>
 
@@ -318,7 +358,7 @@ export default function CatalogPage() {
   )
 }
 
-function ProductGrid({ products, selectedMap, brandColor, onToggle }) {
+function ProductGrid({ products, selectedMap, brandColor, onToggle, isMobile }) {
   const groups = []
   let lastCatId = undefined
   for (const p of products) {
@@ -329,17 +369,22 @@ function ProductGrid({ products, selectedMap, brandColor, onToggle }) {
     groups[groups.length - 1].items.push(p)
   }
 
+  const cols = isMobile
+    ? 'repeat(2, 1fr)'
+    : 'repeat(auto-fill, minmax(168px, 1fr))'
+
   return (
     <div className="fade-up">
       {groups.map((g, gi) => (
         <div key={gi} style={{ marginBottom: 28 }}>
           {g.catName && <div className="cat-divider">{g.catName}</div>}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(168px, 1fr))', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: cols, gap: isMobile ? 10 : 12 }}>
             {g.items.map(product => (
               <ProductCard key={product.id} product={product}
                 selected={!!selectedMap[product.id]}
                 brandColor={brandColor}
-                onClick={() => onToggle(product)} />
+                onClick={() => onToggle(product)}
+                isMobile={isMobile} />
             ))}
           </div>
         </div>
@@ -348,9 +393,10 @@ function ProductGrid({ products, selectedMap, brandColor, onToggle }) {
   )
 }
 
-function ProductCard({ product, selected, brandColor, onClick }) {
+function ProductCard({ product, selected, brandColor, onClick, isMobile }) {
   return (
-    <div onClick={onClick} className={`product-card ${selected ? 'selected' : ''}`}>
+    <div onClick={onClick} className={`product-card ${selected ? 'selected' : ''}`}
+      style={isMobile ? { touchAction: 'manipulation', userSelect: 'none' } : undefined}>
       {selected && (
         <div className="check-badge" style={{ background: brandColor }}>✓</div>
       )}
@@ -363,22 +409,22 @@ function ProductCard({ product, selected, brandColor, onClick }) {
           ◻
         </div>
       )}
-      <div style={{ padding: '10px 11px 12px' }}>
+      <div style={{ padding: isMobile ? '8px 10px 10px' : '10px 11px 12px' }}>
         {product.categories?.name && (
           <span style={{
             display: 'inline-block', padding: '2px 7px', borderRadius: 999,
-            fontSize: 9, fontWeight: 600, marginBottom: 6, letterSpacing: '0.05em',
+            fontSize: 9, fontWeight: 600, marginBottom: 5, letterSpacing: '0.05em',
             background: 'var(--surface-h)', color: 'var(--text3)', textTransform: 'uppercase',
           }}>
             {product.categories.name}
           </span>
         )}
-        <div style={{ fontSize: 12, fontWeight: 600, lineHeight: 1.4, marginBottom: 8, color: 'var(--text)' }}>
+        <div style={{ fontSize: isMobile ? 12 : 12, fontWeight: 600, lineHeight: 1.4, marginBottom: 7, color: 'var(--text)' }}>
           {product.name}
         </div>
         <div style={{
-          display: 'inline-block', padding: '3px 10px', borderRadius: 999,
-          fontSize: 11, fontWeight: 700, letterSpacing: '0.04em',
+          display: 'inline-block', padding: '3px 9px', borderRadius: 999,
+          fontSize: 10, fontWeight: 700, letterSpacing: '0.04em',
           background: brandColor ?? 'var(--accent)', color: '#fff',
         }}>
           {product.sku}
@@ -388,17 +434,18 @@ function ProductCard({ product, selected, brandColor, onClick }) {
   )
 }
 
-function SkeletonGrid() {
+function SkeletonGrid({ isMobile }) {
+  const cols = isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(168px, 1fr))'
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(168px, 1fr))', gap: 12 }}>
-      {Array.from({ length: 12 }).map((_, i) => (
+    <div style={{ display: 'grid', gridTemplateColumns: cols, gap: isMobile ? 10 : 12 }}>
+      {Array.from({ length: isMobile ? 8 : 12 }).map((_, i) => (
         <div key={i} className="skeleton" style={{ borderRadius: 12, aspectRatio: '0.75' }} />
       ))}
     </div>
   )
 }
 
-function CatalogInstructions() {
+function CatalogInstructions({ isMobile }) {
   const steps = [
     { n: '1', title: 'Elegí una marca', desc: 'Seleccioná una marca del panel izquierdo para ver sus productos.' },
     { n: '2', title: 'Seleccioná productos', desc: 'Hacé clic en los productos que querés incluir en el catálogo. Podés filtrar por categoría o buscar por nombre.' },
@@ -406,9 +453,11 @@ function CatalogInstructions() {
     { n: '4', title: 'Exportá el PDF', desc: 'Configurá la portada, el tema y el formato, y descargá el catálogo listo para compartir.' },
   ]
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: 340, padding: '0 48px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: isMobile ? 'flex-start' : 'center', height: '100%', minHeight: 240, padding: isMobile ? '24px 4px 0' : '0 48px' }}>
       <div style={{ maxWidth: 480, width: '100%' }}>
-        <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 20 }}>Cómo armar tu catálogo</p>
+        <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: isMobile ? 16 : 20 }}>
+          {isMobile ? 'Tocá una marca para empezar' : 'Cómo armar tu catálogo'}
+        </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {steps.map(s => (
             <div key={s.n} style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
