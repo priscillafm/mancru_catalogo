@@ -29,12 +29,12 @@ export default function RegisterPage() {
       const userId = authData.user?.id
       if (!userId) throw new Error('No se pudo crear el usuario')
 
-      // Esperar a que la sesión esté activa
-      if (!authData.session) {
-        await new Promise(resolve => setTimeout(resolve, 1000))
-        const { data: { session } } = await supabase.auth.getSession()
-        if (!session) throw new Error('No se pudo iniciar sesión automáticamente')
-      }
+      // Forzar sesión activa haciendo signIn inmediatamente
+      const { error: signInErr } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+      })
+      if (signInErr) throw new Error('Usuario creado pero no se pudo iniciar sesión: ' + signInErr.message)
 
       // 2. Crear empresa
       const { data: companyData, error: companyErr } = await supabase
