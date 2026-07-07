@@ -6,17 +6,21 @@ export function useNotifications() {
   const user = useAuthStore(s => s.user)
   const [notifications, setNotifications] = useState([])
 
-  useEffect(() => {
+  async function fetchNotifications() {
     if (!user?.id) return
-
-    // Cargar notificaciones existentes
-    supabase
+    const { data } = await supabase
       .from('notifications')
       .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(20)
-      .then(({ data }) => setNotifications(data ?? []))
+    setNotifications(data ?? [])
+  }
+
+  useEffect(() => {
+    if (!user?.id) return
+
+    fetchNotifications()
 
     // Escuchar nuevas en tiempo real
     const channel = supabase
@@ -51,5 +55,5 @@ export function useNotifications() {
 
   const unreadCount = notifications.filter(n => !n.read).length
 
-  return { notifications, unreadCount, markAllRead, markRead }
+  return { notifications, unreadCount, markAllRead, markRead, refetch: fetchNotifications }
 }

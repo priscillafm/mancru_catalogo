@@ -11,7 +11,7 @@ import Brands from './Brands'
 import Products from './Products'
 import Sync from './Sync'
 import Users from './Users'
-import ImportIto from './ImportIto'
+import ImportExcel from './ImportExcel'
 import Settings from './Settings'
 import SuperAdmin from './SuperAdmin'
 
@@ -20,7 +20,7 @@ const NAV = [
   { to: 'brands',     label: 'Marcas',        Icon: IconBrands,    shapeFill: true },
   { to: 'products',   label: 'Productos',     Icon: IconProducts,  shapeFill: true },
   { to: 'sync',       label: 'Sincronizar',   Icon: IconSync,      shapeFill: false },
-  { to: 'import-ito', label: 'Importar',      Icon: IconImport,    shapeFill: false },
+  { to: 'import',     label: 'Importar',      Icon: IconImport,    shapeFill: false },
   { to: 'users',      label: 'Usuarios',      Icon: IconUsers,     shapeFill: true },
   { to: 'settings',   label: 'Config',        Icon: IconSettings,  shapeFill: false },
 ]
@@ -66,7 +66,7 @@ export default function AdminLayout() {
             <span style={{ fontSize: 13, fontWeight: 700 }}>Admin</span>
             <span style={{ fontSize: 12, color: 'var(--text3)', marginLeft: 4 }}>· {company?.name ?? '—'}</span>
           </div>
-          <button onClick={() => navigate('/')} style={{ ...iconBtn, fontSize: 12, padding: '6px 10px', gap: 4 }}>
+          <button onClick={() => navigate('/app')} style={{ ...iconBtn, fontSize: 12, padding: '6px 10px', gap: 4 }}>
             ← Catálogo
           </button>
         </header>
@@ -114,7 +114,7 @@ export default function AdminLayout() {
             )}
           </nav>
           <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)' }}>
-            <button onClick={() => { navigate('/'); setDrawerOpen(false) }}
+            <button onClick={() => { navigate('/app'); setDrawerOpen(false) }}
               style={{ fontSize: 12, color: 'var(--text3)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
               ← Volver al catálogo
             </button>
@@ -128,7 +128,7 @@ export default function AdminLayout() {
             <Route path="brands"     element={<Brands />} />
             <Route path="products"   element={<Products />} />
             <Route path="sync"       element={<Sync />} />
-            <Route path="import-ito" element={<ImportIto />} />
+            <Route path="import"     element={<ImportExcel />} />
             <Route path="users"      element={<Users />} />
             <Route path="settings"   element={<Settings />} />
             {isSuperAdmin && <Route path="super" element={<SuperAdmin />} />}
@@ -187,7 +187,7 @@ export default function AdminLayout() {
           </div>
         )}
         <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)' }}>
-          <NavLink to="/" style={{ fontSize: 12, color: 'var(--text3)', textDecoration: 'none' }}>
+          <NavLink to="/app" style={{ fontSize: 12, color: 'var(--text3)', textDecoration: 'none' }}>
             ← Volver al catálogo
           </NavLink>
         </div>
@@ -199,7 +199,7 @@ export default function AdminLayout() {
           <Route path="brands"     element={<Brands />} />
           <Route path="products"   element={<Products />} />
           <Route path="sync"       element={<Sync />} />
-          <Route path="import-ito" element={<ImportIto />} />
+          <Route path="import"     element={<ImportExcel />} />
           <Route path="users"      element={<Users />} />
           <Route path="settings"   element={<Settings />} />
           {isSuperAdmin && <Route path="super" element={<SuperAdmin />} />}

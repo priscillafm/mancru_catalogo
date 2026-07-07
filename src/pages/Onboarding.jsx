@@ -185,7 +185,7 @@ export default function OnboardingPage() {
                 Ya tenés tu primera marca y producto cargados.
                 Ahora creá tu primer catálogo y compartilo con un cliente.
               </p>
-              <button onClick={() => navigate('/')} style={primaryBtn}>
+              <button onClick={() => navigate('/app')} style={primaryBtn}>
                 Ir al catálogo →
               </button>
               <button onClick={() => navigate('/admin/products')} style={skipBtn}>

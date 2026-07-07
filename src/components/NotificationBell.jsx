@@ -1,24 +1,35 @@
 import { useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { useNotifications } from '@/hooks/useNotifications'
 
 export default function NotificationBell() {
-  const { notifications, unreadCount, markAllRead, markRead } = useNotifications()
+  const { notifications, unreadCount, markAllRead, markRead, refetch } = useNotifications()
   const [open, setOpen] = useState(false)
+  const [pos, setPos] = useState({ top: 0, left: 0 })
   const ref = useRef(null)
   const navigate = useNavigate()
 
-  useEffect(() => {
-    function handleClick(e) {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false)
-    }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [])
+  // useEffect(() => {
+  //   function handleClick(e) {
+  //     if (ref.current && !ref.current.contains(e.target)) setOpen(false)
+  //   }
+  //   document.addEventListener('mousedown', handleClick)
+  //   return () => document.removeEventListener('mousedown', handleClick)
+  // }, [])
 
   function handleOpen() {
-    setOpen(p => !p)
-    if (!open && unreadCount > 0) markAllRead()
+    const opening = !open
+    alert('click! open=' + opening)
+    if (opening && ref.current) {
+      const rect = ref.current.getBoundingClientRect()
+      setPos({ top: rect.bottom + 8, left: Math.max(8, rect.right - 320) })
+    }
+    setOpen(opening)
+    if (opening) {
+      refetch()
+      if (unreadCount > 0) setTimeout(() => markAllRead(), 500)
+    }
   }
 
   function handleNotifClick(n) {
@@ -51,12 +62,12 @@ export default function NotificationBell() {
         )}
       </button>
 
-      {open && (
+      {open && createPortal(
         <div style={{
-          position: 'absolute', right: 0, top: 'calc(100% + 8px)',
+          position: 'fixed', top: pos.top, left: pos.left,
           width: 320, background: 'var(--surface)',
           border: '1px solid var(--border)', borderRadius: 12,
-          boxShadow: 'var(--shadow)', zIndex: 500, overflow: 'hidden',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.4)', zIndex: 9999, overflow: 'hidden',
         }}>
           <div style={{
             padding: '12px 16px', borderBottom: '1px solid var(--border)',
@@ -108,7 +119,8 @@ export default function NotificationBell() {
               ))
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )

@@ -78,7 +78,7 @@ export default function CatalogsPage() {
           <h1 style={{ fontSize: 15, fontWeight: 700 }}>Mis catálogos</h1>
         </div>
         <nav style={{ flex: 1, padding: '8px 6px' }}>
-          <button className="brand-btn" onClick={() => navigate('/')}>
+          <button className="brand-btn" onClick={() => navigate('/app')}>
             ← Volver al catálogo
           </button>
         </nav>

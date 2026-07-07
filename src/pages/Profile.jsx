@@ -55,7 +55,7 @@ export default function ProfilePage() {
       <div style={{ width: '100%', maxWidth: 440, margin: '0 auto' }}>
 
         {/* Back */}
-        <button onClick={() => navigate('/')} style={{
+        <button onClick={() => navigate('/app')} style={{
           background: 'none', border: 'none', color: 'var(--text3)', fontSize: 13,
           cursor: 'pointer', marginBottom: 16, padding: 0, display: 'flex', alignItems: 'center', gap: 6,
         }}>

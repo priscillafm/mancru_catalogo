@@ -213,9 +213,9 @@ export default function Dashboard() {
       <div>
         <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>Acciones rápidas</h3>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          <QuickAction icon="📄" label="Nuevo catálogo" onClick={() => navigate('/')} primary />
+          <QuickAction icon="📄" label="Nuevo catálogo" onClick={() => navigate('/app')} primary />
           <QuickAction icon="📦" label="Ver productos"  onClick={() => navigate('/admin/products')} />
-          <QuickAction icon="📥" label="Importar Excel" onClick={() => navigate('/admin/import-ito')} />
+          <QuickAction icon="📥" label="Importar Excel" onClick={() => navigate('/admin/import')} />
           <QuickAction icon="👥" label="Usuarios"       onClick={() => navigate('/admin/users')} />
         </div>
       </div>

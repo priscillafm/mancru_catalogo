@@ -36,7 +36,7 @@ export default function ResetPasswordPage() {
             <div style={{ background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.3)', borderRadius: 10, padding: '14px 16px', marginBottom: 20 }}>
               <p style={{ fontSize: 13, color: 'var(--success)', margin: 0 }}>✓ Contraseña actualizada correctamente.</p>
             </div>
-            <button onClick={() => navigate('/')} style={primaryBtn}>Ir al catálogo</button>
+            <button onClick={() => navigate('/app')} style={primaryBtn}>Ir al catálogo</button>
           </div>
         ) : (
           <form onSubmit={handleSubmit}>

@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/auth.store'
+import LandingPage from '@/pages/Landing'
 import LoginPage from '@/pages/Login'
 import RegisterPage from '@/pages/Register'
 import OnboardingPage from '@/pages/Onboarding'
@@ -14,9 +15,9 @@ import PublicCatalog from '@/pages/PublicCatalog'
 function PrivateRoute({ children, requireAdmin = false }) {
   const { session, membership, loading } = useAuthStore()
   if (loading) return <Spinner />
-  if (!session) return <Navigate to="/login" replace />
+  if (!session) return <Navigate to="/" replace />
   if (requireAdmin && !['super_admin','company_admin'].includes(membership?.role)) {
-    return <Navigate to="/" replace />
+    return <Navigate to="/app" replace />
   }
   return children
 }
@@ -35,20 +36,17 @@ export default function App() {
 
   return (
     <Routes>
-      <Route path="/c/:id"           element={<PublicCatalog />} />
+      <Route path="/"               element={<LandingPage />} />
+      <Route path="/c/:id"          element={<PublicCatalog />} />
       <Route path="/login"          element={<LoginPage />} />
       <Route path="/register"       element={<RegisterPage />} />
       <Route path="/onboarding"     element={<PrivateRoute><OnboardingPage /></PrivateRoute>} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/profile"        element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
       <Route path="/catalogs"       element={<PrivateRoute><CatalogsPage /></PrivateRoute>} />
-      <Route path="/" element={
-        <PrivateRoute><CatalogPage /></PrivateRoute>
-      } />
-      <Route path="/admin/*" element={
-        <PrivateRoute requireAdmin><AdminLayout /></PrivateRoute>
-      } />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="/app"            element={<PrivateRoute><CatalogPage /></PrivateRoute>} />
+      <Route path="/admin/*"        element={<PrivateRoute requireAdmin><AdminLayout /></PrivateRoute>} />
+      <Route path="*"               element={<Navigate to="/" replace />} />
     </Routes>
   )
 }
