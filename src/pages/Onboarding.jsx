@@ -32,9 +32,11 @@ export default function OnboardingPage() {
   async function handleStep2() {
     if (!brandName.trim()) { setError('Ingresá el nombre de tu marca'); return }
     setSaving(true); setError('')
+    const slug = brandName.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now()
     const { error: err } = await supabase.from('brands').insert({
       company_id: companyId,
       name:       brandName.trim(),
+      slug,
       color:      brandColor,
       active:     true,
     })
