@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { useNavigate } from 'react-router-dom'
 import { useNotifications } from '@/hooks/useNotifications'
+import Icon from '@/components/Icon'
 
 export default function NotificationBell() {
   const { notifications, unreadCount, markAllRead, markRead, refetch } = useNotifications()
@@ -10,17 +11,16 @@ export default function NotificationBell() {
   const ref = useRef(null)
   const navigate = useNavigate()
 
-  // useEffect(() => {
-  //   function handleClick(e) {
-  //     if (ref.current && !ref.current.contains(e.target)) setOpen(false)
-  //   }
-  //   document.addEventListener('mousedown', handleClick)
-  //   return () => document.removeEventListener('mousedown', handleClick)
-  // }, [])
+  useEffect(() => {
+    function handleClick(e) {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
 
   function handleOpen() {
     const opening = !open
-    alert('click! open=' + opening)
     if (opening && ref.current) {
       const rect = ref.current.getBoundingClientRect()
       setPos({ top: rect.bottom + 8, left: Math.max(8, rect.right - 320) })
@@ -101,8 +101,8 @@ export default function NotificationBell() {
                   onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-h)'}
                   onMouseLeave={e => e.currentTarget.style.background = n.read ? 'transparent' : 'color-mix(in srgb, var(--accent) 6%, transparent)'}
                 >
-                  <span style={{ fontSize: 16, flexShrink: 0 }}>
-                    {n.type === 'catalog_view' ? '👁' : '🔔'}
+                  <span style={{ flexShrink: 0, color: 'var(--text3)', display: 'flex', alignItems: 'center' }}>
+                    {n.type === 'catalog_view' ? <Icon name="view" size={16} /> : '🔔'}
                   </span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13, color: 'var(--text)', lineHeight: 1.4 }}>{n.message}</div>

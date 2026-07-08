@@ -108,14 +108,14 @@ export default function Settings() {
         <div>
           <label style={labelStyle}>Nombre de empresa</label>
           <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-            style={inputStyle} placeholder="Mancru" />
+            style={inputStyle} placeholder="Mi empresa" />
         </div>
 
         {/* Website */}
         <div>
           <label style={labelStyle}>Sitio web</label>
           <input value={form.website} onChange={e => setForm(f => ({ ...f, website: e.target.value }))}
-            style={inputStyle} placeholder="www.mancru.com" />
+            style={inputStyle} placeholder="www.tuempresa.com" />
           <p style={{ fontSize: 11, color: 'var(--text3)', marginTop: 4 }}>
             Aparece en la esquina derecha del encabezado PDF.
           </p>

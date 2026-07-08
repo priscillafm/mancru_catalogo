@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/auth.store'
 import { PotatoMark } from '@/components/PotatoLogo'
+import Icon from '@/components/Icon'
 
 const STEPS = [
   { id: 1, label: 'Bienvenida' },
@@ -30,18 +31,20 @@ export default function OnboardingPage() {
   const [productPrice, setProductPrice] = useState('')
 
   async function handleStep2() {
-    if (!brandName.trim()) { setError('Ingresá el nombre de tu marca'); return }
-    setSaving(true); setError('')
-    const slug = brandName.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now()
-    const { error: err } = await supabase.from('brands').insert({
-      company_id: companyId,
-      name:       brandName.trim(),
-      slug,
-      color:      brandColor,
-      active:     true,
-    })
-    setSaving(false)
-    if (err) { setError(err.message); return }
+    // Si hay nombre de marca, la crea; si no, pasa igual (productos genéricos)
+    if (brandName.trim()) {
+      setSaving(true); setError('')
+      const slug = brandName.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now()
+      const { error: err } = await supabase.from('brands').insert({
+        company_id: companyId,
+        name:       brandName.trim(),
+        slug,
+        color:      brandColor,
+        active:     true,
+      })
+      setSaving(false)
+      if (err) { setError(err.message); return }
+    }
     setStep(3)
   }
 
@@ -49,18 +52,22 @@ export default function OnboardingPage() {
     if (!productName.trim()) { setError('Ingresá el nombre del producto'); return }
     setSaving(true); setError('')
 
-    // Buscar la marca recién creada
-    const { data: brand } = await supabase
-      .from('brands')
-      .select('id')
-      .eq('company_id', companyId)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single()
+    // Si el usuario creó una marca en el paso 2, la asociamos
+    let brandId = null
+    if (brandName.trim()) {
+      const { data: brand } = await supabase
+        .from('brands')
+        .select('id')
+        .eq('company_id', companyId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single()
+      brandId = brand?.id ?? null
+    }
 
     const { error: err } = await supabase.from('products').insert({
       company_id: companyId,
-      brand_id:   brand?.id,
+      brand_id:   brandId,
       name:       productName.trim(),
       sku:        productSku.trim() || `SKU-${Date.now()}`,
       price:      parseFloat(productPrice) || null,
@@ -104,7 +111,7 @@ export default function OnboardingPage() {
           {/* Step 1 — Bienvenida */}
           {step === 1 && (
             <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 48, marginBottom: 16 }}>👋</div>
+              <div style={{ marginBottom: 16, color: 'var(--accent)' }}><Icon name="welcome" size={48} /></div>
               <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 10 }}>
                 Bienvenido a Potato
               </h1>
@@ -122,9 +129,9 @@ export default function OnboardingPage() {
           {/* Step 2 — Marca */}
           {step === 2 && (
             <div>
-              <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>Tu primera marca</h2>
+              <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>Tu primera marca <span style={{ fontSize: 12, fontWeight: 400, color: 'var(--text3)' }}>(opcional)</span></h2>
               <p style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 24 }}>
-                Puede ser el nombre de tu empresa o una línea de productos.
+                Si vendés productos de varias marcas, podés organizarlos así. Si preferís productos genéricos, dejalo en blanco.
               </p>
 
               <Field label="Nombre de la marca" value={brandName} onChange={e => setBrandName(e.target.value)} placeholder="Ej: Nike, Línea Premium, Marca XYZ" autoFocus />
@@ -148,7 +155,7 @@ export default function OnboardingPage() {
               {error && <p style={{ fontSize: 12, color: 'var(--danger)', marginBottom: 12 }}>{error}</p>}
 
               <button onClick={handleStep2} disabled={saving} style={primaryBtn}>
-                {saving ? 'Guardando...' : 'Continuar →'}
+                {saving ? 'Guardando...' : brandName.trim() ? 'Crear marca y continuar →' : 'Continuar sin marca →'}
               </button>
             </div>
           )}
@@ -179,7 +186,7 @@ export default function OnboardingPage() {
           {/* Step 4 — Listo */}
           {step === 4 && (
             <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 48, marginBottom: 16 }}>🎉</div>
+              <div style={{ marginBottom: 16, color: 'var(--accent)' }}><Icon name="celebrate" size={48} /></div>
               <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 10 }}>
                 ¡Todo listo!
               </h2>

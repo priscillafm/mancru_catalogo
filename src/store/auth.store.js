@@ -34,7 +34,7 @@ export const useAuthStore = create((set, get) => ({
       .select('*, companies(*)')
       .eq('user_id', userId)
       .eq('active', true)
-      .order('joined_at', { ascending: true })
+      .order('created_at', { ascending: true })
       .limit(1)
       .single()
 

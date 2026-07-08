@@ -72,13 +72,21 @@ export default function LandingPage() {
           alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center',
         }}>
           {[
-            { n: '1', icon: '📦', title: 'Cargás tus productos', desc: 'Desde un Excel o uno por uno. Con foto, SKU y precio.' },
-            { n: '2', icon: '🗂', title: 'Armás el catálogo', desc: 'Seleccionás los productos, ajustás precios y lo nombrás.' },
-            { n: '3', icon: '🔗', title: 'Compartís el link', desc: 'Tu cliente abre el catálogo desde su celular.' },
-            { n: '4', icon: '💬', title: 'El pedido llega', desc: 'El cliente selecciona y te manda el pedido por WhatsApp.' },
+            { n: '1', title: 'Cargás tus productos', desc: 'Desde un Excel o uno por uno. Con foto, SKU y precio.' },
+            { n: '2', title: 'Armás el catálogo', desc: 'Seleccionás los productos, ajustás precios y lo nombrás.' },
+            { n: '3', title: 'Compartís el link', desc: 'Tu cliente abre el catálogo desde su celular.' },
+            { n: '4', title: 'El pedido llega', desc: 'El cliente selecciona y te manda el pedido por WhatsApp.' },
           ].map(s => (
             <div key={s.n} style={{ textAlign: 'center', width: 160 }}>
-              <div style={{ fontSize: 32, marginBottom: 10 }}>{s.icon}</div>
+              <div style={{
+                width: 40, height: 40, borderRadius: '50%',
+                background: 'color-mix(in srgb, var(--accent) 15%, transparent)',
+                color: 'var(--accent)', fontSize: 18, fontWeight: 800,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                margin: '0 auto 12px',
+              }}>
+                {s.n}
+              </div>
               <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6 }}>{s.title}</div>
               <div style={{ fontSize: 12, color: 'var(--text3)', lineHeight: 1.5 }}>{s.desc}</div>
             </div>
@@ -93,18 +101,20 @@ export default function LandingPage() {
         </h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 16 }}>
           {[
-            { icon: '📄', title: 'PDF profesional', desc: 'Generá catálogos con logo, precios y tu marca en segundos.' },
-            { icon: '🔗', title: 'Link público', desc: 'Compartí un link que cualquiera puede ver sin crear cuenta.' },
-            { icon: '💬', title: 'Pedidos por WhatsApp', desc: 'El cliente selecciona y te manda la lista directo a tu número.' },
-            { icon: '👁', title: 'Seguimiento de vistas', desc: 'Sabé cuándo tu cliente abrió el catálogo y cuántas veces.' },
-            { icon: '🏷', title: 'Múltiples marcas', desc: 'Organizá tus productos por marca y armá catálogos combinados.' },
-            { icon: '📥', title: 'Importar desde Excel', desc: 'Subí tu lista de precios y la convertimos en catálogo automáticamente.' },
+            { icon: 'document', title: 'PDF profesional', desc: 'Generá catálogos con logo, precios y tu marca en segundos.' },
+            { icon: 'link',     title: 'Link público', desc: 'Compartí un link que cualquiera puede ver sin crear cuenta.' },
+            { icon: 'message',  title: 'Pedidos por WhatsApp', desc: 'El cliente selecciona y te manda la lista directo a tu número.' },
+            { icon: 'view',     title: 'Seguimiento de vistas', desc: 'Sabé cuándo tu cliente abrió el catálogo y cuántas veces.' },
+            { icon: 'tag',      title: 'Múltiples marcas', desc: 'Organizá tus productos por marca y armá catálogos combinados.' },
+            { icon: 'table',    title: 'Importar desde Excel', desc: 'Subí tu lista de precios y la convertimos en catálogo automáticamente.' },
           ].map(f => (
             <div key={f.title} style={{
               background: 'var(--surface)', border: '1px solid var(--border)',
               borderRadius: 14, padding: '20px 22px',
             }}>
-              <div style={{ fontSize: 24, marginBottom: 10 }}>{f.icon}</div>
+              <div style={{ marginBottom: 10, color: 'var(--accent)' }}>
+                <LandingIcon name={f.icon} />
+              </div>
               <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 6 }}>{f.title}</div>
               <div style={{ fontSize: 13, color: 'var(--text3)', lineHeight: 1.5 }}>{f.desc}</div>
             </div>
@@ -157,7 +167,7 @@ export default function LandingPage() {
           background: 'var(--surface)', border: '1px solid var(--border)',
           borderRadius: 20, padding: '48px 32px',
         }}>
-          <div style={{ fontSize: 36, marginBottom: 16 }}>🥔</div>
+          <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'center' }}><PotatoMark size={48} /></div>
           <h2 style={{ fontSize: 24, fontWeight: 800, marginBottom: 10, letterSpacing: '-0.5px' }}>
             Tu primer catálogo en 5 minutos
           </h2>
@@ -186,4 +196,22 @@ const ctaBtn = {
   background: 'var(--accent)', color: 'var(--accent-text)',
   textDecoration: 'none', fontWeight: 700, fontSize: 13,
   padding: '9px 18px', borderRadius: 9, display: 'inline-block',
+}
+
+const svgProps = {
+  width: 24, height: 24, viewBox: '0 0 24 24',
+  fill: 'none', stroke: 'currentColor', strokeWidth: '2',
+  strokeLinecap: 'round', strokeLinejoin: 'round',
+}
+
+function LandingIcon({ name }) {
+  const icons = {
+    document: <svg {...svgProps}><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>,
+    link:     <svg {...svgProps}><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>,
+    message:  <svg {...svgProps}><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>,
+    view:     <svg {...svgProps}><path d="M2.06 12.35a1 1 0 0 1 0-.7 10.75 10.75 0 0 1 19.88 0 1 1 0 0 1 0 .7 10.75 10.75 0 0 1-19.88 0"/><circle cx="12" cy="12" r="3"/></svg>,
+    tag:      <svg {...svgProps}><path d="M9.5 2H4a2 2 0 0 0-2 2v5.5l9.8 9.8a2 2 0 0 0 2.83 0l5.17-5.17a2 2 0 0 0 0-2.83z"/><circle cx="6.5" cy="6.5" r="1.5"/></svg>,
+    table:    <svg {...svgProps}><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/></svg>,
+  }
+  return icons[name] ?? null
 }

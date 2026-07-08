@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/auth.store'
 import ImageCropModal from '@/components/ImageCropModal'
+import Icon from '@/components/Icon'
 import { usePlanLimits } from '@/hooks/usePlanLimits'
 import PlanLimitBar from '@/components/PlanLimitBar'
 
@@ -55,16 +56,22 @@ export default function Products() {
         .select('id, sku, name, active, image_url, stock, brand_id, category_id, brands(name,color), categories(name)', { count: 'exact' })
         .eq('company_id', companyId)
         .is('deleted_at', null)
-        .order('brands(name)', { ascending: true })
         .order('name', { ascending: true })
         .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1)
 
-      if (search)     q = q.ilike('name', `%${search}%`)
-      if (brandId !== 'all')    q = q.eq('brand_id', brandId)
+      if (search)              q = q.ilike('name', `%${search}%`)
+      if (brandId === 'none')  q = q.is('brand_id', null)
+      else if (brandId !== 'all') q = q.eq('brand_id', brandId)
       if (categoryId !== 'all') q = q.eq('category_id', categoryId)
 
       const { data, count } = await q
-      return { rows: data ?? [], total: count ?? 0 }
+      // Ordenar por nombre de marca client-side (null brand = "Sin marca" al final)
+      const sorted = (data ?? []).slice().sort((a, b) => {
+        const ba = a.brands?.name ?? 'zzz'
+        const bb = b.brands?.name ?? 'zzz'
+        return ba.localeCompare(bb) || a.name.localeCompare(b.name)
+      })
+      return { rows: sorted, total: count ?? 0 }
     },
     enabled: !!companyId,
   })
@@ -136,11 +143,12 @@ export default function Products() {
         <div style={{ padding: '0 14px 10px', fontSize: 10, fontWeight: 700, color: 'var(--text3)', letterSpacing: '.08em', textTransform: 'uppercase' }}>
           Marcas
         </div>
-        <BrandBtn label="Todas" color="var(--accent)" active={brandId === 'all'} onClick={() => { setBrandId('all'); setPage(0) }} count={null} />
+        <BrandBtn label="Todas" color="var(--accent)" active={brandId === 'all'} onClick={() => { setBrandId('all'); setPage(0) }} />
         {brands.map(b => (
           <BrandBtn key={b.id} label={b.name} color={b.color} active={brandId === b.id}
             onClick={() => { setBrandId(b.id); setPage(0) }} />
         ))}
+        <BrandBtn label="Sin marca" color="var(--text3)" active={brandId === 'none'} onClick={() => { setBrandId('none'); setPage(0) }} />
       </div>
 
       {/* ── Main content ── */}
@@ -182,12 +190,12 @@ export default function Products() {
               ) : rows.length === 0 ? (
                 <tr><td colSpan={7} style={{ padding: 32, textAlign: 'center', color: 'var(--text3)' }}>Sin resultados</td></tr>
               ) : rows.map((p, i) => {
-                const prevBrand = i > 0 ? rows[i-1].brands?.name : null
-                const curBrand  = p.brands?.name ?? '—'
+                const prevBrand = i > 0 ? (rows[i-1].brands?.name ?? null) : undefined
+                const curBrand  = p.brands?.name ?? null
                 const showBrandRow = curBrand !== prevBrand
                 return [
                   showBrandRow && (
-                    <tr key={`brand-${p.brand_id}`}>
+                    <tr key={`brand-${p.brand_id ?? 'none'}-${i}`}>
                       <td colSpan={7} style={{
                         padding: '8px 14px 4px',
                         fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase',
@@ -195,7 +203,7 @@ export default function Products() {
                         borderBottom: `2px solid ${p.brands?.color ?? 'var(--border)'}22`,
                         background: 'var(--bg-panel)',
                       }}>
-                        {curBrand}
+                        {curBrand ?? 'Sin marca'}
                       </td>
                     </tr>
                   ),
@@ -205,7 +213,7 @@ export default function Products() {
                     <td style={tdStyle}>
                       {p.image_url
                         ? <img src={p.image_url} alt="" style={{ width: 38, height: 38, objectFit: 'contain', borderRadius: 4, background: 'var(--bg-panel)' }} onError={e => e.target.style.display='none'} />
-                        : <span style={{ display:'inline-flex', width:38, height:38, background:'var(--surface-h)', borderRadius:4, alignItems:'center', justifyContent:'center', color:'var(--text3)', fontSize:16 }}>📷</span>
+                        : <span style={{ display:'inline-flex', width:38, height:38, background:'var(--surface-h)', borderRadius:4, alignItems:'center', justifyContent:'center', color:'var(--text3)' }}><Icon name="image" size={16} /></span>
                       }
                     </td>
                     <td style={tdStyle}><code style={{ fontSize: 11, color: 'var(--accent)' }}>{p.sku}</code></td>
@@ -228,8 +236,8 @@ export default function Products() {
                       </span>
                     </td>
                     <td style={{ ...tdStyle, whiteSpace: 'nowrap' }}>
-                      <button onClick={() => setEditing({ ...p })} style={btnIcon} title="Editar">✏️</button>
-                      <button onClick={() => setConfirmDel(p)} style={{ ...btnIcon, marginLeft: 4 }} title="Eliminar">🗑️</button>
+                      <button onClick={() => setEditing({ ...p })} style={btnIcon} title="Editar">Editar</button>
+                      <button onClick={() => setConfirmDel(p)} style={{ ...btnIcon, marginLeft: 4, color: '#ef4444', borderColor: 'rgba(239,68,68,.3)' }} title="Eliminar">Eliminar</button>
                     </td>
                   </tr>
                 ]
@@ -264,7 +272,7 @@ export default function Products() {
             <div style={{ width: 64, height: 64, borderRadius: 8, background: 'var(--bg-panel)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
               {editing.image_url
                 ? <img src={editing.image_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                : <span style={{ fontSize: 22, color: 'var(--text3)' }}>📷</span>
+                : <span style={{ color: 'var(--text3)' }}><Icon name="image" size={22} /></span>
               }
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -282,6 +290,12 @@ export default function Products() {
 
           <label style={labelStyle}>Nombre</label>
           <input value={editing.name} onChange={e => setEditing(p => ({ ...p, name: e.target.value }))} style={inputFull} />
+
+          <label style={labelStyle}>Marca</label>
+          <select value={editing.brand_id ?? ''} onChange={e => setEditing(p => ({ ...p, brand_id: e.target.value || null }))} style={inputFull}>
+            <option value="">— Sin marca —</option>
+            {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+          </select>
 
           <label style={labelStyle}>Categoría</label>
           <select value={editing.category_id ?? ''} onChange={e => setEditing(p => ({ ...p, category_id: e.target.value || null }))} style={inputFull}>
@@ -301,7 +315,7 @@ export default function Products() {
           <div style={{ display: 'flex', gap: 8, marginTop: 20, justifyContent: 'flex-end' }}>
             <button onClick={() => setEditing(null)} style={btnSecondary}>Cancelar</button>
             <button
-              onClick={() => updateProduct.mutate({ id: editing.id, name: editing.name, category_id: editing.category_id, stock: editing.stock, active: editing.active, image_url: editing.image_url ?? null })}
+              onClick={() => updateProduct.mutate({ id: editing.id, name: editing.name, brand_id: editing.brand_id ?? null, category_id: editing.category_id, stock: editing.stock, active: editing.active, image_url: editing.image_url ?? null })}
               disabled={updateProduct.isPending}
               style={btnPrimary}>
               {updateProduct.isPending ? 'Guardando...' : 'Guardar'}

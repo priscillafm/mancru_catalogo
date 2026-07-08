@@ -16,6 +16,7 @@ export default function RegisterPage() {
     e.preventDefault()
     if (step === 1) { setStep(2); return }
 
+    if (password.length < 8) { setError('La contraseña debe tener al menos 8 caracteres'); return }
     setLoading(true); setError('')
     try {
       // 1. Crear usuario en Supabase Auth
@@ -36,13 +37,12 @@ export default function RegisterPage() {
       })
       if (signInErr) throw new Error('Usuario creado pero no se pudo iniciar sesión: ' + signInErr.message)
 
-      // 2. Crear empresa
+      // 2. Crear empresa — generamos el ID acá para no necesitar SELECT después (evita problema de RLS)
+      const companyId = crypto.randomUUID()
       const slug = company.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now()
-      const { data: companyData, error: companyErr } = await supabase
+      const { error: companyErr } = await supabase
         .from('companies')
-        .insert({ name: company.trim(), slug, plan: 'basic' })
-        .select('id')
-        .single()
+        .insert({ id: companyId, name: company.trim(), slug, plan: 'basic' })
       if (companyErr) throw companyErr
 
       // 3. Crear usuario en tabla pública
@@ -55,7 +55,7 @@ export default function RegisterPage() {
       // 4. Crear membresía
       const { error: memberErr } = await supabase.from('user_memberships').insert({
         user_id:    userId,
-        company_id: companyData.id,
+        company_id: companyId,
         role:       'company_admin',
         active:     true,
       })
@@ -113,7 +113,7 @@ export default function RegisterPage() {
             {step === 1 ? (
               <>
                 <Field label="Email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="vos@tuempresa.com" />
-                <Field label="Contraseña" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Mínimo 6 caracteres" />
+                <Field label="Contraseña" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Mínimo 8 caracteres" />
               </>
             ) : (
               <Field label="Nombre de la empresa" type="text" value={company} onChange={e => setCompany(e.target.value)} placeholder="Ej: Distribuidora García" autoFocus />

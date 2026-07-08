@@ -3,6 +3,7 @@ import { useAuthStore } from '@/store/auth.store'
 import { supabase } from '@/lib/supabase'
 import ExcelJS from 'exceljs'
 import { usePlanLimits } from '@/hooks/usePlanLimits'
+import Icon from '@/components/Icon'
 
 /**
  * Importación genérica desde Excel.
@@ -179,23 +180,26 @@ export default function ImportExcel() {
 
         if (existingId) {
           toUpdate.push({ id: existingId, name: row.name, stock: row.stock, active: true,
-            ...(row.price !== null ? { price: row.price } : {}) })
+            ...(row.price !== null ? { price: row.price } : {}),
+            ...(brandId ? { brand_id: brandId } : {}) })
         } else {
-          if (!brandId) { skipped++; continue }
-          toInsert.push({ company_id: companyId, sku: row.sku, name: row.name, stock: row.stock, brand_id: brandId, active: true,
+          toInsert.push({ company_id: companyId, sku: row.sku, name: row.name, stock: row.stock,
+            brand_id: brandId ?? null, active: true,
             ...(row.price !== null ? { price: row.price } : {}) })
         }
       }
 
       // Enforce plan limit
       const remaining = limits.max_products === null ? Infinity : Math.max(0, limits.max_products - usage.products)
+      let skippedByPlan = 0
       if (toInsert.length > remaining) {
-        const trimmed = toInsert.length - remaining
+        skippedByPlan = toInsert.length - remaining
         toInsert.splice(remaining)
-        addLog(`⚠️ Límite del plan: se omiten ${trimmed} productos nuevos. Actualizaciones continúan igual.`)
+        addLog(`⚠️ Límite del plan: se omiten ${skippedByPlan} productos nuevos. Actualizaciones continúan igual.`)
       }
 
-      addLog(`${toInsert.length} nuevos · ${toUpdate.length} a actualizar · ${skipped} sin marca (omitidos)`)
+      const sinMarca = rows.filter(r => !r.brand).length
+      addLog(`${toInsert.length} nuevos · ${toUpdate.length} a actualizar${sinMarca ? ` · ${sinMarca} sin marca` : ''}${skippedByPlan ? ` · ${skippedByPlan} omitidos por plan` : ''}`)
 
       const BATCH = 100
       let inserted = 0
@@ -216,7 +220,7 @@ export default function ImportExcel() {
         addLog(`  Actualizados ${updated} / ${toUpdate.length}...`)
       }
 
-      addLog(`✅ Listo. ${inserted} creados · ${updated} actualizados · ${skipped} omitidos`)
+      addLog(`✅ Listo. ${inserted} creados · ${updated} actualizados${skippedByPlan ? ` · ${skippedByPlan} omitidos por límite de plan` : ''}`)
       setStep('done')
     } catch (err) {
       addLog('✗ Error inesperado: ' + err.message)
@@ -251,7 +255,7 @@ export default function ImportExcel() {
           onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent)'}
           onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
         >
-          <div style={{ fontSize: 36, marginBottom: 12 }}>📥</div>
+          <div style={{ color: 'var(--text3)', marginBottom: 12, display: 'flex', justifyContent: 'center' }}><Icon name="import" size={36} /></div>
           <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>Seleccioná tu archivo Excel</div>
           <div style={{ fontSize: 12, color: 'var(--text3)' }}>Formatos: .xlsx · .xls</div>
           <input ref={fileRef} type="file" accept=".xlsx,.xls" style={{ display: 'none' }} onChange={handleFile} />

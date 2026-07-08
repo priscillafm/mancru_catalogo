@@ -3,6 +3,7 @@ import { generateCatalogPDF } from '@/utils/pdf'
 import { COVER_STYLES } from '@/utils/coverStyles'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/auth.store'
+import Icon from '@/components/Icon'
 
 export default function PDFPreviewModal({
   brandGroups,
@@ -30,11 +31,11 @@ export default function PDFPreviewModal({
   const [coverColor2, setCoverColor2]   = useState('#D4FF3F')
   const [contacto, setContacto]         = useState('')
   const [clientName, setClientName]     = useState('')
-  const LOGO_WHITE = 'https://wmzqpblqorfuawubryvt.supabase.co/storage/v1/object/public/product-images/00000000-0000-0000-0000-000000000001/logos/mancru-white.svg'
-  const LOGO_COLOR = 'https://www.mancru.com/artworks/artworks_mancru2021comuy/logo.svg'
-  const [logoUrlDark, setLogoUrlDark]   = useState(LOGO_WHITE)
-  const [logoUrlLight, setLogoUrlLight] = useState(LOGO_COLOR)
+  const companyLogoUrl = company?.logo_url ?? ''
+  const [logoUrlDark, setLogoUrlDark]   = useState(companyLogoUrl)
+  const [logoUrlLight, setLogoUrlLight] = useState(companyLogoUrl)
   const [showCoverPanel, setShowCoverPanel] = useState(false)
+  const [unbrandedColor, setUnbrandedColor] = useState('#6366f1')
 
   // Pre-populate prices from saved catalog
   const [prices, setPrices] = useState(() => {
@@ -70,6 +71,7 @@ export default function PDFPreviewModal({
   function buildGroupsWithPrices() {
     return brandGroups.map(g => ({
       ...g,
+      brand: g.brand.id === null ? { ...g.brand, color: unbrandedColor } : g.brand,
       products: g.products.map(p => ({
         ...p,
         _price:    prices[p.id]?.amount   ?? '',
@@ -258,7 +260,7 @@ export default function PDFPreviewModal({
                         logoUrl={coverTheme === 'dark' ? logoUrlDark : (logoUrlLight || logoUrlDark)}
                         clientName={clientName}
                         companyName={company?.name}
-                        website={company?.website ?? 'www.mancru.com'}
+                        website={company?.website ?? ''}
                       />
 
                       {/* ── Dark / Light toggle ── */}
@@ -269,11 +271,7 @@ export default function PDFPreviewModal({
                             { key: 'dark',  label: '● Oscura', bg: '#09090B', fg: '#fff' },
                             { key: 'light', label: '○ Clara',  bg: '#F8F8F8', fg: '#111' },
                           ].map(t => (
-                            <button key={t.key} onClick={() => {
-                              setCoverTheme(t.key)
-                              if (t.key === 'dark')  { setLogoUrlDark(LOGO_WHITE); setLogoUrlLight(LOGO_COLOR) }
-                              if (t.key === 'light') { setLogoUrlDark(LOGO_WHITE); setLogoUrlLight(LOGO_COLOR) }
-                            }} style={{
+                            <button key={t.key} onClick={() => setCoverTheme(t.key)} style={{
                               flex: 1, padding: '8px 0', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 600,
                               background: t.bg, color: t.fg,
                               border: coverTheme === t.key ? `2px solid ${coverColor1}` : '2px solid var(--border)',
@@ -345,29 +343,17 @@ export default function PDFPreviewModal({
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                            <label style={labelStyle}>Logo fondo oscuro (blanco / claro)</label>
-                            <div style={{ display: 'flex', gap: 5 }}>
+                            <label style={labelStyle}>Logo (URL de imagen)</label>
+                            {company?.logo_url && (
                               <button
-                                onClick={() => setLogoUrlDark('https://wmzqpblqorfuawubryvt.supabase.co/storage/v1/object/public/product-images/00000000-0000-0000-0000-000000000001/logos/mancru-white.svg')}
+                                onClick={() => { setLogoUrlDark(company.logo_url); setLogoUrlLight(company.logo_url) }}
                                 style={presetBtn}
-                                title="Logo blanco (fondo oscuro)"
-                              >⬜ Blanco</button>
-                              {company?.logo_url && (
-                                <button
-                                  onClick={() => setLogoUrlDark(company.logo_url)}
-                                  style={presetBtn}
-                                  title="Logo de la empresa (configurado en Ajustes)"
-                                >🏢 Empresa</button>
-                              )}
-                            </div>
+                                title="Usar logo configurado en Ajustes"
+                              >Usar mi logo</button>
+                            )}
                           </div>
-                          <input type="text" placeholder="https://..." value={logoUrlDark}
-                            onChange={e => setLogoUrlDark(e.target.value)} style={inputStyle} />
-                        </div>
-                        <div>
-                          <label style={labelStyle}>Logo fondo claro (color / oscuro) — opcional</label>
-                          <input type="text" placeholder="Usa el mismo si no tenés versión clara" value={logoUrlLight}
-                            onChange={e => setLogoUrlLight(e.target.value)} style={inputStyle} />
+                          <input type="text" placeholder="https://... (dejá vacío para omitir logo)" value={logoUrlDark}
+                            onChange={e => { setLogoUrlDark(e.target.value); setLogoUrlLight(e.target.value) }} style={inputStyle} />
                         </div>
                       </div>
 
@@ -392,40 +378,55 @@ export default function PDFPreviewModal({
           )}
 
           {/* Preview */}
-          {step === 'preview' && brandGroups.map(({ brand, products }) => (
-            <div key={brand.id} style={{ marginBottom: 28 }}>
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14,
-                paddingBottom: 10, borderBottom: `2px solid ${brand.color}`
-              }}>
-                <span style={{ width: 12, height: 12, borderRadius: '50%', background: brand.color }} />
-                <span style={{ fontWeight: 700, fontSize: 14, color: brand.color }}>{brand.name}</span>
-                <span style={{ fontSize: 12, color: 'var(--text3)' }}>{products.length} productos</span>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12 }}>
-                {products.map(p => (
-                  <div key={p.id} style={{
-                    background: '#fff', color: '#111', borderRadius: 8,
-                    padding: 10, textAlign: 'center', border: '1px solid #eee'
-                  }}>
-                    {p.image_url
-                      ? <img src={p.image_url} alt="" style={{ width: '100%', aspectRatio: '1', objectFit: 'contain', marginBottom: 8, borderRadius: 4 }} onError={e => { e.target.style.display = 'none' }} />
-                      : <div style={{ width: '100%', aspectRatio: '1', background: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, marginBottom: 8, borderRadius: 4 }}>📷</div>
-                    }
-                    <div style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 6, background: brand.color, color: brand.text_color ?? '#fff', fontSize: 9, fontWeight: 700, marginBottom: 5, fontFamily: 'monospace' }}>
-                      {p.sku}
-                    </div>
-                    <div style={{ fontSize: 11, fontWeight: 600, lineHeight: 1.3 }}>{p.name}</div>
-                    {prices[p.id]?.amount && (
-                      <div style={{ marginTop: 4, fontSize: 11, color: '#333', fontWeight: 700 }}>
-                        {prices[p.id].currency} {prices[p.id].amount}
+          {step === 'preview' && brandGroups.map(({ brand, products }) => {
+            const isUnbranded = brand.id === null
+            const displayColor = isUnbranded ? unbrandedColor : brand.color
+            return (
+              <div key={brand.id ?? 'unbranded'} style={{ marginBottom: 28 }}>
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14,
+                  paddingBottom: 10, borderBottom: `2px solid ${displayColor}`
+                }}>
+                  <span style={{ width: 12, height: 12, borderRadius: '50%', background: displayColor, flexShrink: 0 }} />
+                  <span style={{ fontWeight: 700, fontSize: 14, color: displayColor }}>{brand.name}</span>
+                  <span style={{ fontSize: 12, color: 'var(--text3)' }}>{products.length} producto{products.length !== 1 ? 's' : ''}</span>
+                  {isUnbranded && (
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto', cursor: 'pointer', fontSize: 12, color: 'var(--text3)' }}>
+                      Color
+                      <input
+                        type="color"
+                        value={unbrandedColor}
+                        onChange={e => setUnbrandedColor(e.target.value)}
+                        style={{ width: 28, height: 28, borderRadius: 6, border: '1px solid var(--border)', cursor: 'pointer', padding: 2 }}
+                      />
+                    </label>
+                  )}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12 }}>
+                  {products.map(p => (
+                    <div key={p.id} style={{
+                      background: '#fff', color: '#111', borderRadius: 8,
+                      padding: 10, textAlign: 'center', border: '1px solid #eee'
+                    }}>
+                      {p.image_url
+                        ? <img src={p.image_url} alt="" style={{ width: '100%', aspectRatio: '1', objectFit: 'contain', marginBottom: 8, borderRadius: 4 }} onError={e => { e.target.style.display = 'none' }} />
+                        : <div style={{ width: '100%', aspectRatio: '1', background: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#aaa', marginBottom: 8, borderRadius: 4 }}><Icon name="image" size={24} /></div>
+                      }
+                      <div style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 6, background: displayColor, color: '#fff', fontSize: 9, fontWeight: 700, marginBottom: 5, fontFamily: 'monospace' }}>
+                        {p.sku}
                       </div>
-                    )}
-                  </div>
-                ))}
+                      <div style={{ fontSize: 11, fontWeight: 600, lineHeight: 1.3 }}>{p.name}</div>
+                      {prices[p.id]?.amount && (
+                        <div style={{ marginTop: 4, fontSize: 11, color: '#333', fontWeight: 700 }}>
+                          {prices[p.id].currency} {prices[p.id].amount}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
 
           {/* Pricing */}
           {step === 'pricing' && (

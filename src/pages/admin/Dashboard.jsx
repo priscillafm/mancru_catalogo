@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/auth.store'
 import { usePlanLimits } from '@/hooks/usePlanLimits'
+import Icon from '@/components/Icon'
 
 export default function Dashboard() {
   const membership = useAuthStore(s => s.membership)
+  const authUser   = useAuthStore(s => s.user)
   const companyId  = membership?.company_id
   const navigate   = useNavigate()
   const { usage, limits, pctProducts, plan } = usePlanLimits()
@@ -94,7 +96,7 @@ export default function Dashboard() {
       {/* Greeting */}
       <div style={{ marginBottom: 24 }}>
         <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>
-          Hola, {membership?.users?.name ?? membership?.companies?.name ?? 'bienvenido'} 👋
+          Hola, {authUser?.name ?? membership?.companies?.name ?? 'bienvenido'} 👋
         </h2>
         <p style={{ fontSize: 13, color: 'var(--text3)' }}>
           Acá tenés un resumen de la actividad de tu empresa.
@@ -103,10 +105,10 @@ export default function Dashboard() {
 
       {/* Stat cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12, marginBottom: 24 }}>
-        <StatCard label="Productos" value={stats?.products ?? '—'} sub={limits.max_products ? `de ${limits.max_products} disponibles` : 'sin límite'} icon="📦" onClick={() => navigate('/admin/products')} />
-        <StatCard label="Marcas" value={stats?.brands ?? '—'} icon="🏷" onClick={() => navigate('/admin/brands')} />
-        <StatCard label="Catálogos" value={stats?.catalogs ?? '—'} sub={`${stats?.sharedCatalogs ?? 0} activos`} icon="📄" onClick={() => navigate('/catalogs')} />
-        <StatCard label="Vistas este mes" value={viewsThisMonth} icon="👁" accent />
+        <StatCard label="Productos" value={stats?.products ?? '—'} sub={limits.max_products ? `de ${limits.max_products} disponibles` : 'sin límite'} icon="products" onClick={() => navigate('/admin/products')} />
+        <StatCard label="Marcas" value={stats?.brands ?? '—'} icon="brands" onClick={() => navigate('/admin/brands')} />
+        <StatCard label="Catálogos" value={stats?.catalogs ?? '—'} sub={`${stats?.sharedCatalogs ?? 0} activos`} icon="document" onClick={() => navigate('/catalogs')} />
+        <StatCard label="Vistas este mes" value={viewsThisMonth} icon="view" accent />
       </div>
 
       {/* Plan usage */}
@@ -154,10 +156,10 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-        {plan === 'free' && (
+        {(plan === 'free' || plan === 'basic') && (
           <div style={{ textAlign: 'center' }}>
             <p style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 8 }}>Más productos,<br />más catálogos</p>
-            <button onClick={() => {}} style={{
+            <button onClick={() => navigate('/')} style={{
               padding: '8px 16px', background: 'var(--accent)', color: 'var(--accent-text)',
               border: 'none', borderRadius: 8, fontWeight: 700, fontSize: 12, cursor: 'pointer',
             }}>
@@ -175,7 +177,7 @@ export default function Dashboard() {
         </div>
 
         {topCatalogs.length === 0 ? (
-          <EmptyCard icon="👁" message="Compartí un catálogo para ver estadísticas de visitas" />
+          <EmptyCard icon="view" message="Compartí un catálogo para ver estadísticas de visitas" />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {topCatalogs.map((cat, i) => (
@@ -213,10 +215,10 @@ export default function Dashboard() {
       <div>
         <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>Acciones rápidas</h3>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          <QuickAction icon="📄" label="Nuevo catálogo" onClick={() => navigate('/app')} primary />
-          <QuickAction icon="📦" label="Ver productos"  onClick={() => navigate('/admin/products')} />
-          <QuickAction icon="📥" label="Importar Excel" onClick={() => navigate('/admin/import')} />
-          <QuickAction icon="👥" label="Usuarios"       onClick={() => navigate('/admin/users')} />
+          <QuickAction icon="document" label="Nuevo catálogo" onClick={() => navigate('/app')} primary />
+          <QuickAction icon="products"  label="Ver productos"  onClick={() => navigate('/admin/products')} />
+          <QuickAction icon="import" label="Importar Excel" onClick={() => navigate('/admin/import')} />
+          <QuickAction icon="users"  label="Usuarios"       onClick={() => navigate('/admin/users')} />
         </div>
       </div>
 
@@ -235,7 +237,7 @@ function StatCard({ label, value, sub, icon, accent, onClick }) {
       onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.transform = 'translateY(0)' }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-        <span style={{ fontSize: 14 }}>{icon}</span>
+        <Icon name={icon} size={15} color="var(--text3)" />
         <span style={{ fontSize: 11, color: 'var(--text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</span>
       </div>
       <div style={{ fontSize: 32, fontWeight: 800, fontVariantNumeric: 'tabular-nums', lineHeight: 1, color: accent ? 'var(--accent)' : 'var(--text)' }}>
@@ -259,7 +261,7 @@ function QuickAction({ icon, label, onClick, primary }) {
       onMouseEnter={e => { if (!primary) e.currentTarget.style.borderColor = 'var(--accent)' }}
       onMouseLeave={e => { if (!primary) e.currentTarget.style.borderColor = 'var(--border)' }}
     >
-      <span>{icon}</span> {label}
+      <Icon name={icon} size={15} /> {label}
     </button>
   )
 }
@@ -280,7 +282,7 @@ function EmptyCard({ icon, message }) {
       background: 'var(--surface)', border: '2px dashed var(--border)',
       borderRadius: 12, padding: '28px 20px', textAlign: 'center',
     }}>
-      <div style={{ fontSize: 28, marginBottom: 8, opacity: 0.4 }}>{icon}</div>
+      <div style={{ marginBottom: 8, opacity: 0.4, color: 'var(--text3)', display: 'flex', justifyContent: 'center' }}><Icon name={icon} size={28} /></div>
       <p style={{ fontSize: 13, color: 'var(--text3)', margin: 0 }}>{message}</p>
     </div>
   )

@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/auth.store'
 import { useNavigate } from 'react-router-dom'
+import Icon from '@/components/Icon'
 import { signOut } from '@/lib/auth'
 import PDFPreviewModal from '@/components/PDFPreviewModal'
 import { PotatoMark } from '@/components/PotatoLogo'
@@ -116,9 +117,12 @@ export default function CatalogPage() {
   const allSelected   = products.length > 0 && products.every(p => selectedMap[p.id])
 
   function buildBrandGroups() {
-    return brands
+    const groups = brands
       .map(brand => ({ brand, products: Object.values(selectedMap).filter(p => p.brand_id === brand.id) }))
       .filter(g => g.products.length > 0)
+    const unbranded = Object.values(selectedMap).filter(p => !p.brand_id)
+    if (unbranded.length > 0) groups.push({ brand: { id: null, name: 'Sin marca', color: null }, products: unbranded })
+    return groups
   }
 
   return (
@@ -207,7 +211,7 @@ export default function CatalogPage() {
           padding: '10px 12px', borderTop: '1px solid var(--border)',
           display: 'flex', gap: 6, alignItems: 'center',
         }}>
-          <button onClick={() => navigate('/catalogs')} style={sideBtn} title="Mis catálogos guardados">📄</button>
+          <button onClick={() => navigate('/catalogs')} style={sideBtn} title="Mis catálogos guardados"><Icon name="catalogs" size={16} /></button>
           {isAdmin && (
             <button onClick={() => navigate('/admin')} style={sideBtn}>Admin</button>
           )}

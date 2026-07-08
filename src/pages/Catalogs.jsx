@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/auth.store'
+import Icon from '@/components/Icon'
 import PDFPreviewModal from '@/components/PDFPreviewModal'
 import { usePlanLimits } from '@/hooks/usePlanLimits'
 
@@ -104,7 +105,7 @@ export default function CatalogsPage() {
                     alert(`Tu plan permite ${limits.max_catalogs_active} catálogo${limits.max_catalogs_active !== 1 ? 's' : ''} compartido${limits.max_catalogs_active !== 1 ? 's' : ''} a la vez. Desactivá uno antes de crear otro, o actualizá tu plan.`)
                     return
                   }
-                  navigate('/')
+                  navigate('/app')
                 }}
                 style={{
                   padding: '9px 18px',
@@ -119,7 +120,7 @@ export default function CatalogsPage() {
               </button>
               {!canAddCatalog && (
                 <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 4 }}>
-                  {usage.catalogs_active}/{limits.max_catalogs_active} activos — <a href="/pricing" style={{ color: 'var(--accent)', textDecoration: 'none' }}>Actualizar plan</a>
+                  {usage.catalogs_active}/{limits.max_catalogs_active} activos — <a href="/" style={{ color: 'var(--accent)', textDecoration: 'none' }}>Actualizar plan</a>
                 </div>
               )}
             </div>
@@ -163,8 +164,8 @@ export default function CatalogsPage() {
                       <div style={{
                         width: 36, height: 36, borderRadius: 8, flexShrink: 0,
                         background: 'var(--surface-h)', display: 'flex', alignItems: 'center',
-                        justifyContent: 'center', fontSize: 18,
-                      }}>📄</div>
+                        justifyContent: 'center', color: 'var(--text3)',
+                      }}><Icon name="document" size={18} /></div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ fontWeight: 700, fontSize: 14 }}>{cat.name}</div>
                         <div style={{ fontSize: 12, color: 'var(--text3)', display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 2 }}>
@@ -173,7 +174,7 @@ export default function CatalogsPage() {
                           <span>{new Date(cat.updated_at).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                           {viewCount > 0 && (
                             <span style={{ color: 'var(--accent)' }}>
-                              👁 {viewCount} vista{viewCount !== 1 ? 's' : ''}
+                                <Icon name="view" size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 3 }} />{viewCount} vista{viewCount !== 1 ? 's' : ''}
                               {lastView && ` · última ${lastView.toLocaleDateString('es-AR', { day: '2-digit', month: 'short' })} ${lastView.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}`}
                             </span>
                           )}

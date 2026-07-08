@@ -109,7 +109,7 @@ export default function AdminLayout() {
             {isSuperAdmin && (
               <NavLink to="/admin/super" onClick={handleNav}
                 style={({ isActive }) => ({ ...navLinkStyle(isActive), marginTop: 8, borderTop: '1px solid var(--border)', paddingTop: 14 })}>
-                {() => <><span>🥔</span><span>Potato Admin</span></>}
+                {() => <><PotatoMark size={16} /><span>Potato Admin</span></>}
               </NavLink>
             )}
           </nav>
@@ -182,7 +182,7 @@ export default function AdminLayout() {
                 ...navLinkStyle(isActive),
                 color: isActive ? 'var(--accent)' : 'var(--text3)',
               })}>
-              {() => <><span>🥔</span><span>Potato Admin</span></>}
+              {() => <><PotatoMark size={16} /><span>Potato Admin</span></>}
             </NavLink>
           </div>
         )}

@@ -249,7 +249,7 @@ async function addCoverPage(doc, company, coverOptions, isLandscape) {
   doc.setFontSize(8)
   setFont(doc, 'ui')
   doc.setTextColor(...textFaint)
-  doc.text(company?.website ?? 'www.mancru.com', centerX, PH - 10, { align: 'center' })
+  if (company?.website) doc.text(company.website, centerX, PH - 10, { align: 'center' })
 
   // ── Contact ──
   if (contacto) {
