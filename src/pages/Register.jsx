@@ -37,9 +37,10 @@ export default function RegisterPage() {
       if (signInErr) throw new Error('Usuario creado pero no se pudo iniciar sesión: ' + signInErr.message)
 
       // 2. Crear empresa
+      const slug = company.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now()
       const { data: companyData, error: companyErr } = await supabase
         .from('companies')
-        .insert({ name: company.trim(), plan: 'free' })
+        .insert({ name: company.trim(), slug, plan: 'free' })
         .select('id')
         .single()
       if (companyErr) throw companyErr
