@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/auth.store'
@@ -13,13 +13,25 @@ const STEPS = [
 ]
 
 export default function OnboardingPage() {
-  const navigate    = useNavigate()
-  const membership  = useAuthStore(s => s.membership)
-  const companyId   = membership?.company_id
+  const navigate        = useNavigate()
+  const membership      = useAuthStore(s => s.membership)
+  const loadMembership  = useAuthStore(s => s.loadMembership)
+  const session         = useAuthStore(s => s.session)
+  const companyId       = membership?.company_id
 
   const [step, setStep]       = useState(1)
   const [saving, setSaving]   = useState(false)
   const [error, setError]     = useState('')
+  const [loadingMembership, setLoadingMembership] = useState(!membership?.company_id)
+
+  // Si el store todavía no tiene la membresía (recién registrado), la recargamos
+  useEffect(() => {
+    if (!membership?.company_id && session?.user?.id) {
+      loadMembership(session.user.id).then(() => setLoadingMembership(false))
+    } else {
+      setLoadingMembership(false)
+    }
+  }, [])
 
   // Step 2 — marca
   const [brandName, setBrandName]   = useState('')
@@ -29,6 +41,12 @@ export default function OnboardingPage() {
   const [productName, setProductName] = useState('')
   const [productSku, setProductSku]   = useState('')
   const [productPrice, setProductPrice] = useState('')
+
+  if (loadingMembership) return (
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)', color: 'var(--text3)', fontSize: 14 }}>
+      Cargando...
+    </div>
+  )
 
   async function handleStep2() {
     // Si hay nombre de marca, la crea; si no, pasa igual (productos genéricos)
