@@ -40,7 +40,7 @@ export default function RegisterPage() {
       const slug = company.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now()
       const { data: companyData, error: companyErr } = await supabase
         .from('companies')
-        .insert({ name: company.trim(), slug, plan: 'free' })
+        .insert({ name: company.trim(), slug, plan: 'basic' })
         .select('id')
         .single()
       if (companyErr) throw companyErr

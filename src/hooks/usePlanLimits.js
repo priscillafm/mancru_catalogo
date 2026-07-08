@@ -13,7 +13,7 @@ import { useAuthStore } from '@/store/auth.store'
 export function usePlanLimits() {
   const membership = useAuthStore(s => s.membership)
   const companyId  = membership?.company_id
-  const plan       = membership?.companies?.plan ?? membership?.plan ?? 'free'
+  const plan       = membership?.companies?.plan ?? membership?.plan ?? 'basic'
 
   // Fetch plan limits
   const { data: limits } = useQuery({
@@ -25,7 +25,7 @@ export function usePlanLimits() {
         .eq('name', plan)
         .single()
       // max_catalogs_active not in plans table — hardcode per plan
-      const catalogLimits = { free: 1, pro: 50, enterprise: null }
+      const catalogLimits = { basic: 1, pro: 50, empresa: null }
       return {
         max_products:        data?.max_products        ?? 75,
         max_users:           data?.max_users           ?? 1,
