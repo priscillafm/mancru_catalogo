@@ -27,11 +27,14 @@ export default function OnboardingPage() {
   // Si el store todavía no tiene la membresía (recién registrado), la recargamos
   useEffect(() => {
     if (!membership?.company_id && session?.user?.id) {
-      loadMembership(session.user.id).then(() => setLoadingMembership(false))
-    } else {
-      setLoadingMembership(false)
+      loadMembership(session.user.id)
     }
   }, [])
+
+  // Cuando membership finalmente carga en el store, salimos del loading
+  useEffect(() => {
+    if (membership?.company_id) setLoadingMembership(false)
+  }, [membership?.company_id])
 
   // Step 2 — marca
   const [brandName, setBrandName]   = useState('')
@@ -49,6 +52,7 @@ export default function OnboardingPage() {
   )
 
   async function handleStep2() {
+    if (!companyId) { setError('Error: no se encontró la empresa. Recargá la página.'); return }
     // Si hay nombre de marca, la crea; si no, pasa igual (productos genéricos)
     if (brandName.trim()) {
       setSaving(true); setError('')
