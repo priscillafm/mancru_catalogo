@@ -13,28 +13,38 @@ const STEPS = [
 ]
 
 export default function OnboardingPage() {
-  const navigate        = useNavigate()
-  const membership      = useAuthStore(s => s.membership)
-  const loadMembership  = useAuthStore(s => s.loadMembership)
-  const session         = useAuthStore(s => s.session)
-  const companyId       = membership?.company_id
+  const navigate   = useNavigate()
+  const membership = useAuthStore(s => s.membership)
 
-  const [step, setStep]       = useState(1)
-  const [saving, setSaving]   = useState(false)
-  const [error, setError]     = useState('')
+  const [step, setStep]           = useState(1)
+  const [saving, setSaving]       = useState(false)
+  const [error, setError]         = useState('')
+  const [companyId, setCompanyId] = useState(membership?.company_id ?? null)
   const [loadingMembership, setLoadingMembership] = useState(!membership?.company_id)
 
-  // Si el store todavía no tiene la membresía (recién registrado), la recargamos
+  // Query directa: el store puede tener membership null si onAuthStateChange
+  // corrió antes de que Register insertara la membresía
   useEffect(() => {
-    if (!membership?.company_id && session?.user?.id) {
-      loadMembership(session.user.id)
+    if (membership?.company_id) {
+      setCompanyId(membership.company_id)
+      setLoadingMembership(false)
+      return
     }
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) { setLoadingMembership(false); return }
+      supabase
+        .from('user_memberships')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .eq('active', true)
+        .limit(1)
+        .single()
+        .then(({ data }) => {
+          if (data?.company_id) setCompanyId(data.company_id)
+          setLoadingMembership(false)
+        })
+    })
   }, [])
-
-  // Cuando membership finalmente carga en el store, salimos del loading
-  useEffect(() => {
-    if (membership?.company_id) setLoadingMembership(false)
-  }, [membership?.company_id])
 
   // Step 2 — marca
   const [brandName, setBrandName]   = useState('')
