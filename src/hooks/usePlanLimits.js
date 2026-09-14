@@ -13,24 +13,24 @@ import { useAuthStore } from '@/store/auth.store'
 export function usePlanLimits() {
   const membership = useAuthStore(s => s.membership)
   const companyId  = membership?.company_id
-  const plan       = membership?.companies?.plan ?? membership?.plan ?? 'basic'
+  const plan       = membership?.companies?.plan ?? membership?.plan ?? 'free'
 
-  // Fetch plan limits
+  // Fetch plan limits — stored as jsonb in plans.limits, with -1 meaning "unlimited"
   const { data: limits } = useQuery({
     queryKey: ['plan-limits', plan],
     queryFn: async () => {
       const { data } = await supabase
         .from('plans')
-        .select('max_products, max_users, max_brands')
+        .select('limits')
         .eq('name', plan)
         .single()
-      // max_catalogs_active not in plans table — hardcode per plan
-      const catalogLimits = { basic: 1, pro: 50, empresa: null }
+      const l = data?.limits ?? {}
+      const toLimit = v => (v === -1 || v == null) ? null : v
       return {
-        max_products:        data?.max_products        ?? 75,
-        max_users:           data?.max_users           ?? 1,
-        max_brands:          data?.max_brands          ?? 3,
-        max_catalogs_active: catalogLimits[plan]       ?? 1,
+        max_products:        toLimit(l.max_products)   ?? 75,
+        max_users:           toLimit(l.max_users)      ?? 1,
+        max_brands:          toLimit(l.max_brands)     ?? 3,
+        max_catalogs_active: toLimit(l.active_catalogs) ?? 1,
       }
     },
     enabled: !!plan,

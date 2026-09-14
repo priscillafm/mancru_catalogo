@@ -2,10 +2,15 @@ import { useEffect } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuthStore } from '@/store/auth.store'
 import { PotatoMark } from '@/components/PotatoLogo'
+import { usePlans } from '@/hooks/usePlans'
+import PricingCards from '@/components/PricingCards'
+
+const DEMO_CATALOG_ID = '00000000-0000-0000-0000-0000000000de'
 
 export default function LandingPage() {
   const { session, loading } = useAuthStore()
   const navigate = useNavigate()
+  const { data: plans = [] } = usePlans()
 
   useEffect(() => {
     if (!loading && session) navigate('/app', { replace: true })
@@ -61,6 +66,11 @@ export default function LandingPage() {
         </div>
         <p style={{ fontSize: 12, color: 'var(--text3)', marginTop: 16 }}>
           Sin tarjeta de crédito · Plan gratuito permanente
+        </p>
+        <p style={{ fontSize: 13, marginTop: 10 }}>
+          <Link to={`/c/${DEMO_CATALOG_ID}`} style={{ color: 'var(--accent)', fontWeight: 600, textDecoration: 'none' }}>
+            Ver catálogo de ejemplo →
+          </Link>
         </p>
       </section>
 
@@ -126,38 +136,22 @@ export default function LandingPage() {
       <section style={{ padding: '0 24px 80px', maxWidth: 700, margin: '0 auto', textAlign: 'center' }}>
         <h2 style={{ fontSize: 28, fontWeight: 800, marginBottom: 8, letterSpacing: '-0.5px' }}>Precios simples</h2>
         <p style={{ fontSize: 15, color: 'var(--text2)', marginBottom: 40 }}>Empezá gratis, crecé cuando lo necesites.</p>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 16 }}>
-          {[
-            { name: 'Free', price: '$0', desc: 'Para empezar', features: ['75 productos', '1 catálogo activo', '1 usuario', 'Link público'], cta: 'Empezar gratis', accent: false },
-            { name: 'Pro', price: '$29/mes', desc: 'Para crecer', features: ['5.000 productos', '50 catálogos', 'Usuarios ilimitados', 'Soporte prioritario'], cta: 'Empezar Pro', accent: true },
-            { name: 'Enterprise', price: 'A consultar', desc: 'Sin límites', features: ['Todo ilimitado', 'Integraciones', 'Onboarding dedicado', 'SLA garantizado'], cta: 'Contactar', accent: false },
-          ].map(p => (
-            <div key={p.name} style={{
-              background: p.accent ? 'var(--accent)' : 'var(--surface)',
-              border: `1px solid ${p.accent ? 'var(--accent)' : 'var(--border)'}`,
-              borderRadius: 16, padding: '24px 20px',
-              color: p.accent ? 'var(--accent-text)' : 'var(--text)',
-            }}>
-              <div style={{ fontSize: 12, fontWeight: 700, opacity: 0.7, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{p.name}</div>
-              <div style={{ fontSize: 26, fontWeight: 900, marginBottom: 4 }}>{p.price}</div>
-              <div style={{ fontSize: 12, opacity: 0.6, marginBottom: 20 }}>{p.desc}</div>
-              <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 20px', textAlign: 'left' }}>
-                {p.features.map(f => (
-                  <li key={f} style={{ fontSize: 13, padding: '4px 0', opacity: 0.85 }}>✓ {f}</li>
-                ))}
-              </ul>
+        {plans.length > 0 && (
+          <PricingCards
+            plans={plans}
+            renderCta={(p, accent) => (
               <Link to="/register" style={{
                 display: 'block', padding: '10px', borderRadius: 9,
-                background: p.accent ? 'rgba(0,0,0,0.2)' : 'var(--accent)',
-                color: p.accent ? 'var(--accent-text)' : 'var(--accent-text)',
+                background: accent ? 'rgba(0,0,0,0.2)' : 'var(--accent)',
+                color: 'var(--accent-text)',
                 textDecoration: 'none', fontWeight: 700, fontSize: 13,
-                border: p.accent ? '1px solid rgba(255,255,255,0.2)' : 'none',
+                border: accent ? '1px solid rgba(255,255,255,0.2)' : 'none',
               }}>
-                {p.cta}
+                {p.name === 'free' ? 'Empezar gratis' : p.name === 'enterprise' ? 'Contactar' : 'Empezar Pro'}
               </Link>
-            </div>
-          ))}
-        </div>
+            )}
+          />
+        )}
       </section>
 
       {/* CTA final */}
@@ -183,6 +177,10 @@ export default function LandingPage() {
       {/* Footer */}
       <footer style={{ textAlign: 'center', padding: '24px', borderTop: '1px solid var(--border)', fontSize: 12, color: 'var(--text3)' }}>
         © 2026 Potato · Para distribuidores de Latam
+        {' · '}
+        <Link to="/terms" style={{ color: 'var(--text3)' }}>Términos</Link>
+        {' · '}
+        <Link to="/privacy" style={{ color: 'var(--text3)' }}>Privacidad</Link>
       </footer>
     </div>
   )

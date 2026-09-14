@@ -156,10 +156,10 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-        {(plan === 'free' || plan === 'basic') && (
+        {plan === 'free' && (
           <div style={{ textAlign: 'center' }}>
             <p style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 8 }}>Más productos,<br />más catálogos</p>
-            <button onClick={() => navigate('/')} style={{
+            <button onClick={() => navigate('/pricing')} style={{
               padding: '8px 16px', background: 'var(--accent)', color: 'var(--accent-text)',
               border: 'none', borderRadius: 8, fontWeight: 700, fontSize: 12, cursor: 'pointer',
             }}>

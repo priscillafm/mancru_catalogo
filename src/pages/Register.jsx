@@ -42,7 +42,7 @@ export default function RegisterPage() {
       const slug = company.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '-' + Date.now()
       const { error: companyErr } = await supabase
         .from('companies')
-        .insert({ id: companyId, name: company.trim(), slug, plan: 'basic' })
+        .insert({ id: companyId, name: company.trim(), slug, plan: 'free' })
       if (companyErr) throw companyErr
 
       // 3. Crear usuario en tabla pública
@@ -155,7 +155,10 @@ export default function RegisterPage() {
         </div>
 
         <p style={{ textAlign: 'center', fontSize: 11, color: 'var(--text3)', marginTop: 16 }}>
-          Al registrarte aceptás los términos de uso y la política de privacidad.
+          Al registrarte aceptás los{' '}
+          <Link to="/terms" style={{ color: 'var(--text3)', textDecoration: 'underline' }}>términos de uso</Link>
+          {' '}y la{' '}
+          <Link to="/privacy" style={{ color: 'var(--text3)', textDecoration: 'underline' }}>política de privacidad</Link>.
         </p>
       </div>
     </div>

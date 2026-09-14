@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/auth.store'
 import Icon from '@/components/Icon'
@@ -120,7 +120,7 @@ export default function CatalogsPage() {
               </button>
               {!canAddCatalog && (
                 <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 4 }}>
-                  {usage.catalogs_active}/{limits.max_catalogs_active} activos — <a href="/" style={{ color: 'var(--accent)', textDecoration: 'none' }}>Actualizar plan</a>
+                  {usage.catalogs_active}/{limits.max_catalogs_active} activos — <Link to="/pricing" style={{ color: 'var(--accent)', textDecoration: 'none' }}>Actualizar plan</Link>
                 </div>
               )}
             </div>

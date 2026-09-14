@@ -3,16 +3,16 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 
 const PLANS = {
-  basic:   { label: 'Basic',   color: '#6b7280' },
-  pro:     { label: 'Pro',     color: '#6366f1' },
-  empresa: { label: 'Empresa', color: '#f59e0b' },
+  free:       { label: 'Free',       color: '#6b7280' },
+  pro:        { label: 'Pro',        color: '#6366f1' },
+  enterprise: { label: 'Enterprise', color: '#f59e0b' },
 }
 
 export default function SuperAdmin() {
   const qc = useQueryClient()
   const [showNew, setShowNew] = useState(false)
   const [newName, setNewName] = useState('')
-  const [newPlan, setNewPlan] = useState('basic')
+  const [newPlan, setNewPlan] = useState('free')
   const [saving, setSaving]   = useState(false)
 
   const { data: companies = [], isLoading } = useQuery({
@@ -54,7 +54,7 @@ export default function SuperAdmin() {
     setSaving(true)
     await supabase.from('companies').insert({ name: newName.trim(), plan: newPlan })
     setSaving(false)
-    setNewName(''); setNewPlan('basic'); setShowNew(false)
+    setNewName(''); setNewPlan('free'); setShowNew(false)
     qc.invalidateQueries(['super-companies'])
   }
 
@@ -79,8 +79,8 @@ export default function SuperAdmin() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 24 }}>
         {[
           { label: 'Total empresas', value: companies.length },
-          { label: 'Plan Pro',     value: companies.filter(c => c.plan === 'pro').length },
-          { label: 'Plan Empresa', value: companies.filter(c => c.plan === 'empresa').length },
+          { label: 'Plan Pro',        value: companies.filter(c => c.plan === 'pro').length },
+          { label: 'Plan Enterprise', value: companies.filter(c => c.plan === 'enterprise').length },
         ].map(s => (
           <div key={s.label} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: '16px 18px' }}>
             <div style={{ fontSize: 11, color: 'var(--text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>{s.label}</div>
@@ -95,7 +95,7 @@ export default function SuperAdmin() {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {companies.map(c => {
-            const plan = PLANS[c.plan] ?? PLANS.basic
+            const plan = PLANS[c.plan] ?? PLANS.free
             return (
               <div key={c.id} style={{
                 background: 'var(--surface)', border: '1px solid var(--border)',
@@ -128,7 +128,7 @@ export default function SuperAdmin() {
 
                 {/* Plan selector */}
                 <select
-                  value={c.plan ?? 'basic'}
+                  value={c.plan ?? 'free'}
                   onChange={e => changePlan(c.id, e.target.value)}
                   style={{
                     padding: '5px 10px', borderRadius: 7, fontSize: 12, fontWeight: 700,

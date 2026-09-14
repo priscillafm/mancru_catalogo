@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/auth.store'
@@ -120,7 +121,7 @@ export default function Users() {
         {!canAddUser && (
           <p style={{ fontSize: 12, color: '#f97316', marginBottom: 12 }}>
             ⚠️ Alcanzaste el límite de {limits.max_users} usuario{limits.max_users !== 1 ? 's' : ''} de tu plan.{' '}
-            <a href="/pricing" style={{ color: 'var(--accent)', textDecoration: 'none' }}>Actualizar plan →</a>
+            <Link to="/pricing" style={{ color: 'var(--accent)', textDecoration: 'none' }}>Actualizar plan →</Link>
           </p>
         )}
         <form onSubmit={e => { if (!canAddUser) { e.preventDefault(); return }; handleInvite(e) }} style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
