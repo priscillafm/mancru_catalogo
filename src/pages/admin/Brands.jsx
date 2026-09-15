@@ -136,7 +136,10 @@ export default function Brands() {
                 </button>
               )}
             </div>
-            <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 5 }}>SVG, PNG o JPG — se guarda en Supabase</div>
+            <p style={{ fontSize: 11, color: 'var(--text3)', marginTop: 6 }}>
+              Cualquier forma sirve (cuadrado, rectangular horizontal o vertical) — se adapta solo, sin deformarse.
+              Recomendado: PNG con fondo transparente, al menos 200px de ancho.
+            </p>
           </Field>
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', marginTop: 6 }}>
             <button onClick={() => setModal(null)} style={btnSm}>Cancelar</button>

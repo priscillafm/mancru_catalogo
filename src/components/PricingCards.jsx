@@ -33,15 +33,15 @@ export default function PricingCards({ plans, renderCta }) {
             borderRadius: 16, padding: '24px 20px',
             color: accent ? 'var(--accent-text)' : 'var(--text)',
           }}>
-            <div style={{ fontSize: 12, fontWeight: 700, opacity: 0.7, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            <div style={{ fontSize: 12, fontWeight: 600, opacity: 0.7, marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               {p.display_name ?? p.name}
             </div>
             {price.strike != null && (
               <div style={{ fontSize: 13, opacity: 0.6, textDecoration: 'line-through' }}>${price.strike} UYU/mes</div>
             )}
-            <div style={{ fontSize: 26, fontWeight: 900, marginBottom: price.sub ? 2 : 4 }}>{price.main}</div>
+            <div style={{ fontSize: 26, fontWeight: 700, marginBottom: price.sub ? 2 : 4 }}>{price.main}</div>
             {price.sub && (
-              <div style={{ fontSize: 11, fontWeight: 700, marginBottom: 16, color: accent ? 'var(--accent-text)' : 'var(--accent)' }}>
+              <div style={{ fontSize: 11, fontWeight: 600, marginBottom: 16, color: accent ? 'var(--accent-text)' : 'var(--accent)' }}>
                 🚀 {price.sub}
               </div>
             )}

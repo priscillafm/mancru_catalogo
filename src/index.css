@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@500;600;700&display=swap');
 @import "tailwindcss";
 
 /* ── Tokens: Dark (default) ─────────────────────────────── */
@@ -13,9 +13,9 @@
   --text:        #F2EDE6;
   --text2:       #8A7F72;
   --text3:       #524840;
-  --accent:      #E0B15B;
-  --accent-h:    #D4A045;
-  --accent-text: #1A1208;
+  --accent:      #8B7FE8;
+  --accent-h:    #7A6DD9;
+  --accent-text: #0E0C18;
   --danger:      #FF4D4D;
   --success:     #22c55e;
   --amber:       #E0B15B;
@@ -24,10 +24,25 @@
   --shadow:      0 8px 32px rgba(0,0,0,0.7);
   --shadow-sm:   0 2px 8px rgba(0,0,0,0.45);
   --font:        'Sora', system-ui, sans-serif;
+  --font-light:  'Inter', system-ui, sans-serif;
   --font-mono:   'JetBrains Mono', monospace;
   --radius:      12px;
   --radius-sm:   8px;
   --transition:  all 0.18s cubic-bezier(0.4,0,0.2,1);
+
+  /* ── Paleta ampliada: una sola familia azul → violeta → magenta → rojo ── */
+  --indigo:      #5B6EE8;
+  --violet:      #8B7FE8;
+  --magenta:     #C864D8;
+  --flame:       #E8506B;
+  /* alias viejos, para no romper nada que todavía los use */
+  --blue:        var(--indigo);
+  --pink:        var(--magenta);
+  --coral:       var(--flame);
+  --teal:        var(--indigo);
+  --grad-hero:   radial-gradient(120% 100% at 15% 0%, rgba(139,127,232,0.22) 0%, transparent 55%),
+                 radial-gradient(100% 90% at 85% 15%, rgba(91,110,232,0.16) 0%, transparent 50%),
+                 radial-gradient(90% 80% at 50% 100%, rgba(200,100,216,0.10) 0%, transparent 60%);
 }
 
 /* ── Tokens: Light ──────────────────────────────────────── */
@@ -42,8 +57,8 @@
   --text:        #1A1208;
   --text2:       #6B5E4E;
   --text3:       #9C8E7E;
-  --accent:      #C4893A;
-  --accent-h:    #B37830;
+  --accent:      #6B5FCB;
+  --accent-h:    #5B4FB8;
   --accent-text: #FFFFFF;
   --glass:       rgba(253,250,245,0.78);
   --glass-border: rgba(0,0,0,0.07);

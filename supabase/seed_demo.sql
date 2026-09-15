@@ -41,19 +41,19 @@ VALUES (
       {
         "brand": { "id": "b1", "name": "Bebidas del Sur", "color": "#DC2626", "text_color": "#fff" },
         "products": [
-          { "id": "d1", "sku": "BDS-001", "name": "Agua saborizada 500ml", "image_url": "https://picsum.photos/seed/potato-d1/300" },
-          { "id": "d2", "sku": "BDS-002", "name": "Gaseosa cola 1.5L",     "image_url": "https://picsum.photos/seed/potato-d2/300" },
-          { "id": "d3", "sku": "BDS-003", "name": "Jugo de naranja 1L",   "image_url": "https://picsum.photos/seed/potato-d3/300" },
-          { "id": "d4", "sku": "BDS-004", "name": "Energizante 250ml",    "image_url": "https://picsum.photos/seed/potato-d4/300" }
+          { "id": "d1", "sku": "BDS-001", "name": "Agua saborizada 500ml", "description": "Pomelo y limón, sin azúcar agregada. Caja por 12." },
+          { "id": "d2", "sku": "BDS-002", "name": "Gaseosa cola 1.5L",     "description": "Botella retornable. Pack por 6 unidades." },
+          { "id": "d3", "sku": "BDS-003", "name": "Jugo de naranja 1L",   "description": "Exprimido, sin conservantes. Requiere frío." },
+          { "id": "d4", "sku": "BDS-004", "name": "Energizante 250ml",    "description": "Lata. Caja por 24 unidades." }
         ]
       },
       {
         "brand": { "id": "b2", "name": "Snacks Andinos", "color": "#16A34A", "text_color": "#fff" },
         "products": [
-          { "id": "d5", "sku": "SA-101", "name": "Papas fritas clásicas", "image_url": "https://picsum.photos/seed/potato-d5/300" },
-          { "id": "d6", "sku": "SA-102", "name": "Maní salado 200g",       "image_url": "https://picsum.photos/seed/potato-d6/300" },
-          { "id": "d7", "sku": "SA-103", "name": "Mix frutos secos 300g",  "image_url": "https://picsum.photos/seed/potato-d7/300" },
-          { "id": "d8", "sku": "SA-104", "name": "Galletas de avena",      "image_url": "https://picsum.photos/seed/potato-d8/300" }
+          { "id": "d5", "sku": "SA-101", "name": "Papas fritas clásicas", "description": "Bolsa 120g. Display por 20 unidades." },
+          { "id": "d6", "sku": "SA-102", "name": "Maní salado 200g",       "description": "Tostado en horno. Caja por 24." },
+          { "id": "d7", "sku": "SA-103", "name": "Mix frutos secos 300g",  "description": "Almendras, nueces y castañas. Caja por 12." },
+          { "id": "d8", "sku": "SA-104", "name": "Galletas de avena",      "description": "Pack por 6 unidades. Sin azúcar agregada." }
         ]
       }
     ]

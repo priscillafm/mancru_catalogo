@@ -3,12 +3,15 @@ import { useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { PotatoMark } from '@/components/PotatoLogo'
+import { DEMO_CATALOG_ID } from '@/utils/demoCatalog'
+import { generateCatalogPDF } from '@/utils/pdf'
 
 export default function PublicCatalog() {
   const { id } = useParams()
   const [quantities, setQuantities] = useState({})
   const [showModal, setShowModal]   = useState(false)
   const [clientName, setClientName] = useState('')
+  const [generatingPdf, setGeneratingPdf] = useState(false)
 
   const { data: catalog, isLoading, error } = useQuery({
     queryKey: ['public-catalog', id],
@@ -83,6 +86,28 @@ export default function PublicCatalog() {
     alert('Pedido copiado al portapapeles')
   }
 
+  async function handleDownloadPdf() {
+    setGeneratingPdf(true)
+    try {
+      const brandGroupsForPdf = brandGroups.map(g => ({
+        brand: g.brand,
+        products: g.products.map(p => {
+          const priceObj = prices[p.id]
+          const amount   = typeof priceObj === 'object' ? priceObj?.amount   : priceObj
+          const currency = typeof priceObj === 'object' ? priceObj?.currency : '$'
+          return { ...p, _price: amount, _currency: currency }
+        }),
+      }))
+      await generateCatalogPDF(brandGroupsForPdf, company, null, 'landscape', {
+        enabled: true, color1: '#8B7FE8', color2: '#4FC3B0', theme: 'dark', style: 'corners',
+      }, true)
+    } catch {
+      alert('No se pudo generar el PDF de ejemplo. Probá de nuevo.')
+    } finally {
+      setGeneratingPdf(false)
+    }
+  }
+
   return (
     <div style={{ minHeight: '100vh', background: '#F4EFE6', fontFamily: 'system-ui, sans-serif' }}>
 
@@ -99,13 +124,26 @@ export default function PublicCatalog() {
       </div>
 
       {/* Catalog title */}
-      <div style={{ padding: '28px 24px 0' }}>
-        <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1A1208', letterSpacing: '-0.5px', marginBottom: 4 }}>
-          {catalog.name}
-        </h1>
-        <p style={{ fontSize: 13, color: '#888', marginBottom: 28 }}>
-          {brandGroups.reduce((n, g) => n + g.products.length, 0)} productos
-        </p>
+      <div style={{ padding: '28px 24px 0', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+        <div>
+          <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1A1208', letterSpacing: '-0.5px', marginBottom: 4 }}>
+            {catalog.name}
+          </h1>
+          <p style={{ fontSize: 13, color: '#888', marginBottom: 28 }}>
+            {brandGroups.reduce((n, g) => n + g.products.length, 0)} productos
+          </p>
+        </div>
+        {id === DEMO_CATALOG_ID && (
+          <button onClick={handleDownloadPdf} disabled={generatingPdf} style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            padding: '9px 16px', borderRadius: 999, border: 'none',
+            background: '#8B7FE8', color: '#fff', fontSize: 13, fontWeight: 700,
+            cursor: generatingPdf ? 'not-allowed' : 'pointer', opacity: generatingPdf ? 0.7 : 1,
+            boxShadow: '0 4px 14px rgba(139,127,232,0.4)',
+          }}>
+            {generatingPdf ? 'Generando PDF…' : 'Ver PDF de ejemplo'}
+          </button>
+        )}
       </div>
 
       {/* Brand groups */}
@@ -148,7 +186,14 @@ export default function PublicCatalog() {
                       <img src={p.image_url} alt={p.name}
                         style={{ width: '100%', aspectRatio: '1', objectFit: 'contain', background: '#f8f8f8', display: 'block' }} />
                     ) : (
-                      <div style={{ width: '100%', aspectRatio: '1', background: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ccc', fontSize: 28 }}>◻</div>
+                      <div style={{
+                        width: '100%', aspectRatio: '1', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 32, fontWeight: 700,
+                        background: `color-mix(in srgb, ${brand.color ?? '#6366f1'} 12%, white)`,
+                        color: brand.color ?? '#6366f1',
+                      }}>
+                        {(p.name ?? '?').trim().charAt(0).toUpperCase() || '?'}
+                      </div>
                     )}
                     <div style={{ padding: '10px 12px 12px' }}>
                       <div style={{ fontSize: 12, fontWeight: 600, lineHeight: 1.4, color: '#111', marginBottom: 7 }}>

@@ -76,6 +76,7 @@ export default function Settings() {
           <label style={labelStyle}>Logo de empresa</label>
           <p style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 10 }}>
             Se muestra en el centro del encabezado del PDF. SVG blanco recomendado.
+            Cualquier forma sirve (cuadrado o rectangular) — se adapta solo, sin deformarse.
           </p>
           <input ref={fileRef} type="file" accept=".svg,.png,.jpg,.jpeg,.webp" style={{ display: 'none' }} onChange={handleLogoUpload} />
           <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>

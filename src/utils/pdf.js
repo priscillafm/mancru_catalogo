@@ -81,35 +81,8 @@ function hexToRgb(hex) {
   return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)]
 }
 
-// Generate a horizontal gradient bar as a JPEG data-URL (synchronous)
-function makeGradientBar(w, h, brandColor) {
-  const scale = 3
-  const cw = Math.ceil(w * scale)
-  const ch = Math.ceil(h * scale)
-  const canvas = document.createElement('canvas')
-  canvas.width  = cw
-  canvas.height = ch
-  const ctx = canvas.getContext('2d')
-  const [r, g, b] = hexToRgb(brandColor)
-
-  // Dark base
-  ctx.fillStyle = '#09090B'
-  ctx.fillRect(0, 0, cw, ch)
-
-  // Brand color sweep — peaks at ~40% then fades out to the right
-  const grad = ctx.createLinearGradient(0, 0, cw, 0)
-  grad.addColorStop(0,    `rgba(${r},${g},${b},0.55)`)
-  grad.addColorStop(0.30, `rgba(${r},${g},${b},1)`)
-  grad.addColorStop(0.55, `rgba(${r},${g},${b},0.85)`)
-  grad.addColorStop(1,    `rgba(${r},${g},${b},0.15)`)
-  ctx.fillStyle = grad
-  ctx.fillRect(0, 0, cw, ch)
-
-  return canvas.toDataURL('image/jpeg', 0.92)
-}
-
 // Cover page
-async function addCoverPage(doc, company, coverOptions, isLandscape) {
+async function addCoverPage(doc, company, coverOptions, isLandscape, stats = null) {
   const PW = isLandscape ? 297 : 210
   const PH = isLandscape ? 210 : 297
 
@@ -245,6 +218,39 @@ async function addCoverPage(doc, company, coverOptions, isLandscape) {
     doc.setLineDashPattern([], 0)
   }
 
+  // ── Stat chips (moneda / productos / marcas) ──
+  if (stats) {
+    const chips = [
+      { label: 'MONEDA', value: stats.currency },
+      { label: 'PRODUCTOS', value: String(stats.totalProducts) },
+      { label: stats.brandCount === 1 ? 'MARCA' : 'MARCAS', value: String(stats.brandCount) },
+    ]
+    const chipH = 14
+    const chipGap = 4
+    let chipX = centerX - (isLandscape ? 60 : 45)
+    const chipY = PH - 30
+    const chipBg = isDark ? [255, 255, 255] : [20, 20, 20]
+    for (const chip of chips) {
+      doc.setFontSize(6)
+      const w = Math.max(doc.getTextWidth(chip.label), doc.getTextWidth(chip.value)) + 10
+      doc.setFillColor(chipBg[0], chipBg[1], chipBg[2])
+      doc.saveGraphicsState()
+      doc.setGState(new doc.GState({ opacity: isDark ? 0.08 : 0.05 }))
+      doc.roundedRect(chipX, chipY, w, chipH, 3, 3, 'F')
+      doc.restoreGraphicsState()
+      setFont(doc, 'ui')
+      doc.setCharSpace(1)
+      doc.setTextColor(...textFaint)
+      doc.text(chip.label, chipX + w / 2, chipY + 5.5, { align: 'center' })
+      doc.setCharSpace(0)
+      doc.setFontSize(9)
+      setFont(doc, 'bold')
+      doc.setTextColor(...textWhite)
+      doc.text(chip.value, chipX + w / 2, chipY + 11, { align: 'center' })
+      chipX += w + chipGap
+    }
+  }
+
   // ── Website ──
   doc.setFontSize(8)
   setFont(doc, 'ui')
@@ -259,51 +265,136 @@ async function addCoverPage(doc, company, coverOptions, isLandscape) {
   }
 }
 
+// Raster con las mismas manchas de color difuminadas que usa la portada real
+// (ver addCoverPage) pero a tamaño mini, para que el mockup se vea como una
+// portada de verdad y no como círculos sueltos.
+function makeCoverThumbRaster(color1, color2, isDark) {
+  const scale = 4
+  const cw = 240 * scale, ch = 163 * scale
+  const canvas = document.createElement('canvas')
+  canvas.width = cw; canvas.height = ch
+  const ctx = canvas.getContext('2d')
+
+  ctx.fillStyle = isDark ? '#09090B' : '#F8F8F8'
+  ctx.fillRect(0, 0, cw, ch)
+
+  const blobs = [
+    { color: color1, cx: 0.22, cy: 0.32, r: 0.55 },
+    { color: color2, cx: 0.75, cy: 0.62, r: 0.5 },
+  ]
+  for (const b of blobs) {
+    const [r, g, bl] = hexToRgb(b.color)
+    const gx = cw * b.cx, gy = ch * b.cy, gr = cw * b.r
+    const grad = ctx.createRadialGradient(gx, gy, 0, gx, gy, gr)
+    grad.addColorStop(0,    `rgba(${r},${g},${bl},0.9)`)
+    grad.addColorStop(0.45, `rgba(${r},${g},${bl},0.28)`)
+    grad.addColorStop(1,    `rgba(${r},${g},${bl},0)`)
+    ctx.fillStyle = grad
+    ctx.fillRect(0, 0, cw, ch)
+  }
+  return canvas.toDataURL('image/jpeg', 0.92)
+}
+
+// Mini-mockup de una portada (para la página de "personalizá tu catálogo")
+function drawCoverThumb(doc, x, y, w, h, { color1, color2, isDark, label }) {
+  const raster = makeCoverThumbRaster(color1, color2, isDark)
+  doc.addImage(raster, 'JPEG', x, y, w, h, undefined, 'FAST')
+  doc.setDrawColor(isDark ? '#333333' : '#CCCCCC')
+  doc.setLineWidth(0.15)
+  doc.roundedRect(x, y, w, h, 2, 2, 'S')
+
+  doc.setFontSize(6.5)
+  setFont(doc, 'bold')
+  doc.setTextColor(isDark ? '#FFFFFF' : '#1A1208')
+  doc.text('Tu Marca', x + w / 2, y + h / 2, { align: 'center' })
+  doc.setFontSize(6.5)
+  setFont(doc, 'ui')
+  doc.setTextColor('#666666')
+  doc.text(label, x + w / 2, y + h + 5, { align: 'center' })
+}
+
+// Página final del PDF de ejemplo: muestra qué se puede personalizar
+// (portadas, orientación) sin necesidad de generar 4 catálogos completos.
+function addShowcasePage(doc, isLandscape) {
+  const PW = isLandscape ? 297 : 210
+  const PH = isLandscape ? 210 : 297
+  doc.addPage()
+  doc.setFillColor('#F4EFE6')
+  doc.rect(0, 0, PW, PH, 'F')
+
+  doc.setFontSize(16)
+  setFont(doc, 'bold')
+  doc.setTextColor('#1A1208')
+  doc.text('Personalizá tu catálogo', PW / 2, 22, { align: 'center' })
+  doc.setFontSize(9)
+  setFont(doc, 'ui')
+  doc.setTextColor('#888888')
+  doc.text('Elegís portada, colores y orientación cada vez que exportás — esto es solo un ejemplo.', PW / 2, 30, { align: 'center' })
+
+  const thumbW = isLandscape ? 55 : 70
+  const thumbH = thumbW * 0.68
+  const gap = 16
+  const totalW = thumbW * 2 + gap
+  const startX = (PW - totalW) / 2
+  const rowY = 50
+
+  drawCoverThumb(doc, startX, rowY, thumbW, thumbH, {
+    isDark: true, color1: '#8B7FE8', color2: '#4FC3B0', label: 'Portada oscura',
+  })
+  drawCoverThumb(doc, startX + thumbW + gap, rowY, thumbW, thumbH, {
+    isDark: false, color1: '#5B6EE8', color2: '#E8506B', label: 'Portada clara',
+  })
+
+  const row2Y = rowY + thumbH + 28
+  drawCoverThumb(doc, startX, row2Y, thumbW, thumbH * 0.72, {
+    isDark: true, color1: '#C864D8', color2: '#8B7FE8', label: 'Horizontal (A4)',
+  })
+  drawCoverThumb(doc, startX + thumbW + gap, row2Y, thumbW * 0.72, thumbH,
+    { isDark: true, color1: '#5B6EE8', color2: '#C864D8', label: 'Vertical (A4)' })
+}
+
 /**
  * Generates a multi-brand PDF catalog.
  */
-export async function generateCatalogPDF(brandGroups, company, onProgress, orientation = 'landscape', coverOptions = null) {
+export async function generateCatalogPDF(brandGroups, company, onProgress, orientation = 'landscape', coverOptions = null, showcase = false) {
   const isLandscape = orientation === 'landscape'
   const doc = new jsPDF({ orientation, unit: 'mm', format: 'a4' })
 
   const PW = isLandscape ? 297 : 210
   const PH = isLandscape ? 210 : 297
-  const HEADER_H    = 22
-  const FOOTER_H    = 8
-  const CONTENT_TOP = HEADER_H + 6
-  const CONTENT_BOT = PH - FOOTER_H - 4
-  const COLS_PDF    = isLandscape ? 4 : 3
-  const ROWS_PDF    = isLandscape ? 2 : 4
-  const CELL_W = (PW - 16) / COLS_PDF
-  const CELL_H = (CONTENT_BOT - CONTENT_TOP) / ROWS_PDF
+  const SIDE_MARGIN = 12
+  const GAP         = 6
+  const HEADER_H    = 26
+  const FOOTER_H    = 12
+  const CONTENT_TOP = HEADER_H + 2
+  const CONTENT_BOT = PH - FOOTER_H
+  const COLS_PDF    = isLandscape ? 3 : 2
+  const ROWS_PDF    = isLandscape ? 3 : 4
+  const CELL_W = (PW - SIDE_MARGIN * 2 - GAP * (COLS_PDF - 1)) / COLS_PDF
+  const CELL_H = (CONTENT_BOT - CONTENT_TOP - GAP * (ROWS_PDF - 1)) / ROWS_PDF
 
   const companyName = company?.name    ?? ''
   const companyWeb  = company?.website ?? ''
 
   const totalProducts = brandGroups.reduce((n, g) => n + g.products.length, 0)
   let globalIdx = 0
+  let globalPageNum = 0
 
   if (coverOptions?.enabled) {
-    await addCoverPage(doc, company, coverOptions, isLandscape)
+    const firstPriced = brandGroups.flatMap(g => g.products).find(p => p._currency)
+    const stats = {
+      totalProducts,
+      brandCount: brandGroups.length,
+      currency: firstPriced?._currency && firstPriced._currency !== '$' ? firstPriced._currency : 'UYU',
+    }
+    await addCoverPage(doc, company, coverOptions, isLandscape, stats)
   }
 
   let firstContentPage = true
 
-  // Load company logo once for all pages
-  let companyLogo = null
-  if (company?.logo_url) {
-    try { companyLogo = await loadImageAsBase64(company.logo_url) } catch { companyLogo = null }
-  }
-
   for (const { brand, products } of brandGroups) {
-    const brandColor   = brand.color      ?? '#6366f1'
-    const brandTextClr = brand.text_color ?? '#ffffff'
-    const brandName    = brand.name       ?? ''
-
-    let brandLogo = null
-    if (brand.logo_url) {
-      try { brandLogo = await loadImageAsBase64(brand.logo_url) } catch { brandLogo = null }
-    }
+    const brandColor = brand.color ?? '#6366f1'
+    const brandName  = brand.name  ?? ''
 
     const sorted = [...products].sort((a, b) => {
       const catA = a.categories?.name ?? '￿'
@@ -312,92 +403,59 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
     })
 
     let slot = 0
-    let pageNum = 0
+    const [br, bg, bb] = hexToRgb(brandColor)
+    const tint = (pct) => `rgb(${Math.round(br + (255 - br) * pct)}, ${Math.round(bg + (255 - bg) * pct)}, ${Math.round(bb + (255 - bb) * pct)})`
 
-    // Pre-generate gradient bars (sync — canvas.toDataURL is synchronous)
-    const headerBarImg = makeGradientBar(PW, HEADER_H, brandColor)
-    const footerBarImg = makeGradientBar(PW, FOOTER_H, brandColor)
+    const renderHeaderFooter = () => {
+      // Fondo crema para el cuerpo de la página (look más cálido/premium que blanco puro)
+      doc.setFillColor('#FAF8F4')
+      doc.rect(0, 0, PW, PH, 'F')
 
-    const renderHeaderFooter = (pg) => {
-      // Gradient header bar (always dark bg)
-      doc.addImage(headerBarImg, 'JPEG', 0, 0, PW, HEADER_H)
+      // Barra de color de marca + "PROVEEDOR" + nombre
+      doc.setFillColor(br, bg, bb)
+      doc.rect(SIDE_MARGIN, 8, 1.3, 10, 'F')
+      doc.setFontSize(6.5)
+      setFont(doc, 'ui')
+      doc.setCharSpace(1.2)
+      doc.setTextColor('#8A8580')
+      doc.text('PROVEEDOR', SIDE_MARGIN + 5, 11)
+      doc.setCharSpace(0)
+      doc.setFontSize(16)
+      setFont(doc, 'bold')
+      doc.setTextColor('#171310')
+      doc.text(brandName, SIDE_MARGIN + 5, 19)
 
-      // Website — always white since header is always dark
-      if (companyWeb) {
-        doc.setFontSize(7)
-        setFont(doc, 'ui')
-        doc.setTextColor('#ffffff')
-        doc.text(companyWeb, PW - 10, 14, { align: 'right' })
-      }
+      // Chip "N productos" arriba a la derecha
+      const chipText = `${products.length} producto${products.length !== 1 ? 's' : ''}`
+      doc.setFontSize(7.5)
+      setFont(doc, 'bold')
+      const chipW = doc.getTextWidth(chipText) + 10
+      const chipX = PW - SIDE_MARGIN - chipW
+      doc.setFillColor(tint(0.88))
+      doc.roundedRect(chipX, 10, chipW, 7.5, 3.75, 3.75, 'F')
+      doc.setTextColor(br, bg, bb)
+      doc.text(chipText, chipX + chipW / 2, 15, { align: 'center' })
 
-      // Gradient footer
-      doc.addImage(footerBarImg, 'JPEG', 0, PH - FOOTER_H, PW, FOOTER_H)
+      // Línea divisoria bajo el header
+      doc.setDrawColor('#E7E3DA')
+      doc.setLineWidth(0.3)
+      doc.line(SIDE_MARGIN, HEADER_H - 3, PW - SIDE_MARGIN, HEADER_H - 3)
+
+      // Footer: empresa · web (izq) — marca — página (der)
+      doc.setDrawColor('#E7E3DA')
+      doc.line(SIDE_MARGIN, PH - FOOTER_H + 4, PW - SIDE_MARGIN, PH - FOOTER_H + 4)
       doc.setFontSize(7)
       setFont(doc, 'ui')
-      doc.setTextColor('#ffffff')
-      doc.text(`${brandName}  •  Pág. ${pg + 1}`, PW / 2, PH - 2.5, { align: 'center' })
-    }
-
-    // Render company logo (center) or text — called after header so it draws on top
-    const renderCompanyCenter = async () => {
-      if (companyLogo && typeof companyLogo === 'string' && companyLogo.startsWith('data:image')) {
-        try {
-          const dims = await new Promise(res => {
-            const img = new Image()
-            img.onload = () => res({ w: img.naturalWidth, h: img.naturalHeight })
-            img.onerror = () => res(null)
-            img.src = companyLogo
-          })
-          if (dims) {
-            const maxH = HEADER_H - 8
-            const maxW = isLandscape ? 36 : 28
-            const ratio = dims.w / dims.h
-            let w = maxW, h = w / ratio
-            if (h > maxH) { h = maxH; w = h * ratio }
-            const fmt = companyLogo.startsWith('data:image/png') ? 'PNG' : 'JPEG'
-            doc.addImage(companyLogo, fmt, PW / 2 - w / 2, (HEADER_H - h) / 2, w, h, undefined, 'NONE')
-            return
-          }
-        } catch { /* fallback to text */ }
-      }
-      doc.setFontSize(11)
-      setFont(doc, 'ui')
-      doc.setTextColor('#ffffff')
-      doc.text(companyName, PW / 2, 14, { align: 'center' })
-    }
-
-    const renderBrandLogo = async () => {
-      if (brandLogo && typeof brandLogo === 'string' && brandLogo.startsWith('data:image')) {
-        try {
-          const fmt = brandLogo.startsWith('data:image/png') ? 'PNG' : 'JPEG'
-          const dims = await new Promise(res => {
-            const img = new Image()
-            img.onload = () => res({ w: img.naturalWidth, h: img.naturalHeight })
-            img.onerror = () => res(null)
-            img.src = brandLogo
-          })
-          if (dims) {
-            const maxH = HEADER_H - 4
-            const maxW = isLandscape ? 42 : 32
-            const ratio = dims.w / dims.h
-            let w = maxW, h = w / ratio
-            if (h > maxH) { h = maxH; w = h * ratio }
-            doc.addImage(brandLogo, fmt, 5, (HEADER_H - h) / 2, w, h, undefined, 'NONE')
-            return
-          }
-        } catch { /* skip */ }
-      }
-      doc.setFontSize(13)
-      setFont(doc, 'uibold')
-      doc.setTextColor(brandTextClr)
-      doc.text(brandName, 10, 14)
+      doc.setTextColor('#9C948A')
+      const footerLeft = [companyName, companyWeb].filter(Boolean).join(' · ')
+      doc.text(footerLeft, SIDE_MARGIN, PH - 6)
+      doc.text(`${brandName} — ${String(globalPageNum).padStart(2, '0')}`, PW - SIDE_MARGIN, PH - 6, { align: 'right' })
     }
 
     if (!firstContentPage || coverOptions?.enabled) doc.addPage()
     firstContentPage = false
-    renderHeaderFooter(pageNum)
-    await renderCompanyCenter()
-    await renderBrandLogo()
+    globalPageNum++
+    renderHeaderFooter()
 
     for (let si = 0; si < sorted.length; si++) {
       const p = sorted[si]
@@ -408,104 +466,99 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
 
       if (slot >= COLS_PDF * ROWS_PDF) {
         slot = 0
-        pageNum++
         doc.addPage()
-        renderHeaderFooter(pageNum)
-        await renderCompanyCenter()
-        await renderBrandLogo()
+        globalPageNum++
+        renderHeaderFooter()
       }
 
       const col = slot % COLS_PDF
       const row = Math.floor(slot / COLS_PDF)
-      const x   = 8 + col * CELL_W
-      const y   = CONTENT_TOP + row * CELL_H
+      const x   = SIDE_MARGIN + col * (CELL_W + GAP)
+      const y   = CONTENT_TOP + row * (CELL_H + GAP)
 
       globalIdx++
       onProgress && onProgress(globalIdx, totalProducts)
 
-      const PAD     = 3
-      const MARGIN  = 1.5
-      const inner_w = CELL_W - PAD * 2
+      const CARD_PAD = 4
 
-      // ── Card shadow (offset grey rect) ──
-      doc.setFillColor('#DDDDDD')
-      doc.roundedRect(x + MARGIN + 1.2, y + MARGIN + 1.2, CELL_W - MARGIN * 2, CELL_H - MARGIN * 2, 4, 4, 'F')
-
-      // ── Card white background ──
+      // ── Card: borde suave, sin sombra dura ──
+      doc.setDrawColor('#E7E3DA')
+      doc.setLineWidth(0.25)
       doc.setFillColor('#FFFFFF')
-      doc.roundedRect(x + MARGIN, y + MARGIN, CELL_W - MARGIN * 2, CELL_H - MARGIN * 2, 4, 4, 'F')
+      doc.roundedRect(x, y, CELL_W, CELL_H, 4, 4, 'FD')
 
-      // ── Image area: white square, fills top portion ──
-      const imgAreaH = CELL_H * 0.54
-      const imgPad   = 2
-      const imgSize  = Math.min(inner_w - imgPad * 2, imgAreaH - imgPad * 2)
-      const imgX     = x + (CELL_W - imgSize) / 2
-      const imgY     = y + MARGIN + imgPad + 2
-
-      // White bg for image (clip any bg artifacts)
-      doc.setFillColor('#FFFFFF')
-      doc.rect(x + MARGIN, y + MARGIN, CELL_W - MARGIN * 2, imgAreaH, 'F')
+      // ── Cuadrado a la izquierda: foto real o inicial con color de marca ──
+      const monoSize = Math.min(CELL_H - CARD_PAD * 2, 26)
+      const monoX = x + CARD_PAD
+      const monoY = y + (CELL_H - monoSize) / 2
 
       const b64 = await loadImageAsBase64(p.image_url)
       if (b64) {
-        try { doc.addImage(b64, 'JPEG', imgX, imgY, imgSize, imgSize, undefined, 'FAST') }
-        catch { drawNoImage(doc, imgX, imgY, imgSize) }
+        try { doc.addImage(b64, 'JPEG', monoX, monoY, monoSize, monoSize, undefined, 'FAST') }
+        catch { drawMonogram(doc, monoX, monoY, monoSize, p.name, brandColor) }
       } else {
-        drawNoImage(doc, imgX, imgY, imgSize)
+        drawMonogram(doc, monoX, monoY, monoSize, p.name, brandColor)
       }
 
-      // ── Text area (mirrors web card: name → SKU pill → price) ──
-      const textW = CELL_W - MARGIN * 2 - PAD * 2
-      const textTop = y + MARGIN + imgAreaH + 4
+      // ── Bloque de texto a la derecha ──
+      const textX = monoX + monoSize + 5
+      const textW = x + CELL_W - CARD_PAD - textX
 
-      // Name — bold, 2 lines max
-      doc.setFontSize(7.5)
+      doc.setFontSize(9.5)
       setFont(doc, 'bold')
-      doc.setTextColor('#111111')
+      doc.setTextColor('#171310')
       const nameLines = doc.splitTextToSize(String(p.name ?? ''), textW).slice(0, 2)
-      doc.text(nameLines, x + CELL_W / 2, textTop, { align: 'center', lineHeightFactor: 1.4 })
-      const nameBottom = textTop + nameLines.length * 4.8
+      doc.text(nameLines, textX, y + CARD_PAD + 3.5, { lineHeightFactor: 1.3 })
+      let cursorY = y + CARD_PAD + 3.5 + nameLines.length * 4.2
 
-      // SKU pill — below name
+      if (p.description) {
+        doc.setFontSize(7)
+        setFont(doc, 'ui')
+        doc.setTextColor('#8A8580')
+        const descLines = doc.splitTextToSize(String(p.description), textW).slice(0, 2)
+        doc.text(descLines, textX, cursorY + 2.5, { lineHeightFactor: 1.3 })
+      }
+
+      // SKU pill (abajo-izq del bloque) + precio (abajo-der), alineados al piso de la tarjeta
+      const bottomY = y + CELL_H - CARD_PAD
+
       const skuText = String(p.sku ?? '')
-      const skuH    = 6
-      const skuW    = Math.min(doc.getTextWidth(skuText) + 10, inner_w - 2)
-      const skuX    = x + (CELL_W - skuW) / 2
-      const skuY    = nameBottom + 3
-      const [sr, sg, sb] = hexToRgb(brandColor)
-      doc.setFillColor(sr, sg, sb)
-      doc.roundedRect(skuX, skuY, skuW, skuH, 3, 3, 'F')
       doc.setFontSize(6.5)
       setFont(doc, 'bold')
-      doc.setTextColor(brandTextClr)
-      doc.text(skuText, x + CELL_W / 2, skuY + 4.2, { align: 'center' })
-      doc.setCharSpace(0)
+      const skuW = doc.getTextWidth(skuText) + 8
+      doc.setFillColor(tint(0.9))
+      doc.roundedRect(textX, bottomY - 5.5, skuW, 5.5, 2.75, 2.75, 'F')
+      doc.setTextColor('#6E6A62')
+      doc.text(skuText, textX + skuW / 2, bottomY - 1.8, { align: 'center' })
 
-      // Price — inside card, above bottom border
       if (p._price) {
-        const cardBottom = y + CELL_H - MARGIN
-        const priceY = cardBottom - 5
-        const curLabel = (p._currency ?? '$') === '$' ? '$ UYU' : 'USD'
-        // separator line above price
-        doc.setDrawColor('#EEEEEE')
-        doc.setLineWidth(0.3)
-        doc.line(x + MARGIN + 3, priceY - 4, x + CELL_W - MARGIN - 3, priceY - 4)
-        doc.setFontSize(9.5)
+        const curLabel = (p._currency ?? '$') === '$' ? '$' : p._currency
+        doc.setFontSize(11)
         setFont(doc, 'bold')
-        doc.setTextColor('#111111')
-        doc.text(`${curLabel} ${p._price}`, x + CELL_W / 2, priceY, { align: 'center' })
+        doc.setTextColor(br, bg, bb)
+        doc.text(`${curLabel} ${p._price}`, x + CELL_W - CARD_PAD, bottomY - 1, { align: 'right' })
       }
 
       slot++
     }
   }
 
+  if (showcase) addShowcasePage(doc, isLandscape)
+
   const date = new Date().toISOString().slice(0, 10)
   const name = brandGroups.length === 1 ? brandGroups[0].brand.name : companyName || 'Catalogo'
   doc.save(`Catalogo_${name.replace(/\s+/g, '_')}_${date}.pdf`)
 }
 
-function drawNoImage(doc, x, y, size) {
-  doc.setFillColor('#e8e8e8')
-  doc.roundedRect(x, y, size, size, 2, 2, 'F')
+// Placeholder cuando el producto no tiene foto: un cuadrado con la
+// inicial del nombre, en vez de un bloque gris vacío.
+function drawMonogram(doc, x, y, size, name, brandColor) {
+  const [r, g, b] = hexToRgb(brandColor)
+  doc.setFillColor(Math.round(r + (255 - r) * 0.86), Math.round(g + (255 - g) * 0.86), Math.round(b + (255 - b) * 0.86))
+  doc.roundedRect(x, y, size, size, 3, 3, 'F')
+  const letter = String(name ?? '?').trim().charAt(0).toUpperCase() || '?'
+  doc.setFontSize(size * 0.9)
+  setFont(doc, 'bold')
+  doc.setTextColor(r, g, b)
+  doc.text(letter, x + size / 2, y + size / 2 + size * 0.16, { align: 'center' })
 }
