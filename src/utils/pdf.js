@@ -2,6 +2,7 @@ import { jsPDF } from 'jspdf'
 import { COVER_STYLES } from './coverStyles'
 
 const imgCache = new Map()
+const fontCache = new Map()
 
 const SUPABASE_URL  = import.meta.env.VITE_SUPABASE_URL
 const SUPABASE_ANON = import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -10,9 +11,47 @@ function proxyUrl(url) {
   return `${SUPABASE_URL}/functions/v1/img-proxy?url=${encodeURIComponent(url)}`
 }
 
-// serif (times) for content, sans (helvetica) for UI chrome, mono (courier) for codes
+// Fuentes del spec de diseño: Outfit (títulos, 600) + IBM Plex Sans (texto, 400/600)
+const FONT_FILES = [
+  { file: '/fonts/Outfit-SemiBold.ttf',       vfsName: 'Outfit-SemiBold.ttf',       family: 'Outfit',      style: 'bold'   },
+  { file: '/fonts/IBMPlexSans-Regular.ttf',   vfsName: 'IBMPlexSans-Regular.ttf',   family: 'IBMPlexSans', style: 'normal' },
+  { file: '/fonts/IBMPlexSans-SemiBold.ttf',  vfsName: 'IBMPlexSans-SemiBold.ttf',  family: 'IBMPlexSans', style: 'bold'   },
+]
+
+async function loadFontBase64(url) {
+  if (fontCache.has(url)) return fontCache.get(url)
+  const buf = await fetch(url).then(r => r.arrayBuffer())
+  const bytes = new Uint8Array(buf)
+  let binary = ''
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i])
+  const b64 = btoa(binary)
+  fontCache.set(url, b64)
+  return b64
+}
+
+// Registra Outfit + IBM Plex Sans en esta instancia de jsPDF (addFont es por-instancia).
+// Si falla (ej. fetch bloqueado), se sigue con helvetica como fallback silencioso.
+async function ensureFonts(doc) {
+  try {
+    for (const f of FONT_FILES) {
+      const b64 = await loadFontBase64(f.file)
+      doc.addFileToVFS(f.vfsName, b64)
+      doc.addFont(f.vfsName, f.family, f.style)
+    }
+    doc.__customFontsLoaded = true
+  } catch {
+    doc.__customFontsLoaded = false
+  }
+}
+
+// Títulos (portada, encabezado de marca) → Outfit 600. Todo lo demás → IBM Plex Sans.
 function setFont(doc, style) {
-  const bold = style === 'bold' || style === 'uibold' || style === 'mono' || style === 'bolditalic'
+  const bold = style === 'bold' || style === 'uibold' || style === 'mono' || style === 'bolditalic' || style === 'title'
+  if (doc.__customFontsLoaded) {
+    if (style === 'title') { doc.setFont('Outfit', 'bold'); return }
+    doc.setFont('IBMPlexSans', bold ? 'bold' : 'normal')
+    return
+  }
   doc.setFont('helvetica', bold ? 'bold' : 'normal')
 }
 
@@ -95,8 +134,8 @@ async function addCoverPage(doc, company, coverOptions, isLandscape, stats = nul
   const PW = isLandscape ? 297 : 210
   const PH = isLandscape ? 210 : 297
 
-  const color1     = coverOptions?.color1     ?? '#6366f1'
-  const color2     = coverOptions?.color2     ?? '#D4FF3F'
+  const color1     = coverOptions?.color1     ?? '#0F4C5C'
+  const color2     = coverOptions?.color2     ?? '#E07A28'
   const contacto   = (coverOptions?.contacto  ?? '').trim()
   const clientName = (coverOptions?.clientName ?? '').trim()
   const showTagline = coverOptions?.showTagline !== false
@@ -108,7 +147,7 @@ async function addCoverPage(doc, company, coverOptions, isLandscape, stats = nul
     : (coverOptions?.logoUrlLight ?? coverOptions?.logoUrlDark ?? coverOptions?.logoUrl ?? '').trim()
   const styleName  = coverOptions?.style      ?? 'corners'
 
-  const bgColor    = isDark ? '#09090B' : '#F8F8F8'
+  const bgColor    = isDark ? '#0B2A31' : '#F8F8F8'
   const gridColor  = isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.04)'
   const textWhite  = isDark ? [255,255,255] : [20,20,20]
   const textLabel  = isDark ? [180,180,180] : [100,100,100]
@@ -160,10 +199,12 @@ async function addCoverPage(doc, company, coverOptions, isLandscape, stats = nul
 
   doc.addImage(canvas.toDataURL('image/jpeg', 0.94), 'JPEG', 0, 0, PW, PH)
 
-  const centerX = PW / 2
-  const centerY = PH / 2
+  // ── Layout alineado a la izquierda (spec de diseño) ──
+  const marginL   = 15
+  const titleMaxW = PW - marginL - (isLandscape ? 85 : 40) // deja espacio al glow de la derecha
+  let cursorY = 20
 
-  // ── Logo ──
+  // ── Marca: logo chico (si hay) o nombre de empresa como texto ──
   let logoRendered = false
   let logoH = 0
   if (logoUrl) {
@@ -177,72 +218,66 @@ async function addCoverPage(doc, company, coverOptions, isLandscape, stats = nul
           img.src = logoPng
         })
         if (dims) {
-          const maxW = isLandscape ? 80 : 60
-          const maxH = isLandscape ? 28 : 22
+          const maxW = 34, maxH = 14
           const ratio = dims.w / dims.h
           let w = maxW, h = w / ratio
           if (h > maxH) { h = maxH; w = h * ratio }
           logoH = h
-          const logoY = centerY - h / 2 - (clientName ? 14 : 10)
-          doc.addImage(logoPng, 'PNG', centerX - w/2, logoY, w, h, undefined, 'NONE')
+          doc.addImage(logoPng, 'PNG', marginL, cursorY, w, h, undefined, 'NONE')
           logoRendered = true
         }
       }
-    } catch { /* fallback to text */ }
+    } catch { /* fallback: sin logo, el título grande alcanza */ }
   }
-  const coverSafeW = (isLandscape ? PW : PW) - 60 // margen seguro a cada lado del centro
+  if (logoRendered) cursorY += logoH + 10
 
-  if (!logoRendered) {
-    let nameSize = isLandscape ? 26 : 22
-    doc.setFontSize(nameSize)
-    setFont(doc, 'bold')
-    while (nameSize > 12 && doc.getTextWidth(company?.name ?? '') > coverSafeW) {
-      nameSize -= 1
-      doc.setFontSize(nameSize)
-    }
-    doc.setTextColor(...textWhite)
-    doc.text(fitText(doc, company?.name ?? '', coverSafeW), centerX, centerY - (clientName ? 8 : 4), { align: 'center' })
-  }
-
-  // ── "PROPUESTA COMERCIAL" label — 14mm below logo bottom (opcional) ──
-  const labelY = logoRendered
-    ? centerY - logoH / 2 - (clientName ? 14 : 10) + logoH + 14
-    : centerY + (clientName ? 4 : 8)
+  // ── "PROPUESTA COMERCIAL" — pill (opcional) ──
   if (showTagline) {
     doc.setFontSize(7.5)
     setFont(doc, 'ui')
-    doc.setTextColor(...textLabel)
-    doc.setCharSpace(4)
-    doc.text('PROPUESTA COMERCIAL', centerX, labelY, { align: 'center' })
+    doc.setCharSpace(3)
+    const label = 'PROPUESTA COMERCIAL'
+    const tw = doc.getTextWidth(label)
     doc.setCharSpace(0)
+    const pillW = tw + 16, pillH = 7.5
+    doc.saveGraphicsState()
+    doc.setGState(new doc.GState({ opacity: isDark ? 0.12 : 0.08 }))
+    doc.setFillColor(...textWhite)
+    doc.roundedRect(marginL, cursorY, pillW, pillH, pillH / 2, pillH / 2, 'F')
+    doc.restoreGraphicsState()
+    doc.setCharSpace(3)
+    doc.setTextColor(...textLabel)
+    doc.text(label, marginL + 8, cursorY + pillH / 2 + 1.3)
+    doc.setCharSpace(0)
+    cursorY += pillH + 10
   }
 
-  // ── Client name ──
-  const lineColor = isDark ? [255,255,255] : [180,180,180]
+  // ── Título grande: nombre de la empresa ──
+  let nameSize = isLandscape ? 46 : 32
+  doc.setFontSize(nameSize)
+  setFont(doc, 'title')
+  const nameStr = company?.name ?? ''
+  let titleLines = doc.splitTextToSize(nameStr, titleMaxW)
+  while (titleLines.length > 2 && nameSize > 20) {
+    nameSize -= 2
+    doc.setFontSize(nameSize)
+    titleLines = doc.splitTextToSize(nameStr, titleMaxW)
+  }
+  titleLines = titleLines.slice(0, 2)
+  doc.setTextColor(...textWhite)
+  const lineH = nameSize * 0.3528 * 1.12 // pt → mm, con interlineado ~1.12
+  doc.text(titleLines, marginL, cursorY + nameSize * 0.3528 * 0.78, { lineHeightFactor: 1.12 })
+  cursorY += lineH * titleLines.length + 6
+
+  // ── Cliente (opcional) ──
   if (clientName) {
-    doc.setDrawColor(...lineColor)
-    doc.setLineWidth(0.2)
-    doc.setLineDashPattern([1, 1.5], 0)
-    doc.line(centerX - 28, labelY + 5, centerX + 28, labelY + 5)
-    doc.setLineDashPattern([], 0)
-    let clientSize = isLandscape ? 13 : 11
-    doc.setFontSize(clientSize)
-    setFont(doc, 'italic')
-    while (clientSize > 8 && doc.getTextWidth(clientName) > coverSafeW) {
-      clientSize -= 1
-      doc.setFontSize(clientSize)
-    }
+    doc.setFontSize(isLandscape ? 12 : 10)
+    setFont(doc, 'ui')
     doc.setTextColor(...textSub)
-    doc.text(fitText(doc, clientName, coverSafeW), centerX, labelY + 12, { align: 'center' })
-  } else {
-    doc.setDrawColor(...lineColor)
-    doc.setLineWidth(0.2)
-    doc.setLineDashPattern([1, 1.5], 0)
-    doc.line(centerX - 28, labelY + 4, centerX + 28, labelY + 4)
-    doc.setLineDashPattern([], 0)
+    doc.text(fitText(doc, `Para ${clientName}`, titleMaxW), marginL, cursorY)
   }
 
-  // ── Stat chips (proveedores / productos / moneda) ──
+  // ── Stat chips (proveedores / productos / moneda) — abajo a la izquierda ──
   if (stats) {
     const chips = [
       { label: stats.brandCount === 1 ? 'PROVEEDOR' : 'PROVEEDORES', value: String(stats.brandCount) },
@@ -251,15 +286,14 @@ async function addCoverPage(doc, company, coverOptions, isLandscape, stats = nul
     ]
     const chipH = 14
     const chipGap = 4
-    let chipX = centerX - (isLandscape ? 60 : 45)
-    const chipY = PH - 30
-    const chipBg = isDark ? [255, 255, 255] : [20, 20, 20]
+    let chipX = marginL
+    const chipY = PH - 26
     for (const chip of chips) {
       doc.setFontSize(6)
       const w = Math.max(doc.getTextWidth(chip.label), doc.getTextWidth(chip.value)) + 10
-      doc.setFillColor(chipBg[0], chipBg[1], chipBg[2])
       doc.saveGraphicsState()
-      doc.setGState(new doc.GState({ opacity: isDark ? 0.08 : 0.05 }))
+      doc.setGState(new doc.GState({ opacity: isDark ? 0.1 : 0.06 }))
+      doc.setFillColor(...textWhite)
       doc.roundedRect(chipX, chipY, w, chipH, 3, 3, 'F')
       doc.restoreGraphicsState()
       setFont(doc, 'ui')
@@ -275,17 +309,21 @@ async function addCoverPage(doc, company, coverOptions, isLandscape, stats = nul
     }
   }
 
-  // ── Website ──
-  doc.setFontSize(8)
-  setFont(doc, 'ui')
-  doc.setTextColor(...textFaint)
-  if (company?.website) doc.text(company.website, centerX, PH - 10, { align: 'center' })
-
-  // ── Contact ──
+  // ── Contacto — abajo a la derecha ──
+  const rightX = PW - marginL
+  let contactY = PH - 10
   if (contacto) {
     doc.setFontSize(7)
+    setFont(doc, 'ui')
     doc.setTextColor(...textFaint)
-    doc.text(contacto, 12, PH - 10)
+    doc.text(contacto, rightX, contactY, { align: 'right' })
+    contactY -= 5
+  }
+  if (company?.website) {
+    doc.setFontSize(8)
+    setFont(doc, 'ui')
+    doc.setTextColor(...textFaint)
+    doc.text(company.website, rightX, contactY, { align: 'right' })
   }
 }
 
@@ -299,7 +337,7 @@ function makeCoverThumbRaster(color1, color2, isDark) {
   canvas.width = cw; canvas.height = ch
   const ctx = canvas.getContext('2d')
 
-  ctx.fillStyle = isDark ? '#09090B' : '#F8F8F8'
+  ctx.fillStyle = isDark ? '#0B2A31' : '#F8F8F8'
   ctx.fillRect(0, 0, cw, ch)
 
   const blobs = [
@@ -383,6 +421,7 @@ function addShowcasePage(doc, isLandscape) {
 export async function generateCatalogPDF(brandGroups, company, onProgress, orientation = 'landscape', coverOptions = null, showcase = false, ivaLabel = 'Precios sin IVA') {
   const isLandscape = orientation === 'landscape'
   const doc = new jsPDF({ orientation, unit: 'mm', format: 'a4' })
+  await ensureFonts(doc)
 
   const PW = isLandscape ? 297 : 210
   const PH = isLandscape ? 210 : 297
@@ -441,33 +480,33 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
       doc.setFontSize(6.5)
       setFont(doc, 'ui')
       doc.setCharSpace(1.2)
-      doc.setTextColor('#8A8580')
+      doc.setTextColor('#6E7A76')
       doc.text('PROVEEDOR', SIDE_MARGIN + 5, 11)
       doc.setCharSpace(0)
 
-      // Chips "N productos" + "Precios sin/con IVA" arriba a la derecha (se
-      // calculan antes para saber cuánto espacio le queda al nombre de marca)
+      // Chips "N productos" + "Precios sin/con IVA" arriba a la derecha, en ese
+      // orden de izquierda a derecha (se calculan antes para saber cuánto
+      // espacio le queda al nombre de marca)
       const chipText = `${products.length} producto${products.length !== 1 ? 's' : ''}`
       doc.setFontSize(7.5)
       setFont(doc, 'bold')
+      const ivaChipW = ivaLabel ? doc.getTextWidth(ivaLabel) + 10 : 0
+      const ivaChipX = PW - SIDE_MARGIN - ivaChipW
       const chipW = doc.getTextWidth(chipText) + 10
-      const chipX = PW - SIDE_MARGIN - chipW
+      const chipX = ivaLabel ? ivaChipX - chipW - 4 : PW - SIDE_MARGIN - chipW
 
-      let ivaChipX = chipX
       if (ivaLabel) {
-        const ivaChipW = doc.getTextWidth(ivaLabel) + 10
-        ivaChipX = chipX - ivaChipW - 4
         doc.setFillColor('#F0EEE8')
         doc.roundedRect(ivaChipX, 10, ivaChipW, 7.5, 3.75, 3.75, 'F')
         doc.setTextColor('#6E7A76')
         doc.text(ivaLabel, ivaChipX + ivaChipW / 2, 15, { align: 'center' })
       }
 
-      doc.setFontSize(16)
-      setFont(doc, 'bold')
-      doc.setTextColor('#171310')
-      const brandNameFit = fitText(doc, brandName, ivaChipX - (SIDE_MARGIN + 5) - 6)
-      doc.text(brandNameFit, SIDE_MARGIN + 5, 19)
+      doc.setFontSize(21)
+      setFont(doc, 'title')
+      doc.setTextColor('#0E1A1E')
+      const brandNameFit = fitText(doc, brandName, chipX - (SIDE_MARGIN + 5) - 6)
+      doc.text(brandNameFit, SIDE_MARGIN + 5, 20)
 
       doc.setFontSize(7.5)
       setFont(doc, 'bold')
@@ -486,7 +525,7 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
       doc.line(SIDE_MARGIN, PH - FOOTER_H + 4, PW - SIDE_MARGIN, PH - FOOTER_H + 4)
       doc.setFontSize(7)
       setFont(doc, 'ui')
-      doc.setTextColor('#9C948A')
+      doc.setTextColor('#6E7A76')
       const footerHalfW = (PW - SIDE_MARGIN * 2) / 2 - 4
       const footerLeft  = fitText(doc, [companyName, companyWeb].filter(Boolean).join(' · '), footerHalfW)
       const footerRight = fitText(doc, `${brandName} — ${String(globalPageNum).padStart(2, '0')}`, footerHalfW)
@@ -548,7 +587,7 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
 
       doc.setFontSize(9.5)
       setFont(doc, 'bold')
-      doc.setTextColor('#171310')
+      doc.setTextColor('#0E1A1E')
       const nameLines = doc.splitTextToSize(String(p.name ?? ''), textW).slice(0, 2)
       doc.text(nameLines, textX, y + CARD_PAD + 3.5, { lineHeightFactor: 1.3 })
       let cursorY = y + CARD_PAD + 3.5 + nameLines.length * 4.2
@@ -556,7 +595,7 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
       if (p.description) {
         doc.setFontSize(7)
         setFont(doc, 'ui')
-        doc.setTextColor('#8A8580')
+        doc.setTextColor('#6E7A76')
         const descLines = doc.splitTextToSize(String(p.description), textW).slice(0, 2)
         doc.text(descLines, textX, cursorY + 2.5, { lineHeightFactor: 1.3 })
       }
@@ -570,7 +609,7 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
       const skuW = doc.getTextWidth(skuText) + 8
       doc.setFillColor(tint(0.9))
       doc.roundedRect(textX, bottomY - 5.5, skuW, 5.5, 2.75, 2.75, 'F')
-      doc.setTextColor('#6E6A62')
+      doc.setTextColor('#6E7A76')
       doc.text(skuText, textX + skuW / 2, bottomY - 1.8, { align: 'center' })
 
       if (p._price) {

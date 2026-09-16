@@ -27,8 +27,8 @@ export default function PDFPreviewModal({
   const [coverEnabled, setCoverEnabled] = useState(true)
   const [coverTheme, setCoverTheme]     = useState('dark')  // 'dark' | 'light'
   const [coverStyle, setCoverStyle]     = useState('corners')
-  const [coverColor1, setCoverColor1]   = useState('#6366f1')
-  const [coverColor2, setCoverColor2]   = useState('#D4FF3F')
+  const [coverColor1, setCoverColor1]   = useState('#0F4C5C')
+  const [coverColor2, setCoverColor2]   = useState('#E07A28')
   const [contacto, setContacto]         = useState('')
   const [clientName, setClientName]     = useState('')
   const [showTagline, setShowTagline]   = useState(true)
