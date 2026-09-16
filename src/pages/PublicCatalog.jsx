@@ -175,16 +175,21 @@ export default function PublicCatalog() {
         {brandGroups.map(({ brand, products }) => (
           <div key={brand.id} style={{ marginBottom: 36 }}>
             {/* Brand header */}
-            <div style={{
-              display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16,
-              padding: '10px 16px', borderRadius: 10,
-              background: brand.color ?? '#6366f1',
-            }}>
-              {brand.logo_url ? (
-                <img src={brand.logo_url} alt={brand.name} style={{ height: 24, objectFit: 'contain' }} />
-              ) : (
-                <span style={{ fontWeight: 700, fontSize: 14, color: brand.text_color ?? '#fff' }}>{brand.name}</span>
-              )}
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#8A8580', marginBottom: 6 }}>
+                Proveedor
+              </div>
+              <div style={{
+                display: 'inline-flex', alignItems: 'center', gap: 10,
+                padding: '8px 18px', borderRadius: 999,
+                background: brand.color ?? '#6366f1',
+              }}>
+                {brand.logo_url ? (
+                  <img src={brand.logo_url} alt={brand.name} style={{ height: 24, objectFit: 'contain' }} />
+                ) : (
+                  <span style={{ fontWeight: 700, fontSize: 14, color: brand.text_color ?? '#fff' }}>{brand.name}</span>
+                )}
+              </div>
             </div>
 
             {/* Products grid */}
