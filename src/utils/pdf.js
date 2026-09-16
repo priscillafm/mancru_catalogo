@@ -75,6 +75,15 @@ function svgDataUrlToPng(svgDataUrl, targetW = 600, targetH = 300) {
   })
 }
 
+// Trunca `text` con "…" para que no exceda maxWidth (mm) con la fuente/tamaño actual del doc.
+function fitText(doc, text, maxWidth) {
+  if (!text) return ''
+  if (doc.getTextWidth(text) <= maxWidth) return text
+  let t = text
+  while (t.length > 1 && doc.getTextWidth(t + '…') > maxWidth) t = t.slice(0, -1)
+  return t + '…'
+}
+
 function hexToRgb(hex) {
   const h = hex.replace('#', '')
   if (h.length === 3) return [parseInt(h[0]+h[0],16), parseInt(h[1]+h[1],16), parseInt(h[2]+h[2],16)]
@@ -90,6 +99,7 @@ async function addCoverPage(doc, company, coverOptions, isLandscape, stats = nul
   const color2     = coverOptions?.color2     ?? '#D4FF3F'
   const contacto   = (coverOptions?.contacto  ?? '').trim()
   const clientName = (coverOptions?.clientName ?? '').trim()
+  const showTagline = coverOptions?.showTagline !== false
   const theme      = coverOptions?.theme      ?? 'dark'   // 'dark' | 'light'
   const isDark = theme === 'dark'
   // Auto-select logo based on theme
@@ -180,23 +190,32 @@ async function addCoverPage(doc, company, coverOptions, isLandscape, stats = nul
       }
     } catch { /* fallback to text */ }
   }
+  const coverSafeW = (isLandscape ? PW : PW) - 60 // margen seguro a cada lado del centro
+
   if (!logoRendered) {
-    doc.setFontSize(isLandscape ? 26 : 22)
+    let nameSize = isLandscape ? 26 : 22
+    doc.setFontSize(nameSize)
     setFont(doc, 'bold')
+    while (nameSize > 12 && doc.getTextWidth(company?.name ?? '') > coverSafeW) {
+      nameSize -= 1
+      doc.setFontSize(nameSize)
+    }
     doc.setTextColor(...textWhite)
-    doc.text(company?.name ?? '', centerX, centerY - (clientName ? 8 : 4), { align: 'center' })
+    doc.text(fitText(doc, company?.name ?? '', coverSafeW), centerX, centerY - (clientName ? 8 : 4), { align: 'center' })
   }
 
-  // ── "PROPUESTA COMERCIAL" label — 14mm below logo bottom ──
+  // ── "PROPUESTA COMERCIAL" label — 14mm below logo bottom (opcional) ──
   const labelY = logoRendered
     ? centerY - logoH / 2 - (clientName ? 14 : 10) + logoH + 14
     : centerY + (clientName ? 4 : 8)
-  doc.setFontSize(7.5)
-  setFont(doc, 'ui')
-  doc.setTextColor(...textLabel)
-  doc.setCharSpace(4)
-  doc.text('PROPUESTA COMERCIAL', centerX, labelY, { align: 'center' })
-  doc.setCharSpace(0)
+  if (showTagline) {
+    doc.setFontSize(7.5)
+    setFont(doc, 'ui')
+    doc.setTextColor(...textLabel)
+    doc.setCharSpace(4)
+    doc.text('PROPUESTA COMERCIAL', centerX, labelY, { align: 'center' })
+    doc.setCharSpace(0)
+  }
 
   // ── Client name ──
   const lineColor = isDark ? [255,255,255] : [180,180,180]
@@ -206,10 +225,15 @@ async function addCoverPage(doc, company, coverOptions, isLandscape, stats = nul
     doc.setLineDashPattern([1, 1.5], 0)
     doc.line(centerX - 28, labelY + 5, centerX + 28, labelY + 5)
     doc.setLineDashPattern([], 0)
-    doc.setFontSize(isLandscape ? 13 : 11)
+    let clientSize = isLandscape ? 13 : 11
+    doc.setFontSize(clientSize)
     setFont(doc, 'italic')
+    while (clientSize > 8 && doc.getTextWidth(clientName) > coverSafeW) {
+      clientSize -= 1
+      doc.setFontSize(clientSize)
+    }
     doc.setTextColor(...textSub)
-    doc.text(clientName, centerX, labelY + 12, { align: 'center' })
+    doc.text(fitText(doc, clientName, coverSafeW), centerX, labelY + 12, { align: 'center' })
   } else {
     doc.setDrawColor(...lineColor)
     doc.setLineWidth(0.2)
@@ -420,17 +444,23 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
       doc.setTextColor('#8A8580')
       doc.text('PROVEEDOR', SIDE_MARGIN + 5, 11)
       doc.setCharSpace(0)
-      doc.setFontSize(16)
-      setFont(doc, 'bold')
-      doc.setTextColor('#171310')
-      doc.text(brandName, SIDE_MARGIN + 5, 19)
 
-      // Chip "N productos" arriba a la derecha
+      // Chip "N productos" arriba a la derecha (se calcula antes para saber
+      // cuánto espacio le queda al nombre de marca sin pisarlo)
       const chipText = `${products.length} producto${products.length !== 1 ? 's' : ''}`
       doc.setFontSize(7.5)
       setFont(doc, 'bold')
       const chipW = doc.getTextWidth(chipText) + 10
       const chipX = PW - SIDE_MARGIN - chipW
+
+      doc.setFontSize(16)
+      setFont(doc, 'bold')
+      doc.setTextColor('#171310')
+      const brandNameFit = fitText(doc, brandName, chipX - (SIDE_MARGIN + 5) - 6)
+      doc.text(brandNameFit, SIDE_MARGIN + 5, 19)
+
+      doc.setFontSize(7.5)
+      setFont(doc, 'bold')
       doc.setFillColor(tint(0.88))
       doc.roundedRect(chipX, 10, chipW, 7.5, 3.75, 3.75, 'F')
       doc.setTextColor(br, bg, bb)
@@ -447,9 +477,11 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
       doc.setFontSize(7)
       setFont(doc, 'ui')
       doc.setTextColor('#9C948A')
-      const footerLeft = [companyName, companyWeb].filter(Boolean).join(' · ')
+      const footerHalfW = (PW - SIDE_MARGIN * 2) / 2 - 4
+      const footerLeft  = fitText(doc, [companyName, companyWeb].filter(Boolean).join(' · '), footerHalfW)
+      const footerRight = fitText(doc, `${brandName} — ${String(globalPageNum).padStart(2, '0')}`, footerHalfW)
       doc.text(footerLeft, SIDE_MARGIN, PH - 6)
-      doc.text(`${brandName} — ${String(globalPageNum).padStart(2, '0')}`, PW - SIDE_MARGIN, PH - 6, { align: 'right' })
+      doc.text(footerRight, PW - SIDE_MARGIN, PH - 6, { align: 'right' })
     }
 
     if (!firstContentPage || coverOptions?.enabled) doc.addPage()

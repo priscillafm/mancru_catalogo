@@ -17,6 +17,30 @@ import Icon from '@/components/Icon'
  * La primera fila se trata como encabezado y se ignora.
  */
 
+async function downloadTemplate() {
+  const wb = new ExcelJS.Workbook()
+  const ws = wb.addWorksheet('Productos')
+  ws.columns = [
+    { header: 'SKU', key: 'sku', width: 14 },
+    { header: 'Nombre', key: 'nombre', width: 32 },
+    { header: 'Stock', key: 'stock', width: 10 },
+    { header: 'Precio', key: 'precio', width: 12 },
+    { header: 'Marca', key: 'marca', width: 20 },
+  ]
+  ws.getRow(1).font = { bold: true }
+  ws.addRow({ sku: 'ABC-001', nombre: 'Producto de ejemplo 1', stock: 25, precio: 1500, marca: 'Mi Marca' })
+  ws.addRow({ sku: 'ABC-002', nombre: 'Producto de ejemplo 2', stock: 8,  precio: 2200, marca: 'Mi Marca' })
+  ws.addRow({ sku: 'XYZ-010', nombre: 'Producto sin marca (queda en "Sin marca")', stock: 40, precio: '', marca: '' })
+  const buf = await wb.xlsx.writeBuffer()
+  const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'plantilla-productos-potato.xlsx'
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
 function slugify(str) {
   return str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 }
@@ -235,11 +259,22 @@ export default function ImportExcel() {
     <div style={{ padding: 28, overflowY: 'auto', flex: 1 }}>
       <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>Importar productos desde Excel</h2>
       <p style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 6 }}>
-        Subí tu lista de productos en formato .xlsx. La primera fila debe ser el encabezado.
+        Usá esto para la <strong>carga inicial</strong> de tu catálogo. Subí tu lista en formato .xlsx con la primera fila como encabezado.
       </p>
-      <p style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 24 }}>
+      <p style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 10 }}>
         Columnas detectadas automáticamente: <strong>SKU</strong>, <strong>Nombre</strong>, <strong>Stock</strong>, <strong>Precio</strong> (opcional), <strong>Marca</strong> (opcional).
       </p>
+      <p style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 16 }}>
+        ¿Ya tenés productos cargados y solo querés actualizar stock o precios? Usá{' '}
+        <strong>Sincronizar</strong> en su lugar — compara tu Excel contra lo que ya está guardado antes de aplicar cambios.
+      </p>
+      <button onClick={downloadTemplate} style={{
+        display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px',
+        background: 'var(--surface-h)', border: '1px solid var(--border)', borderRadius: 8,
+        color: 'var(--text2)', fontSize: 12, fontWeight: 600, cursor: 'pointer', marginBottom: 24,
+      }}>
+        ↓ Descargar plantilla de ejemplo (.xlsx)
+      </button>
 
       {error && (
         <div style={{ padding: '10px 14px', background: 'rgba(239,68,68,.1)', border: '1px solid rgba(239,68,68,.3)', borderRadius: 8, color: '#ef4444', fontSize: 13, marginBottom: 16 }}>

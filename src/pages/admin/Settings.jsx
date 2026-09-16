@@ -19,11 +19,31 @@ export default function Settings() {
       .then(({ data }) => { if (data) setForm({ name: data.name ?? '', website: data.website ?? '', logo_url: data.logo_url ?? '' }) })
   }, [companyId])
 
+  const MAX_LOGO_BYTES = 3 * 1024 * 1024 // 3MB
+  const ALLOWED_TYPES = ['image/svg+xml', 'image/png', 'image/jpeg', 'image/webp']
+
   async function handleLogoUpload(e) {
     const file = e.target.files[0]
     if (!file) return
-    setUploading(true)
     setError('')
+
+    if (!companyId) {
+      setError('Tu perfil de empresa todavía se está cargando. Esperá unos segundos y volvé a intentar.')
+      e.target.value = ''
+      return
+    }
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      setError(`Formato no soportado (${file.type || 'desconocido'}). Usá SVG, PNG, JPG o WEBP.`)
+      e.target.value = ''
+      return
+    }
+    if (file.size > MAX_LOGO_BYTES) {
+      setError(`El archivo pesa ${(file.size / 1024 / 1024).toFixed(1)}MB — el máximo permitido es ${MAX_LOGO_BYTES / 1024 / 1024}MB.`)
+      e.target.value = ''
+      return
+    }
+
+    setUploading(true)
     try {
       const ext  = file.name.split('.').pop()
       const path = `${companyId}/company-logo.${ext}`
@@ -32,7 +52,11 @@ export default function Settings() {
       const { data: { publicUrl } } = supabase.storage.from('product-images').getPublicUrl(path)
       setForm(f => ({ ...f, logo_url: publicUrl }))
     } catch (err) {
-      setError('Error subiendo logo: ' + err.message)
+      if (/row-level security/i.test(err.message)) {
+        setError('No tenés permisos para subir archivos a esta empresa. Cerrá sesión y volvé a entrar; si el problema persiste, contactá a soporte.')
+      } else {
+        setError('Error subiendo logo: ' + err.message)
+      }
     } finally {
       setUploading(false)
     }

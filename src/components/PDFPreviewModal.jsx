@@ -31,6 +31,7 @@ export default function PDFPreviewModal({
   const [coverColor2, setCoverColor2]   = useState('#D4FF3F')
   const [contacto, setContacto]         = useState('')
   const [clientName, setClientName]     = useState('')
+  const [showTagline, setShowTagline]   = useState(true)
   const companyLogoUrl = company?.logo_url ?? ''
   const [logoUrlDark, setLogoUrlDark]   = useState(companyLogoUrl)
   const [logoUrlLight, setLogoUrlLight] = useState(companyLogoUrl)
@@ -85,7 +86,7 @@ export default function PDFPreviewModal({
     setProgress('Preparando...')
     try {
       const coverOptions = coverEnabled
-        ? { enabled: true, theme: coverTheme, style: coverStyle, color1: coverColor1, color2: coverColor2, contacto, clientName, logoUrlDark, logoUrlLight }
+        ? { enabled: true, theme: coverTheme, style: coverStyle, color1: coverColor1, color2: coverColor2, contacto, clientName, logoUrlDark, logoUrlLight, showTagline }
         : null
       await generateCatalogPDF(
         buildGroupsWithPrices(),
@@ -115,6 +116,7 @@ export default function PDFPreviewModal({
       prices,
       orientation,
       vendorWhatsapp: authUser?.whatsapp ?? null,
+      vendorEmail: authUser?.email ?? null,
     }
 
     try {
@@ -261,7 +263,15 @@ export default function PDFPreviewModal({
                         clientName={clientName}
                         companyName={company?.name}
                         website={company?.website ?? ''}
+                        showTagline={showTagline}
                       />
+
+                      {/* ── Mostrar/ocultar "Propuesta Comercial" ── */}
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+                        <input type="checkbox" checked={showTagline} onChange={e => setShowTagline(e.target.checked)}
+                          style={{ width: 16, height: 16, accentColor: 'var(--accent)', cursor: 'pointer' }} />
+                        <span style={{ fontSize: 13, fontWeight: 500 }}>Mostrar "Propuesta Comercial" en la portada</span>
+                      </label>
 
                       {/* ── Dark / Light toggle ── */}
                       <div>
@@ -583,7 +593,7 @@ const presetBtn = {
 }
 
 // ── Mini live preview of the cover ──
-function CoverPreview({ theme, style, color1, color2, logoUrl, clientName, companyName, website }) {
+function CoverPreview({ theme, style, color1, color2, logoUrl, clientName, companyName, website, showTagline = true }) {
   const isDark = theme === 'dark'
   const bg   = isDark ? '#09090B' : '#F8F8F8'
   const textMain  = isDark ? '#fff'          : '#111'
@@ -591,20 +601,21 @@ function CoverPreview({ theme, style, color1, color2, logoUrl, clientName, compa
   const textSub   = isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.5)'
   const textWeb   = isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)'
   const mult = isDark ? 1 : 0.45
+  const ellipsis = { maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'center' }
 
   return (
-    <div style={{ width: '100%', height: 110, borderRadius: 8, overflow: 'hidden', position: 'relative', background: bg, border: '1px solid var(--border)' }}>
+    <div style={{ width: '100%', minHeight: 110, borderRadius: 8, overflow: 'hidden', position: 'relative', background: bg, border: '1px solid var(--border)' }}>
       {/* Blobs */}
       <StyleBlobs styleKey={style} color1={color1} color2={color2} mult={mult} />
       {/* Content */}
-      <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 3, padding: '0 10px' }}>
+      <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 110, gap: 3, padding: '10px 14px' }}>
         {logoUrl
-          ? <img src={logoUrl} alt="" style={{ height: 22, maxWidth: 90, objectFit: 'contain' }} onError={e => { e.target.style.display='none' }} />
-          : <span style={{ fontSize: 14, fontWeight: 700, color: textMain }}>{companyName ?? 'Empresa'}</span>
+          ? <img src={logoUrl} alt="" style={{ height: 22, maxWidth: '80%', objectFit: 'contain' }} onError={e => { e.target.style.display='none' }} />
+          : <span style={{ fontSize: 14, fontWeight: 700, color: textMain, ...ellipsis }}>{companyName ?? 'Empresa'}</span>
         }
-        <span style={{ fontSize: 6.5, letterSpacing: '0.22em', color: textLabel, textTransform: 'uppercase', marginTop: 2 }}>Propuesta Comercial</span>
-        {clientName && <span style={{ fontSize: 9, color: textSub, marginTop: 1 }}>{clientName}</span>}
-        <span style={{ fontSize: 6.5, color: textWeb, marginTop: 3 }}>{website}</span>
+        {showTagline && <span style={{ fontSize: 6.5, letterSpacing: '0.22em', color: textLabel, textTransform: 'uppercase', marginTop: 2 }}>Propuesta Comercial</span>}
+        {clientName && <span style={{ fontSize: 9, color: textSub, marginTop: 1, ...ellipsis }}>{clientName}</span>}
+        <span style={{ fontSize: 6.5, color: textWeb, marginTop: 3, ...ellipsis }}>{website}</span>
       </div>
     </div>
   )

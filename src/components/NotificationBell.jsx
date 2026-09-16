@@ -102,7 +102,10 @@ export default function NotificationBell() {
                   onMouseLeave={e => e.currentTarget.style.background = n.read ? 'transparent' : 'color-mix(in srgb, var(--accent) 6%, transparent)'}
                 >
                   <span style={{ flexShrink: 0, color: 'var(--text3)', display: 'flex', alignItems: 'center' }}>
-                    {n.type === 'catalog_view' ? <Icon name="view" size={16} /> : '🔔'}
+                    {n.type === 'catalog_view' ? <Icon name="view" size={16} />
+                      : n.type === 'new_order'  ? '🛒'
+                      : n.type === 'plan_limit' ? '⚠️'
+                      : '🔔'}
                   </span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13, color: 'var(--text)', lineHeight: 1.4 }}>{n.message}</div>

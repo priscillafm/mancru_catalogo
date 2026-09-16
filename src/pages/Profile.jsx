@@ -21,6 +21,10 @@ export default function ProfilePage() {
   const [wappSaving, setWappSaving]   = useState(false)
   const [wappMsg, setWappMsg]         = useState('')
 
+  const DEFAULT_PREFS = { catalog_view: true, new_order: true, plan_limit: true }
+  const [notifPrefs, setNotifPrefs]   = useState({ ...DEFAULT_PREFS, ...(user?.notification_prefs ?? {}) })
+  const [prefsSaving, setPrefsSaving] = useState(false)
+
   async function handleSaveWhatsapp(e) {
     e.preventDefault()
     setWappSaving(true); setWappMsg('')
@@ -28,6 +32,15 @@ export default function ProfilePage() {
     setWappSaving(false)
     if (error) setWappMsg('Error al guardar')
     else { setWappMsg('Guardado'); loadMembership(user.id) }
+  }
+
+  async function toggleNotifPref(key) {
+    const next = { ...notifPrefs, [key]: !notifPrefs[key] }
+    setNotifPrefs(next)
+    setPrefsSaving(true)
+    await supabase.from('users').update({ notification_prefs: next }).eq('id', user.id)
+    setPrefsSaving(false)
+    loadMembership(user.id)
   }
 
   const ROLE_LABELS = { super_admin: 'Super Admin', company_admin: 'Administrador', vendor: 'Vendedor' }
@@ -107,6 +120,25 @@ export default function ProfilePage() {
               {wappSaving ? 'Guardando...' : 'Guardar WhatsApp'}
             </button>
           </form>
+        </div>
+
+        {/* Notification preferences */}
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: '24px 28px', boxShadow: 'var(--shadow)', marginBottom: 16 }}>
+          <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>Notificaciones</h2>
+          <p style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 16 }}>
+            Elegí qué te avisa la campanita.{prefsSaving ? ' Guardando...' : ''}
+          </p>
+          {[
+            { key: 'catalog_view', label: 'Alguien abrió mi catálogo' },
+            { key: 'new_order',    label: 'Llegó un pedido' },
+            { key: 'plan_limit',   label: 'Estoy cerca del límite de mi plan' },
+          ].map(({ key, label }) => (
+            <label key={key} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', marginBottom: 10 }}>
+              <input type="checkbox" checked={!!notifPrefs[key]} onChange={() => toggleNotifPref(key)}
+                style={{ width: 16, height: 16, accentColor: 'var(--accent)', cursor: 'pointer' }} />
+              <span style={{ fontSize: 13 }}>{label}</span>
+            </label>
+          ))}
         </div>
 
         {/* Change password */}

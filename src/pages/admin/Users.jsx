@@ -69,6 +69,10 @@ export default function Users() {
   }
 
   async function deleteUser(userId, memberId) {
+    if (isLastActiveAdmin(memberId)) {
+      alert('No podés eliminar a este usuario: es el único administrador activo de la empresa.')
+      return
+    }
     if (!confirm('¿Eliminar este usuario? Esta acción no se puede deshacer.')) return
     const SUPABASE_URL  = import.meta.env.VITE_SUPABASE_URL
     const SUPABASE_ANON = import.meta.env.VITE_SUPABASE_ANON_KEY
@@ -89,12 +93,30 @@ export default function Users() {
     }
   }
 
+  function isLastActiveAdmin(memberId) {
+    const target = members.find(m => m.id === memberId)
+    if (!target || !target.active || !['super_admin', 'company_admin'].includes(target.role)) return false
+    const otherAdmins = members.filter(m =>
+      m.id !== memberId && m.active && ['super_admin', 'company_admin'].includes(m.role)
+    )
+    return otherAdmins.length === 0
+  }
+
   async function changeRole(memberId, newRole) {
+    if (newRole !== 'company_admin' && newRole !== 'super_admin' && isLastActiveAdmin(memberId)) {
+      alert('No podés quitarte (o quitarle) el rol de Administrador: es el único admin activo de la empresa. Primero asigná el rol de Administrador a otro usuario.')
+      qc.invalidateQueries(['members', companyId])
+      return
+    }
     await supabase.from('user_memberships').update({ role: newRole }).eq('id', memberId)
     qc.invalidateQueries(['members', companyId])
   }
 
   async function toggleActive(memberId, current) {
+    if (current && isLastActiveAdmin(memberId)) {
+      alert('No podés desactivar a este usuario: es el único administrador activo de la empresa.')
+      return
+    }
     await supabase.from('user_memberships').update({ active: !current }).eq('id', memberId)
     qc.invalidateQueries(['members', companyId])
   }

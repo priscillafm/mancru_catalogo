@@ -140,9 +140,12 @@ export default function Sync() {
 
   return (
     <div style={{ padding: 28, overflowY: 'auto', flex: 1 }}>
-      <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>Sincronizar Empresa</h2>
-      <p style={{ color: 'var(--text2)', fontSize: 13, marginBottom: 24 }}>
-        Cargá tu archivo Excel. El sistema comparará cada producto con la base de datos antes de aplicar cambios.
+      <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>Sincronizar stock y precios</h2>
+      <p style={{ color: 'var(--text2)', fontSize: 13, marginBottom: 6 }}>
+        Usá esto para <strong>actualizar</strong> productos que ya cargaste (stock, precio, etc.). Subí tu Excel y el sistema compara cada fila con lo que ya está guardado antes de aplicar cambios — vos decidís qué aplicar.
+      </p>
+      <p style={{ color: 'var(--text3)', fontSize: 12, marginBottom: 24 }}>
+        ¿Todavía no cargaste ningún producto? Usá <strong>Importar</strong> para la carga inicial.
       </p>
 
       {step === STEPS.idle && (
