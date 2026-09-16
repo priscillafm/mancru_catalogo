@@ -23,7 +23,15 @@ export default function NotificationBell() {
     const opening = !open
     if (opening && ref.current) {
       const rect = ref.current.getBoundingClientRect()
-      setPos({ top: rect.bottom + 8, left: Math.max(8, rect.right - 320) })
+      const PANEL_W = 320
+      const PANEL_MAX_H = 404 // header (~45) + lista (360, con scroll propio)
+      const spaceBelow = window.innerHeight - rect.bottom
+      const openUpward = spaceBelow < PANEL_MAX_H && rect.top > spaceBelow
+      const top = openUpward
+        ? Math.max(8, rect.top - PANEL_MAX_H - 8)
+        : rect.bottom + 8
+      const left = Math.min(Math.max(8, rect.right - PANEL_W), window.innerWidth - PANEL_W - 8)
+      setPos({ top, left })
     }
     setOpen(opening)
     if (opening) {
