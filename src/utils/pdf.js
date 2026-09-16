@@ -327,92 +327,188 @@ async function addCoverPage(doc, company, coverOptions, isLandscape, stats = nul
   }
 }
 
-// Raster con las mismas manchas de color difuminadas que usa la portada real
-// (ver addCoverPage) pero a tamaño mini, para que el mockup se vea como una
-// portada de verdad y no como círculos sueltos.
-function makeCoverThumbRaster(color1, color2, isDark) {
-  const scale = 4
-  const cw = 240 * scale, ch = 163 * scale
-  const canvas = document.createElement('canvas')
-  canvas.width = cw; canvas.height = ch
-  const ctx = canvas.getContext('2d')
+function drawToggle(doc, x, y, on) {
+  const w = 11, h = 5.5
+  doc.setFillColor(on ? '#0F4C5C' : '#E7E3DA')
+  doc.roundedRect(x, y, w, h, h / 2, h / 2, 'F')
+  doc.setFillColor('#FFFFFF')
+  doc.circle(on ? x + w - h / 2 : x + h / 2, y + h / 2, h / 2 - 0.8, 'F')
+}
 
-  ctx.fillStyle = isDark ? '#0B2A31' : '#F8F8F8'
-  ctx.fillRect(0, 0, cw, ch)
-
-  const blobs = [
-    { color: color1, cx: 0.22, cy: 0.32, r: 0.55 },
-    { color: color2, cx: 0.75, cy: 0.62, r: 0.5 },
-  ]
-  for (const b of blobs) {
-    const [r, g, bl] = hexToRgb(b.color)
-    const gx = cw * b.cx, gy = ch * b.cy, gr = cw * b.r
-    const grad = ctx.createRadialGradient(gx, gy, 0, gx, gy, gr)
-    grad.addColorStop(0,    `rgba(${r},${g},${bl},0.9)`)
-    grad.addColorStop(0.45, `rgba(${r},${g},${bl},0.28)`)
-    grad.addColorStop(1,    `rgba(${r},${g},${bl},0)`)
-    ctx.fillStyle = grad
-    ctx.fillRect(0, 0, cw, ch)
+function drawGridIcon(doc, x, y, cols, rows, cell, gap, color) {
+  const [r, g, b] = hexToRgb(color)
+  doc.setFillColor(r, g, b)
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
+      doc.roundedRect(x + col * (cell + gap), y + row * (cell + gap), cell, cell, 0.4, 0.4, 'F')
+    }
   }
-  return canvas.toDataURL('image/jpeg', 0.92)
 }
 
-// Mini-mockup de una portada (para la página de "personalizá tu catálogo")
-function drawCoverThumb(doc, x, y, w, h, { color1, color2, isDark, label }) {
-  const raster = makeCoverThumbRaster(color1, color2, isDark)
-  doc.addImage(raster, 'JPEG', x, y, w, h, undefined, 'FAST')
-  doc.setDrawColor(isDark ? '#333333' : '#CCCCCC')
-  doc.setLineWidth(0.15)
-  doc.roundedRect(x, y, w, h, 2, 2, 'S')
-
-  doc.setFontSize(6.5)
-  setFont(doc, 'bold')
-  doc.setTextColor(isDark ? '#FFFFFF' : '#1A1208')
-  doc.text('Tu Marca', x + w / 2, y + h / 2, { align: 'center' })
-  doc.setFontSize(6.5)
-  setFont(doc, 'ui')
-  doc.setTextColor('#666666')
-  doc.text(label, x + w / 2, y + h + 5, { align: 'center' })
-}
-
-// Página final del PDF de ejemplo: muestra qué se puede personalizar
-// (portadas, orientación) sin necesidad de generar 4 catálogos completos.
+// Página final del PDF de ejemplo: explica qué se puede personalizar al exportar
+// (spec de diseño: 6 tarjetas numeradas con mini-mockup de cada opción).
 function addShowcasePage(doc, isLandscape) {
   const PW = isLandscape ? 297 : 210
   const PH = isLandscape ? 210 : 297
   doc.addPage()
-  doc.setFillColor('#F4EFE6')
+  doc.setFillColor('#FAF8F4')
   doc.rect(0, 0, PW, PH, 'F')
 
-  doc.setFontSize(16)
-  setFont(doc, 'bold')
-  doc.setTextColor('#1A1208')
-  doc.text('Personalizá tu catálogo', PW / 2, 22, { align: 'center' })
-  doc.setFontSize(9)
+  const marginL = 15
+  const marginR = PW - 15
+
+  doc.setFontSize(7.5)
   setFont(doc, 'ui')
-  doc.setTextColor('#888888')
-  doc.text('Elegís portada, colores y orientación cada vez que exportás — esto es solo un ejemplo.', PW / 2, 30, { align: 'center' })
+  doc.setCharSpace(2)
+  doc.setTextColor('#6E7A76')
+  doc.text('ESTO ES SOLO UN EJEMPLO', marginL, 18)
+  doc.setCharSpace(0)
 
-  const thumbW = isLandscape ? 55 : 70
-  const thumbH = thumbW * 0.68
-  const gap = 16
-  const totalW = thumbW * 2 + gap
-  const startX = (PW - totalW) / 2
-  const rowY = 50
+  doc.setFontSize(18)
+  setFont(doc, 'title')
+  doc.setTextColor('#0E1A1E')
+  doc.text('Cómo personalizás tu catálogo', marginL, 27)
 
-  drawCoverThumb(doc, startX, rowY, thumbW, thumbH, {
-    isDark: true, color1: '#8B7FE8', color2: '#4FC3B0', label: 'Portada oscura',
-  })
-  drawCoverThumb(doc, startX + thumbW + gap, rowY, thumbW, thumbH, {
-    isDark: false, color1: '#5B6EE8', color2: '#E8506B', label: 'Portada clara',
-  })
+  doc.setFontSize(8.5)
+  setFont(doc, 'ui')
+  doc.setTextColor('#6E7A76')
+  const descLines = doc.splitTextToSize('Cada vez que exportás, elegís portada, colores, orientación y qué datos se muestran. Nada de esto queda fijo.', PW - marginR + 90)
+  doc.text(descLines, marginR, 15, { align: 'right', lineHeightFactor: 1.35 })
 
-  const row2Y = rowY + thumbH + 28
-  drawCoverThumb(doc, startX, row2Y, thumbW, thumbH * 0.72, {
-    isDark: true, color1: '#C864D8', color2: '#8B7FE8', label: 'Horizontal (A4)',
+  doc.setDrawColor('#E7E3DA')
+  doc.setLineWidth(0.3)
+  doc.line(marginL, 33, marginR, 33)
+
+  const cols = 3
+  const gap = 8
+  const cardW = (marginR - marginL - gap * (cols - 1)) / cols
+  const cardH = isLandscape ? 78 : 60
+  const startY = 40
+
+  const cards = [
+    {
+      num: 1, badge: '#0F4C5C', title: 'Subí tu marca',
+      desc: 'Cargás tu logo (PNG o SVG), el nombre comercial y los datos de contacto. Se aplican a la portada y al pie de todas las páginas.',
+      visual: (x, y, w) => {
+        doc.setFillColor('#0F4C5C')
+        doc.circle(x + 5, y + 5, 4, 'F')
+        doc.setFontSize(7); setFont(doc, 'bold'); doc.setTextColor('#FFFFFF')
+        doc.text('D', x + 5, y + 6.5, { align: 'center' })
+        doc.setFillColor('#E7E3DA')
+        doc.roundedRect(x + 13, y + 3, w - 13, 2, 1, 1, 'F')
+        doc.roundedRect(x + 13, y + 7, (w - 13) * 0.6, 2, 1, 1, 'F')
+      },
+    },
+    {
+      num: 2, badge: '#0F4C5C', title: 'Elegí la portada',
+      desc: 'Oscura, clara o con una foto tuya de fondo. Podés sumar un subtítulo, la fecha de vigencia y la lista de precios que aplica.',
+      visual: (x, y) => {
+        doc.setFillColor('#0B2A31'); doc.roundedRect(x, y, 14, 10, 1.5, 1.5, 'F')
+        doc.setFillColor('#FFFFFF'); doc.setDrawColor('#E7E3DA'); doc.setLineWidth(0.2)
+        doc.roundedRect(x + 17, y, 14, 10, 1.5, 1.5, 'FD')
+        doc.setFillColor('#D8D4C8')
+        doc.roundedRect(x + 34, y, 14, 10, 1.5, 1.5, 'F')
+      },
+    },
+    {
+      num: 3, badge: '#0F4C5C', title: 'Horizontal o vertical',
+      desc: 'A4 horizontal entra 9 productos por página en grilla 3×3. A4 vertical entra 8, en 2×4. La grilla se reacomoda sola.',
+      visual: (x, y) => {
+        drawGridIcon(doc, x, y, 3, 3, 2.6, 1, '#E7E3DA')
+        drawGridIcon(doc, x + 15, y, 2, 4, 2.6, 1, '#E7E3DA')
+      },
+    },
+    {
+      num: 4, badge: '#E07A28', title: 'Personalizá los colores',
+      desc: 'Elegís un color de acento y un fondo. Títulos, precios, chips y separadores se recalculan manteniendo el contraste legible.',
+      visual: (x, y) => {
+        const swatches = ['#0F4C5C', '#E07A28', '#1F6B4A', '#6B4FB8']
+        swatches.forEach((c, i) => {
+          const [r, g, b] = hexToRgb(c)
+          doc.setFillColor(r, g, b)
+          doc.circle(x + 4 + i * 9, y + 4, 4, 'F')
+        })
+        doc.setFillColor('#FFFFFF'); doc.setDrawColor('#E7E3DA'); doc.setLineWidth(0.3)
+        doc.circle(x + 4 + 4 * 9, y + 4, 4, 'FD')
+      },
+    },
+    {
+      num: 5, badge: '#E07A28', title: 'Decidí qué se muestra',
+      desc: 'Activás o desactivás cada dato de la ficha: código, descripción, precio, IVA, moneda y stock.',
+      visual: (x, y, w) => {
+        const opts = [['Mostrar código', true], ['Precio con IVA', false], ['Stock disponible', false]]
+        opts.forEach(([label, on], i) => {
+          doc.setFontSize(6); setFont(doc, 'ui'); doc.setTextColor('#6E7A76')
+          doc.text(label, x, y + i * 6 + 3)
+          drawToggle(doc, x + w - 12, y + i * 6, on)
+        })
+      },
+    },
+    {
+      num: 6, badge: '#FFFFFF', dark: true, title: 'Filtrá y exportá',
+      desc: 'Seleccionás proveedores y categorías, ordenás por precio o por nombre, y exportás el PDF. Cada proveedor arranca en página nueva.',
+      visual: (x, y) => {
+        const pills = ['Bebidas del Sur', 'Snacks Andinos']
+        let px = x
+        doc.setFontSize(6.5); setFont(doc, 'bold')
+        for (const p of pills) {
+          const w = doc.getTextWidth(p) + 8
+          doc.setFillColor('#FFFFFF')
+          doc.roundedRect(px, y, w, 6, 3, 3, 'F')
+          doc.setTextColor('#0B2A31')
+          doc.text(p, px + w / 2, y + 4, { align: 'center' })
+          px += w + 3
+        }
+        const sortW = doc.getTextWidth('Ordenar: A–Z') + 8
+        doc.saveGraphicsState()
+        doc.setGState(new doc.GState({ opacity: 0.5 }))
+        doc.setFillColor('#FFFFFF')
+        doc.roundedRect(x, y + 9, sortW, 6, 3, 3, 'F')
+        doc.restoreGraphicsState()
+        doc.setTextColor('#FFFFFF')
+        doc.text('Ordenar: A–Z', x + sortW / 2, y + 13, { align: 'center' })
+      },
+    },
+  ]
+
+  cards.forEach((card, i) => {
+    const col = i % cols
+    const row = Math.floor(i / cols)
+    const x = marginL + col * (cardW + gap)
+    const y = startY + row * (cardH + gap)
+
+    if (card.dark) {
+      doc.setFillColor('#0B2A31')
+      doc.roundedRect(x, y, cardW, cardH, 3, 3, 'F')
+    } else {
+      doc.setFillColor('#FFFFFF')
+      doc.setDrawColor('#E7E3DA')
+      doc.setLineWidth(0.25)
+      doc.roundedRect(x, y, cardW, cardH, 3, 3, 'FD')
+    }
+
+    const pad = 6
+    const [br, bgc, bb] = hexToRgb(card.badge)
+    doc.setFillColor(br, bgc, bb)
+    doc.circle(x + pad + 3, y + pad + 3, 3.4, 'F')
+    doc.setFontSize(7)
+    setFont(doc, 'bold')
+    doc.setTextColor(card.dark ? '#0B2A31' : '#FFFFFF')
+    doc.text(String(card.num), x + pad + 3, y + pad + 4.3, { align: 'center' })
+
+    doc.setFontSize(10.5)
+    setFont(doc, 'bold')
+    doc.setTextColor(card.dark ? '#FFFFFF' : '#0E1A1E')
+    doc.text(card.title, x + pad + 9, y + pad + 4.3)
+
+    doc.setFontSize(7.5)
+    setFont(doc, 'ui')
+    doc.setTextColor(card.dark ? '#C9D3D6' : '#6E7A76')
+    const lines = doc.splitTextToSize(card.desc, cardW - pad * 2)
+    doc.text(lines, x + pad, y + pad + 12, { lineHeightFactor: 1.4 })
+
+    card.visual(x + pad, y + cardH - 20, cardW - pad * 2)
   })
-  drawCoverThumb(doc, startX + thumbW + gap, row2Y, thumbW * 0.72, thumbH,
-    { isDark: true, color1: '#5B6EE8', color2: '#C864D8', label: 'Vertical (A4)' })
 }
 
 /**
