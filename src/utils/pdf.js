@@ -129,6 +129,26 @@ function hexToRgb(hex) {
   return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)]
 }
 
+// Conversión de valores del spec de diseño (CSS px @96dpi) a las unidades de jsPDF.
+const px  = v => v * 25.4 / 96   // px → mm (unit del doc)
+const pxpt = v => v * 0.75       // px → pt (setFontSize/setCharSpace usan pt)
+
+function alphaText(doc, text, x, y, rgb, alpha, opts) {
+  doc.saveGraphicsState()
+  doc.setGState(new doc.GState({ opacity: alpha }))
+  doc.setTextColor(...rgb)
+  doc.text(text, x, y, opts)
+  doc.restoreGraphicsState()
+}
+
+function alphaFill(doc, x, y, w, h, rx, ry, rgb, alpha) {
+  doc.saveGraphicsState()
+  doc.setGState(new doc.GState({ opacity: alpha }))
+  doc.setFillColor(...rgb)
+  doc.roundedRect(x, y, w, h, rx, ry, 'F')
+  doc.restoreGraphicsState()
+}
+
 // Cover page
 async function addCoverPage(doc, company, coverOptions, isLandscape, stats = null) {
   const PW = isLandscape ? 297 : 210
@@ -138,6 +158,7 @@ async function addCoverPage(doc, company, coverOptions, isLandscape, stats = nul
   const color2     = coverOptions?.color2     ?? '#E07A28'
   const contacto   = (coverOptions?.contacto  ?? '').trim()
   const clientName = (coverOptions?.clientName ?? '').trim()
+  const description = (coverOptions?.description ?? '').trim()
   const showTagline = coverOptions?.showTagline !== false
   const theme      = coverOptions?.theme      ?? 'dark'   // 'dark' | 'light'
   const isDark = theme === 'dark'
@@ -149,10 +170,6 @@ async function addCoverPage(doc, company, coverOptions, isLandscape, stats = nul
 
   const bgColor    = isDark ? '#0B2A31' : '#F8F8F8'
   const gridColor  = isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.04)'
-  const textWhite  = isDark ? [255,255,255] : [20,20,20]
-  const textLabel  = isDark ? [180,180,180] : [100,100,100]
-  const textSub    = isDark ? [160,160,160] : [130,130,130]
-  const textFaint  = isDark ? [120,120,120] : [160,160,160]
   // Light mode: blobs are less opaque to avoid neon-on-white look
   const blobMult   = isDark ? 1.0 : 0.55
 
@@ -199,14 +216,16 @@ async function addCoverPage(doc, company, coverOptions, isLandscape, stats = nul
 
   doc.addImage(canvas.toDataURL('image/jpeg', 0.94), 'JPEG', 0, 0, PW, PH)
 
-  // ── Layout alineado a la izquierda (spec de diseño) ──
-  const marginL   = 15
-  const titleMaxW = PW - marginL - (isLandscape ? 85 : 40) // deja espacio al glow de la derecha
-  let cursorY = 20
+  // ── Layout exacto del spec de diseño: padding 64px/72px, columna a la
+  // izquierda con marca arriba, título+descripción al medio, stats+contacto abajo ──
+  const padLR = px(72)
+  const padTB = px(64)
+  const fg = isDark ? [247, 245, 240] : [20, 20, 20]
+  const titleMaxW = PW - padLR * 2 - (isLandscape ? 70 : 0) // dejar aire al glow de la derecha en horizontal
 
-  // ── Marca: logo chico (si hay) o nombre de empresa como texto ──
-  let logoRendered = false
-  let logoH = 0
+  // ── Fila 1: marca (logo real si hay, si no inicial + "Tu logo acá") ──
+  const logoBoxSize = px(44)
+  let logoImgRendered = false
   if (logoUrl) {
     try {
       const logoPng = await loadImageAsBase64(logoUrl)
@@ -218,121 +237,159 @@ async function addCoverPage(doc, company, coverOptions, isLandscape, stats = nul
           img.src = logoPng
         })
         if (dims) {
-          const maxW = 34, maxH = 14
           const ratio = dims.w / dims.h
-          let w = maxW, h = w / ratio
-          if (h > maxH) { h = maxH; w = h * ratio }
-          logoH = h
-          doc.addImage(logoPng, 'PNG', marginL, cursorY, w, h, undefined, 'NONE')
-          logoRendered = true
+          let w = logoBoxSize * 1.8, h = w / ratio
+          if (h > logoBoxSize) { h = logoBoxSize; w = h * ratio }
+          doc.addImage(logoPng, 'PNG', padLR, padTB, w, h, undefined, 'NONE')
+          logoImgRendered = true
         }
       }
-    } catch { /* fallback: sin logo, el título grande alcanza */ }
+    } catch { /* usa el placeholder */ }
   }
-  if (logoRendered) cursorY += logoH + 10
-
-  // ── "PROPUESTA COMERCIAL" — pill (opcional) ──
-  if (showTagline) {
-    doc.setFontSize(7.5)
+  if (!logoImgRendered) {
+    doc.setFillColor(...fg)
+    doc.roundedRect(padLR, padTB, logoBoxSize, logoBoxSize, px(14), px(14), 'F')
+    doc.setFontSize(pxpt(20))
+    setFont(doc, 'title')
+    doc.setTextColor(bgColor)
+    const initial = (company?.name ?? '?').trim().charAt(0).toUpperCase() || '?'
+    doc.text(initial, padLR + logoBoxSize / 2, padTB + logoBoxSize / 2 + px(20) * 0.35, { align: 'center' })
+    doc.setFontSize(pxpt(13))
     setFont(doc, 'ui')
-    doc.setCharSpace(3)
-    const label = 'PROPUESTA COMERCIAL'
-    const tw = doc.getTextWidth(label)
+    doc.setCharSpace(px(13) * 0.16)
+    alphaText(doc, 'TU LOGO ACÁ', padLR + logoBoxSize + px(14), padTB + logoBoxSize / 2 + px(13) * 0.35, fg, 0.62)
     doc.setCharSpace(0)
-    const pillW = tw + 16, pillH = 7.5
-    doc.saveGraphicsState()
-    doc.setGState(new doc.GState({ opacity: isDark ? 0.12 : 0.08 }))
-    doc.setFillColor(...textWhite)
-    doc.roundedRect(marginL, cursorY, pillW, pillH, pillH / 2, pillH / 2, 'F')
-    doc.restoreGraphicsState()
-    doc.setCharSpace(3)
-    doc.setTextColor(...textLabel)
-    doc.text(label, marginL + 8, cursorY + pillH / 2 + 1.3)
-    doc.setCharSpace(0)
-    cursorY += pillH + 10
   }
 
-  // ── Título grande: nombre de la empresa ──
-  let nameSize = isLandscape ? 46 : 32
-  doc.setFontSize(nameSize)
+  // ── Fila 3 (medida primero para poder centrar la fila 2 entre ambas) ──
+  const chipH = px(58)
+  const bottomRowY = PH - padTB - chipH
+
+  // ── Fila 2: pill + título + descripción, centrada entre fila 1 y fila 3 ──
+  const pillH = showTagline ? px(30) : 0
+  let titleSize = isLandscape ? 86 : 60
+  doc.setFontSize(pxpt(titleSize))
   setFont(doc, 'title')
   const nameStr = company?.name ?? ''
   let titleLines = doc.splitTextToSize(nameStr, titleMaxW)
-  while (titleLines.length > 2 && nameSize > 20) {
-    nameSize -= 2
-    doc.setFontSize(nameSize)
+  while (titleLines.length > 2 && titleSize > 30) {
+    titleSize -= 3
+    doc.setFontSize(pxpt(titleSize))
     titleLines = doc.splitTextToSize(nameStr, titleMaxW)
   }
   titleLines = titleLines.slice(0, 2)
-  doc.setTextColor(...textWhite)
-  const lineH = nameSize * 0.3528 * 1.12 // pt → mm, con interlineado ~1.12
-  doc.text(titleLines, marginL, cursorY + nameSize * 0.3528 * 0.78, { lineHeightFactor: 1.12 })
-  cursorY += lineH * titleLines.length + 6
-
-  // ── Cliente (opcional) ──
-  if (clientName) {
-    doc.setFontSize(isLandscape ? 12 : 10)
+  const titleLineH = px(titleSize * 0.98)
+  const descLineH = px(19 * 1.5)
+  let descLines = []
+  if (description) {
+    doc.setFontSize(pxpt(19))
     setFont(doc, 'ui')
-    doc.setTextColor(...textSub)
-    doc.text(fitText(doc, `Para ${clientName}`, titleMaxW), marginL, cursorY)
+    descLines = doc.splitTextToSize(description, Math.min(titleMaxW, px(560)))
+  }
+  const clientLineH = clientName ? px(19) : 0
+
+  const middleH = pillH + (pillH ? px(24) : 0) + titleLineH * titleLines.length + px(24) * (descLines.length || clientName ? 1 : 0) + descLineH * descLines.length + clientLineH
+
+  const topOfMiddle = padTB + logoBoxSize
+  const gapAvail = Math.max(px(24), (bottomRowY - topOfMiddle - middleH) / 2)
+  let cursorY = topOfMiddle + gapAvail
+
+  if (showTagline) {
+    doc.setFontSize(pxpt(13))
+    setFont(doc, 'ui')
+    const trackGap = px(13) * 0.14
+    const label = 'PROPUESTA COMERCIAL'
+    // getTextWidth no contempla el char-space (letter-spacing) que se aplica
+    // recién al dibujar el texto — hay que sumarlo a mano para no cortar el texto.
+    const tw = doc.getTextWidth(label) + trackGap * label.length
+    const pillPadX = px(18)
+    const pillW = tw + pillPadX * 2
+    alphaFill(doc, padLR, cursorY, pillW, pillH, pillH / 2, pillH / 2, fg, isDark ? 0.1 : 0.08)
+    doc.saveGraphicsState()
+    doc.setDrawColor(...fg)
+    doc.setGState(new doc.GState({ opacity: isDark ? 0.22 : 0.18 }))
+    doc.setLineWidth(0.15)
+    doc.roundedRect(padLR, cursorY, pillW, pillH, pillH / 2, pillH / 2, 'S')
+    doc.restoreGraphicsState()
+    doc.setCharSpace(trackGap)
+    alphaText(doc, label, padLR + pillPadX, cursorY + pillH / 2 + px(13) * 0.32, fg, 0.8)
+    doc.setCharSpace(0)
+    cursorY += pillH + px(24)
   }
 
-  // ── Stat chips (proveedores / productos / moneda) — abajo a la izquierda ──
+  doc.setFontSize(pxpt(titleSize))
+  setFont(doc, 'title')
+  doc.setCharSpace(-0.03 * pxpt(titleSize) * 0.3528)
+  doc.setTextColor(...fg)
+  doc.text(titleLines, padLR, cursorY + titleLineH * 0.85, { lineHeightFactor: 0.98 })
+  doc.setCharSpace(0)
+  cursorY += titleLineH * titleLines.length
+
+  if (descLines.length) {
+    cursorY += px(24)
+    doc.setFontSize(pxpt(19))
+    setFont(doc, 'ui')
+    alphaText(doc, descLines, padLR, cursorY + px(19) * 0.85, fg, 0.72, { lineHeightFactor: 1.5 })
+    cursorY += descLineH * descLines.length
+  } else if (clientName) {
+    cursorY += px(24)
+    doc.setFontSize(pxpt(15))
+    setFont(doc, 'ui')
+    alphaText(doc, fitText(doc, `Para ${clientName}`, titleMaxW), padLR, cursorY + px(15) * 0.85, fg, 0.72)
+  }
+
+  // ── Fila 3: stats (izq) + contacto (der) ──
   if (stats) {
     const chips = [
       { label: stats.brandCount === 1 ? 'PROVEEDOR' : 'PROVEEDORES', value: String(stats.brandCount) },
       { label: 'PRODUCTOS', value: String(stats.totalProducts) },
       { label: 'MONEDA', value: stats.currency },
     ]
-    const chipH = 14
-    const chipGap = 4
-    let chipX = marginL
-    const chipY = PH - 26
+    const chipGap = px(12)
+    const chipPadX = px(20)
+    let chipX = padLR
     for (const chip of chips) {
-      doc.setFontSize(6)
-      const w = Math.max(doc.getTextWidth(chip.label), doc.getTextWidth(chip.value)) + 10
+      doc.setFontSize(pxpt(11))
+      const labelTrackGap = px(11) * 0.14
+      const labelW = doc.getTextWidth(chip.label) + labelTrackGap * chip.label.length
+      const w = Math.max(labelW, doc.getTextWidth(chip.value) + pxpt(4)) + chipPadX * 2
+      alphaFill(doc, chipX, bottomRowY, w, chipH, px(18), px(18), fg, isDark ? 0.08 : 0.06)
       doc.saveGraphicsState()
-      doc.setGState(new doc.GState({ opacity: isDark ? 0.1 : 0.06 }))
-      doc.setFillColor(...textWhite)
-      doc.roundedRect(chipX, chipY, w, chipH, 3, 3, 'F')
+      doc.setDrawColor(...fg)
+      doc.setGState(new doc.GState({ opacity: isDark ? 0.16 : 0.12 }))
+      doc.setLineWidth(0.15)
+      doc.roundedRect(chipX, bottomRowY, w, chipH, px(18), px(18), 'S')
       doc.restoreGraphicsState()
       setFont(doc, 'ui')
-      doc.setCharSpace(1)
-      doc.setTextColor(...textFaint)
-      doc.text(chip.label, chipX + w / 2, chipY + 5.5, { align: 'center' })
+      doc.setCharSpace(px(11) * 0.14)
+      alphaText(doc, chip.label, chipX + chipPadX, bottomRowY + px(12) + px(11) * 0.32, fg, 0.55)
       doc.setCharSpace(0)
-      doc.setFontSize(9)
-      setFont(doc, 'bold')
-      doc.setTextColor(...textWhite)
-      doc.text(chip.value, chipX + w / 2, chipY + 11, { align: 'center' })
+      doc.setFontSize(pxpt(22))
+      setFont(doc, 'title')
+      doc.setTextColor(...fg)
+      doc.text(chip.value, chipX + chipPadX, bottomRowY + px(12) + px(4) + pxpt(22) * 0.75)
       chipX += w + chipGap
     }
   }
 
-  // ── Contacto — abajo a la derecha ──
-  const rightX = PW - marginL
-  let contactY = PH - 10
-  if (contacto) {
-    doc.setFontSize(7)
+  const rightX = PW - padLR
+  if (contacto || company?.website) {
+    doc.setFontSize(pxpt(13))
     setFont(doc, 'ui')
-    doc.setTextColor(...textFaint)
-    doc.text(contacto, rightX, contactY, { align: 'right' })
-    contactY -= 5
-  }
-  if (company?.website) {
-    doc.setFontSize(8)
-    setFont(doc, 'ui')
-    doc.setTextColor(...textFaint)
-    doc.text(company.website, rightX, contactY, { align: 'right' })
+    const lines = [contacto, company?.website].filter(Boolean)
+    alphaText(doc, lines, rightX, bottomRowY + chipH / 2 - (lines.length - 1) * px(13) * 0.85 + px(13) * 0.3,
+      fg, 0.55, { align: 'right', lineHeightFactor: 1.7 })
   }
 }
 
-function drawToggle(doc, x, y, on) {
-  const w = 11, h = 5.5
-  doc.setFillColor(on ? '#0F4C5C' : '#E7E3DA')
+// (x, yCenter) es el borde izquierdo del track y su centro vertical
+function drawToggle(doc, x, yCenter, on) {
+  const w = px(32), h = px(18)
+  const y = yCenter - h / 2
+  doc.setFillColor(on ? '#0F4C5C' : '#E1DDD4')
   doc.roundedRect(x, y, w, h, h / 2, h / 2, 'F')
   doc.setFillColor('#FFFFFF')
-  doc.circle(on ? x + w - h / 2 : x + h / 2, y + h / 2, h / 2 - 0.8, 'F')
+  doc.circle(on ? x + w - h / 2 : x + h / 2, yCenter, h / 2 - px(2), 'F')
 }
 
 function drawGridIcon(doc, x, y, cols, rows, cell, gap, color) {
@@ -351,39 +408,43 @@ function addShowcasePage(doc, isLandscape) {
   const PW = isLandscape ? 297 : 210
   const PH = isLandscape ? 210 : 297
   doc.addPage()
-  doc.setFillColor('#FAF8F4')
+  doc.setFillColor('#FFFFFF')
   doc.rect(0, 0, PW, PH, 'F')
 
-  const marginL = 15
-  const marginR = PW - 15
+  const marginL = px(56)
+  const marginR = PW - px(56)
+  const headerTop = px(48)
 
-  doc.setFontSize(7.5)
+  doc.setFontSize(pxpt(11))
   setFont(doc, 'ui')
-  doc.setCharSpace(2)
-  doc.setTextColor('#6E7A76')
-  doc.text('ESTO ES SOLO UN EJEMPLO', marginL, 18)
+  doc.setCharSpace(pxpt(11) * 0.16 * 0.3528)
+  doc.setTextColor('#7A857F')
+  doc.text('ESTO ES SOLO UN EJEMPLO', marginL, headerTop)
   doc.setCharSpace(0)
 
-  doc.setFontSize(18)
+  doc.setFontSize(pxpt(38))
   setFont(doc, 'title')
+  doc.setCharSpace(-0.02 * pxpt(38) * 0.3528)
   doc.setTextColor('#0E1A1E')
-  doc.text('Cómo personalizás tu catálogo', marginL, 27)
+  doc.text('Cómo personalizás tu catálogo', marginL, headerTop + px(36))
+  doc.setCharSpace(0)
 
-  doc.setFontSize(8.5)
+  doc.setFontSize(pxpt(13.5))
   setFont(doc, 'ui')
   doc.setTextColor('#6E7A76')
-  const descLines = doc.splitTextToSize('Cada vez que exportás, elegís portada, colores, orientación y qué datos se muestran. Nada de esto queda fijo.', PW - marginR + 90)
-  doc.text(descLines, marginR, 15, { align: 'right', lineHeightFactor: 1.35 })
+  const descLines = doc.splitTextToSize('Cada vez que exportás, elegís portada, colores, orientación y qué datos se muestran. Nada de esto queda fijo.', px(360))
+  doc.text(descLines, marginR, headerTop - px(6), { align: 'right', lineHeightFactor: 1.55 })
 
+  const headerLineY = headerTop + px(36) + px(8)
   doc.setDrawColor('#E7E3DA')
   doc.setLineWidth(0.3)
-  doc.line(marginL, 33, marginR, 33)
+  doc.line(marginL, headerLineY, marginR, headerLineY)
 
   const cols = 3
-  const gap = 8
+  const gap = px(16)
   const cardW = (marginR - marginL - gap * (cols - 1)) / cols
-  const cardH = isLandscape ? 78 : 60
-  const startY = 40
+  const cardH = (PH - px(34) - px(14) - px(11.5 * 1.3) - headerLineY - px(22) - gap) / 2
+  const startY = headerLineY + px(22)
 
   const cards = [
     {
@@ -437,10 +498,12 @@ function addShowcasePage(doc, isLandscape) {
       desc: 'Activás o desactivás cada dato de la ficha: código, descripción, precio, IVA, moneda y stock.',
       visual: (x, y, w) => {
         const opts = [['Mostrar código', true], ['Precio con IVA', false], ['Stock disponible', false]]
+        const rowH = px(28), rowGap = px(7), toggleW = px(32)
         opts.forEach(([label, on], i) => {
-          doc.setFontSize(6); setFont(doc, 'ui'); doc.setTextColor('#6E7A76')
-          doc.text(label, x, y + i * 6 + 3)
-          drawToggle(doc, x + w - 12, y + i * 6, on)
+          const rowY = y + i * (rowH + rowGap)
+          doc.setFontSize(px(12)); setFont(doc, 'ui'); doc.setTextColor('#4A5551')
+          doc.text(label, x + px(12), rowY + rowH / 2 + px(12) * 0.32)
+          drawToggle(doc, x + w - toggleW - px(12), rowY + rowH / 2, on)
         })
       },
     },
@@ -449,24 +512,27 @@ function addShowcasePage(doc, isLandscape) {
       desc: 'Seleccionás proveedores y categorías, ordenás por precio o por nombre, y exportás el PDF. Cada proveedor arranca en página nueva.',
       visual: (x, y) => {
         const pills = ['Bebidas del Sur', 'Snacks Andinos']
-        let px = x
-        doc.setFontSize(6.5); setFont(doc, 'bold')
+        const padX = px(13), padY = px(7)
+        const pillH = padY * 2 + px(12)
+        let curX = x
+        doc.setFontSize(px(12)); setFont(doc, 'bold')
         for (const p of pills) {
-          const w = doc.getTextWidth(p) + 8
+          const w = doc.getTextWidth(p) + padX * 2
           doc.setFillColor('#FFFFFF')
-          doc.roundedRect(px, y, w, 6, 3, 3, 'F')
+          doc.roundedRect(curX, y, w, pillH, pillH / 2, pillH / 2, 'F')
           doc.setTextColor('#0B2A31')
-          doc.text(p, px + w / 2, y + 4, { align: 'center' })
-          px += w + 3
+          doc.text(p, curX + w / 2, y + pillH / 2 + px(12) * 0.32, { align: 'center' })
+          curX += w + px(7)
         }
-        const sortW = doc.getTextWidth('Ordenar: A–Z') + 8
+        const sortW = doc.getTextWidth('Ordenar: A–Z') + padX * 2
+        const sortY = y + pillH + px(7)
         doc.saveGraphicsState()
         doc.setGState(new doc.GState({ opacity: 0.5 }))
         doc.setFillColor('#FFFFFF')
-        doc.roundedRect(x, y + 9, sortW, 6, 3, 3, 'F')
+        doc.roundedRect(x, sortY, sortW, pillH, pillH / 2, pillH / 2, 'F')
         doc.restoreGraphicsState()
         doc.setTextColor('#FFFFFF')
-        doc.text('Ordenar: A–Z', x + sortW / 2, y + 13, { align: 'center' })
+        doc.text('Ordenar: A–Z', x + sortW / 2, sortY + pillH / 2 + px(12) * 0.32, { align: 'center' })
       },
     },
   ]
@@ -477,37 +543,41 @@ function addShowcasePage(doc, isLandscape) {
     const x = marginL + col * (cardW + gap)
     const y = startY + row * (cardH + gap)
 
+    const cardRadius = px(26)
     if (card.dark) {
       doc.setFillColor('#0B2A31')
-      doc.roundedRect(x, y, cardW, cardH, 3, 3, 'F')
+      doc.roundedRect(x, y, cardW, cardH, cardRadius, cardRadius, 'F')
     } else {
-      doc.setFillColor('#FFFFFF')
-      doc.setDrawColor('#E7E3DA')
+      doc.setFillColor('#FAF8F4')
+      doc.setDrawColor('#EDE9E0')
       doc.setLineWidth(0.25)
-      doc.roundedRect(x, y, cardW, cardH, 3, 3, 'FD')
+      doc.roundedRect(x, y, cardW, cardH, cardRadius, cardRadius, 'FD')
     }
 
-    const pad = 6
+    const pad = px(22)
+    const circleSize = px(28)
     const [br, bgc, bb] = hexToRgb(card.badge)
     doc.setFillColor(br, bgc, bb)
-    doc.circle(x + pad + 3, y + pad + 3, 3.4, 'F')
-    doc.setFontSize(7)
-    setFont(doc, 'bold')
+    doc.circle(x + pad + circleSize / 2, y + pad + circleSize / 2, circleSize / 2, 'F')
+    doc.setFontSize(pxpt(14))
+    setFont(doc, 'title')
     doc.setTextColor(card.dark ? '#0B2A31' : '#FFFFFF')
-    doc.text(String(card.num), x + pad + 3, y + pad + 4.3, { align: 'center' })
+    doc.text(String(card.num), x + pad + circleSize / 2, y + pad + circleSize / 2 + px(14) * 0.32, { align: 'center' })
 
-    doc.setFontSize(10.5)
-    setFont(doc, 'bold')
+    doc.setFontSize(pxpt(18))
+    setFont(doc, 'title')
+    doc.setCharSpace(-0.01 * pxpt(18) * 0.3528)
     doc.setTextColor(card.dark ? '#FFFFFF' : '#0E1A1E')
-    doc.text(card.title, x + pad + 9, y + pad + 4.3)
+    doc.text(card.title, x + pad + circleSize + px(10), y + pad + circleSize / 2 + px(18) * 0.32)
+    doc.setCharSpace(0)
 
-    doc.setFontSize(7.5)
+    doc.setFontSize(pxpt(13))
     setFont(doc, 'ui')
     doc.setTextColor(card.dark ? '#C9D3D6' : '#6E7A76')
     const lines = doc.splitTextToSize(card.desc, cardW - pad * 2)
-    doc.text(lines, x + pad, y + pad + 12, { lineHeightFactor: 1.4 })
+    doc.text(lines, x + pad, y + pad + circleSize + px(14), { lineHeightFactor: 1.55 })
 
-    card.visual(x + pad, y + cardH - 20, cardW - pad * 2)
+    card.visual(x + pad, y + cardH - px(70), cardW - pad * 2)
   })
 }
 
@@ -521,16 +591,32 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
 
   const PW = isLandscape ? 297 : 210
   const PH = isLandscape ? 210 : 297
-  const SIDE_MARGIN = 12
-  const GAP         = 6
-  const HEADER_H    = 26
-  const FOOTER_H    = 12
-  const CONTENT_TOP = HEADER_H + 2
-  const CONTENT_BOT = PH - FOOTER_H
+  // Valores exactos del spec de diseño (padding: 48px 56px 34px)
+  const SIDE_MARGIN  = px(56)
+  const PAD_TOP      = px(48)
+  const PAD_BOTTOM   = px(34)
+  const HEADER_ROW_H = px(44)  // alto de la barra de acento / nombre de marca
+  const HEADER_GAP_B = px(20)  // padding-bottom del header hasta la línea divisoria
+  const GRID_PAD     = px(22)  // aire entre las líneas divisorias y la grilla
+  const FOOTER_GAP_T = px(14)  // padding-top del footer
+  const FOOTER_TEXT_H = px(11.5 * 1.3)
+  const GAP           = px(16)
+  const HEADER_LINE_Y = PAD_TOP + HEADER_ROW_H + HEADER_GAP_B
+  const FOOTER_LINE_Y = PH - PAD_BOTTOM - FOOTER_TEXT_H - FOOTER_GAP_T
+  const CONTENT_TOP = HEADER_LINE_Y + GRID_PAD
+  const CONTENT_BOT = FOOTER_LINE_Y - GRID_PAD
   const COLS_PDF    = isLandscape ? 3 : 2
   const ROWS_PDF    = isLandscape ? 3 : 4
   const CELL_W = (PW - SIDE_MARGIN * 2 - GAP * (COLS_PDF - 1)) / COLS_PDF
   const CELL_H = (CONTENT_BOT - CONTENT_TOP - GAP * (ROWS_PDF - 1)) / ROWS_PDF
+
+  // Texto de chip más oscuro que el color de marca cuando éste es muy claro
+  // (ej. naranja), para que siga siendo legible sobre el fondo tintado — igual
+  // que el spec, que usa #B35E12 (no el naranja crudo) sobre fondo #FAEEE3.
+  function chipTextColor(r, g, b) {
+    const lum = 0.299 * r + 0.587 * g + 0.114 * b
+    return lum > 120 ? [Math.round(r * 0.72), Math.round(g * 0.72), Math.round(b * 0.72)] : [r, g, b]
+  }
 
   const companyName = company?.name    ?? ''
   const companyWeb  = company?.website ?? ''
@@ -564,69 +650,80 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
     let slot = 0
     const [br, bg, bb] = hexToRgb(brandColor)
     const tint = (pct) => `rgb(${Math.round(br + (255 - br) * pct)}, ${Math.round(bg + (255 - bg) * pct)}, ${Math.round(bb + (255 - bb) * pct)})`
+    const chipTextRgb = chipTextColor(br, bg, bb)
 
     const renderHeaderFooter = () => {
       // Fondo crema para el cuerpo de la página (look más cálido/premium que blanco puro)
       doc.setFillColor('#FAF8F4')
       doc.rect(0, 0, PW, PH, 'F')
 
-      // Barra de color de marca + "PROVEEDOR" + nombre
+      // Barra de acento (pill vertical) + "PROVEEDOR" + nombre de marca
+      const barW = px(10)
       doc.setFillColor(br, bg, bb)
-      doc.rect(SIDE_MARGIN, 8, 1.3, 10, 'F')
-      doc.setFontSize(6.5)
+      doc.roundedRect(SIDE_MARGIN, PAD_TOP, barW, HEADER_ROW_H, barW / 2, barW / 2, 'F')
+      const textLeft = SIDE_MARGIN + barW + px(16)
+      doc.setFontSize(pxpt(11))
       setFont(doc, 'ui')
-      doc.setCharSpace(1.2)
-      doc.setTextColor('#6E7A76')
-      doc.text('PROVEEDOR', SIDE_MARGIN + 5, 11)
+      doc.setCharSpace(pxpt(11) * 0.16 * 0.3528)
+      doc.setTextColor('#7A857F')
+      doc.text('PROVEEDOR', textLeft, PAD_TOP + px(14))
       doc.setCharSpace(0)
 
       // Chips "N productos" + "Precios sin/con IVA" arriba a la derecha, en ese
       // orden de izquierda a derecha (se calculan antes para saber cuánto
-      // espacio le queda al nombre de marca)
+      // espacio le queda al nombre de marca). Mismo tinte que el fondo/texto
+      // de marca en ambos chips.
+      const chipY = PAD_TOP + (HEADER_ROW_H - px(8) * 2 - pxpt(12.5) * 0.3528) / 2 - px(2)
+      const chipH = px(8) * 2 + pxpt(12.5) * 0.3528
+      const chipPadX = px(16)
       const chipText = `${products.length} producto${products.length !== 1 ? 's' : ''}`
-      doc.setFontSize(7.5)
-      setFont(doc, 'bold')
-      const ivaChipW = ivaLabel ? doc.getTextWidth(ivaLabel) + 10 : 0
+      doc.setFontSize(pxpt(12.5))
+      setFont(doc, 'ui')
+      const ivaChipW = ivaLabel ? doc.getTextWidth(ivaLabel) + chipPadX * 2 : 0
       const ivaChipX = PW - SIDE_MARGIN - ivaChipW
-      const chipW = doc.getTextWidth(chipText) + 10
-      const chipX = ivaLabel ? ivaChipX - chipW - 4 : PW - SIDE_MARGIN - chipW
+      const chipW = doc.getTextWidth(chipText) + chipPadX * 2
+      const chipGap = px(10)
+      const chipX = ivaLabel ? ivaChipX - chipW - chipGap : PW - SIDE_MARGIN - chipW
 
       if (ivaLabel) {
-        doc.setFillColor('#F0EEE8')
-        doc.roundedRect(ivaChipX, 10, ivaChipW, 7.5, 3.75, 3.75, 'F')
-        doc.setTextColor('#6E7A76')
-        doc.text(ivaLabel, ivaChipX + ivaChipW / 2, 15, { align: 'center' })
+        doc.setFillColor(tint(0.93))
+        doc.roundedRect(ivaChipX, chipY, ivaChipW, chipH, chipH / 2, chipH / 2, 'F')
+        doc.setTextColor(...chipTextRgb)
+        doc.text(ivaLabel, ivaChipX + ivaChipW / 2, chipY + chipH / 2 + px(12.5) * 0.32, { align: 'center' })
       }
 
-      doc.setFontSize(21)
+      doc.setFontSize(pxpt(34))
       setFont(doc, 'title')
+      doc.setCharSpace(-0.02 * pxpt(34) * 0.3528)
       doc.setTextColor('#0E1A1E')
-      const brandNameFit = fitText(doc, brandName, chipX - (SIDE_MARGIN + 5) - 6)
-      doc.text(brandNameFit, SIDE_MARGIN + 5, 20)
+      const brandNameFit = fitText(doc, brandName, chipX - textLeft - px(10))
+      doc.text(brandNameFit, textLeft, PAD_TOP + HEADER_ROW_H * 0.82)
+      doc.setCharSpace(0)
 
-      doc.setFontSize(7.5)
-      setFont(doc, 'bold')
-      doc.setFillColor(tint(0.88))
-      doc.roundedRect(chipX, 10, chipW, 7.5, 3.75, 3.75, 'F')
-      doc.setTextColor(br, bg, bb)
-      doc.text(chipText, chipX + chipW / 2, 15, { align: 'center' })
+      doc.setFontSize(pxpt(12.5))
+      setFont(doc, 'ui')
+      doc.setFillColor(tint(0.93))
+      doc.roundedRect(chipX, chipY, chipW, chipH, chipH / 2, chipH / 2, 'F')
+      doc.setTextColor(...chipTextRgb)
+      doc.text(chipText, chipX + chipW / 2, chipY + chipH / 2 + px(12.5) * 0.32, { align: 'center' })
 
       // Línea divisoria bajo el header
-      doc.setDrawColor('#E7E3DA')
+      doc.setDrawColor('#E3DFD5')
       doc.setLineWidth(0.3)
-      doc.line(SIDE_MARGIN, HEADER_H - 3, PW - SIDE_MARGIN, HEADER_H - 3)
+      doc.line(SIDE_MARGIN, HEADER_LINE_Y, PW - SIDE_MARGIN, HEADER_LINE_Y)
 
       // Footer: empresa · web (izq) — marca — página (der)
-      doc.setDrawColor('#E7E3DA')
-      doc.line(SIDE_MARGIN, PH - FOOTER_H + 4, PW - SIDE_MARGIN, PH - FOOTER_H + 4)
-      doc.setFontSize(7)
+      doc.setDrawColor('#E3DFD5')
+      doc.line(SIDE_MARGIN, FOOTER_LINE_Y, PW - SIDE_MARGIN, FOOTER_LINE_Y)
+      doc.setFontSize(pxpt(11.5))
       setFont(doc, 'ui')
-      doc.setTextColor('#6E7A76')
-      const footerHalfW = (PW - SIDE_MARGIN * 2) / 2 - 4
+      doc.setTextColor('#9AA29D')
+      const footerY = FOOTER_LINE_Y + FOOTER_GAP_T + px(11.5) * 0.32
+      const footerHalfW = (PW - SIDE_MARGIN * 2) / 2 - px(4)
       const footerLeft  = fitText(doc, [companyName, companyWeb].filter(Boolean).join(' · '), footerHalfW)
       const footerRight = fitText(doc, `${brandName} — ${String(globalPageNum).padStart(2, '0')}`, footerHalfW)
-      doc.text(footerLeft, SIDE_MARGIN, PH - 6)
-      doc.text(footerRight, PW - SIDE_MARGIN, PH - 6, { align: 'right' })
+      doc.text(footerLeft, SIDE_MARGIN, footerY)
+      doc.text(footerRight, PW - SIDE_MARGIN, footerY, { align: 'right' })
     }
 
     if (!firstContentPage || coverOptions?.enabled) doc.addPage()
@@ -656,64 +753,74 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
       globalIdx++
       onProgress && onProgress(globalIdx, totalProducts)
 
-      const CARD_PAD = 4
+      const CARD_PAD = px(16)
+      const CARD_GAP = px(16)
+      const CARD_RADIUS = px(26)
 
       // ── Card: borde suave, sin sombra dura ──
       doc.setDrawColor('#E7E3DA')
       doc.setLineWidth(0.25)
       doc.setFillColor('#FFFFFF')
-      doc.roundedRect(x, y, CELL_W, CELL_H, 4, 4, 'FD')
+      doc.roundedRect(x, y, CELL_W, CELL_H, CARD_RADIUS, CARD_RADIUS, 'FD')
 
       // ── Cuadrado a la izquierda: foto real o inicial con color de marca ──
-      const monoSize = Math.min(CELL_H - CARD_PAD * 2, 26)
+      const monoSize = Math.min(CELL_H - CARD_PAD * 2, px(96))
+      const monoRadius = monoSize * (px(20) / px(96))
       const monoX = x + CARD_PAD
       const monoY = y + (CELL_H - monoSize) / 2
 
       const b64 = await loadImageAsBase64(p.image_url)
       if (b64) {
         try { doc.addImage(b64, 'JPEG', monoX, monoY, monoSize, monoSize, undefined, 'FAST') }
-        catch { drawMonogram(doc, monoX, monoY, monoSize, p.name, brandColor) }
+        catch { drawMonogram(doc, monoX, monoY, monoSize, monoRadius, p.name, brandColor) }
       } else {
-        drawMonogram(doc, monoX, monoY, monoSize, p.name, brandColor)
+        drawMonogram(doc, monoX, monoY, monoSize, monoRadius, p.name, brandColor)
       }
 
       // ── Bloque de texto a la derecha ──
-      const textX = monoX + monoSize + 5
+      const textX = monoX + monoSize + CARD_GAP
       const textW = x + CELL_W - CARD_PAD - textX
 
-      doc.setFontSize(9.5)
-      setFont(doc, 'bold')
+      doc.setFontSize(pxpt(16.5))
+      setFont(doc, 'title')
+      doc.setCharSpace(-0.01 * pxpt(16.5) * 0.3528)
       doc.setTextColor('#0E1A1E')
       const nameLines = doc.splitTextToSize(String(p.name ?? ''), textW).slice(0, 2)
-      doc.text(nameLines, textX, y + CARD_PAD + 3.5, { lineHeightFactor: 1.3 })
-      let cursorY = y + CARD_PAD + 3.5 + nameLines.length * 4.2
+      doc.text(nameLines, textX, y + CARD_PAD + px(16.5) * 0.35, { lineHeightFactor: 1.2 })
+      doc.setCharSpace(0)
+      let cursorY = y + CARD_PAD + pxpt(16.5) * 0.35 + px(16.5 * 1.2) * (nameLines.length - 1) + px(5)
 
       if (p.description) {
-        doc.setFontSize(7)
+        doc.setFontSize(pxpt(12.5))
         setFont(doc, 'ui')
         doc.setTextColor('#6E7A76')
         const descLines = doc.splitTextToSize(String(p.description), textW).slice(0, 2)
-        doc.text(descLines, textX, cursorY + 2.5, { lineHeightFactor: 1.3 })
+        doc.text(descLines, textX, cursorY + px(12.5) * 0.35, { lineHeightFactor: 1.4 })
       }
 
       // SKU pill (abajo-izq del bloque) + precio (abajo-der), alineados al piso de la tarjeta
       const bottomY = y + CELL_H - CARD_PAD
 
       const skuText = String(p.sku ?? '')
-      doc.setFontSize(6.5)
+      doc.setFontSize(pxpt(11))
       setFont(doc, 'bold')
-      const skuW = doc.getTextWidth(skuText) + 8
-      doc.setFillColor(tint(0.9))
-      doc.roundedRect(textX, bottomY - 5.5, skuW, 5.5, 2.75, 2.75, 'F')
-      doc.setTextColor('#6E7A76')
-      doc.text(skuText, textX + skuW / 2, bottomY - 1.8, { align: 'center' })
+      const skuTrackGap = pxpt(11) * 0.06 * 0.3528
+      doc.setCharSpace(skuTrackGap)
+      const skuPadX = px(11)
+      const skuH = px(5) * 2 + pxpt(11) * 0.3528
+      const skuW = doc.getTextWidth(skuText) + skuTrackGap * skuText.length + skuPadX * 2
+      doc.setFillColor('#F3F1EB')
+      doc.roundedRect(textX, bottomY - skuH, skuW, skuH, skuH / 2, skuH / 2, 'F')
+      doc.setTextColor('#8A938E')
+      doc.text(skuText, textX + skuW / 2, bottomY - skuH / 2 + px(11) * 0.32, { align: 'center' })
+      doc.setCharSpace(0)
 
       if (p._price) {
         const curLabel = (p._currency ?? '$') === '$' ? '$' : p._currency
-        doc.setFontSize(11)
-        setFont(doc, 'bold')
-        doc.setTextColor(br, bg, bb)
-        doc.text(`${curLabel} ${p._price}`, x + CELL_W - CARD_PAD, bottomY - 1, { align: 'right' })
+        doc.setFontSize(pxpt(21))
+        setFont(doc, 'title')
+        doc.setTextColor('#0F4C5C')
+        doc.text(`${curLabel} ${p._price}`, x + CELL_W - CARD_PAD, bottomY - px(2), { align: 'right' })
       }
 
       slot++
@@ -729,13 +836,14 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
 
 // Placeholder cuando el producto no tiene foto: un cuadrado con la
 // inicial del nombre, en vez de un bloque gris vacío.
-function drawMonogram(doc, x, y, size, name, brandColor) {
+function drawMonogram(doc, x, y, size, radius, name, brandColor) {
   const [r, g, b] = hexToRgb(brandColor)
-  doc.setFillColor(Math.round(r + (255 - r) * 0.86), Math.round(g + (255 - g) * 0.86), Math.round(b + (255 - b) * 0.86))
-  doc.roundedRect(x, y, size, size, 3, 3, 'F')
+  const bgT = (v, c) => Math.round(v + (255 - v) * c)
+  doc.setFillColor(bgT(r, 0.9), bgT(g, 0.9), bgT(b, 0.9))
+  doc.roundedRect(x, y, size, size, radius, radius, 'F')
   const letter = String(name ?? '?').trim().charAt(0).toUpperCase() || '?'
-  doc.setFontSize(size * 0.9)
-  setFont(doc, 'bold')
-  doc.setTextColor(r, g, b)
-  doc.text(letter, x + size / 2, y + size / 2 + size * 0.16, { align: 'center' })
+  doc.setFontSize(pxpt(38))
+  setFont(doc, 'title')
+  doc.setTextColor(bgT(r, 0.7), bgT(g, 0.7), bgT(b, 0.7))
+  doc.text(letter, x + size / 2, y + size / 2 + pxpt(38) * 0.35 * 0.3528, { align: 'center' })
 }

@@ -123,7 +123,8 @@ export default function PublicCatalog() {
         }),
       }))
       await generateCatalogPDF(brandGroupsForPdf, company, null, 'landscape', {
-        enabled: true, color1: '#8B7FE8', color2: '#4FC3B0', theme: 'dark', style: 'corners',
+        enabled: true, color1: '#0F4C5C', color2: '#E07A28', theme: 'dark', style: 'corners',
+        description: 'Catálogo mayorista de bebidas y snacks. Precios en pesos uruguayos, vigentes al 14 de septiembre de 2026.',
       }, true)
     } catch {
       alert('No se pudo generar el PDF de ejemplo. Probá de nuevo.')

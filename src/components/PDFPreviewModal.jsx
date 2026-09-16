@@ -31,6 +31,7 @@ export default function PDFPreviewModal({
   const [coverColor2, setCoverColor2]   = useState('#E07A28')
   const [contacto, setContacto]         = useState('')
   const [clientName, setClientName]     = useState('')
+  const [coverDescription, setCoverDescription] = useState('')
   const [showTagline, setShowTagline]   = useState(true)
   const [ivaMode, setIvaMode]           = useState('sin_iva') // 'sin_iva' | 'con_iva' | 'ninguno'
   const companyLogoUrl = company?.logo_url ?? ''
@@ -87,7 +88,7 @@ export default function PDFPreviewModal({
     setProgress('Preparando...')
     try {
       const coverOptions = coverEnabled
-        ? { enabled: true, theme: coverTheme, style: coverStyle, color1: coverColor1, color2: coverColor2, contacto, clientName, logoUrlDark, logoUrlLight, showTagline }
+        ? { enabled: true, theme: coverTheme, style: coverStyle, color1: coverColor1, color2: coverColor2, contacto, clientName, logoUrlDark, logoUrlLight, showTagline, description: coverDescription }
         : null
       await generateCatalogPDF(
         buildGroupsWithPrices(),
@@ -376,6 +377,14 @@ export default function PDFPreviewModal({
                           <input type="text" placeholder="https://... (dejá vacío para omitir logo)" value={logoUrlDark}
                             onChange={e => { setLogoUrlDark(e.target.value); setLogoUrlLight(e.target.value) }} style={inputStyle} />
                         </div>
+                      </div>
+
+                      {/* ── Description ── */}
+                      <div>
+                        <label style={labelStyle}>Descripción / subtítulo (opcional)</label>
+                        <textarea placeholder="Ej: Catálogo mayorista de bebidas y snacks. Precios en pesos, vigentes al..."
+                          value={coverDescription} onChange={e => setCoverDescription(e.target.value)}
+                          rows={2} style={{ ...inputStyle, resize: 'vertical', fontFamily: 'inherit' }} />
                       </div>
 
                       {/* ── Client name ── */}
