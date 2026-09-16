@@ -242,12 +242,12 @@ async function addCoverPage(doc, company, coverOptions, isLandscape, stats = nul
     doc.setLineDashPattern([], 0)
   }
 
-  // ── Stat chips (moneda / productos / marcas) ──
+  // ── Stat chips (proveedores / productos / moneda) ──
   if (stats) {
     const chips = [
-      { label: 'MONEDA', value: stats.currency },
+      { label: stats.brandCount === 1 ? 'PROVEEDOR' : 'PROVEEDORES', value: String(stats.brandCount) },
       { label: 'PRODUCTOS', value: String(stats.totalProducts) },
-      { label: stats.brandCount === 1 ? 'MARCA' : 'MARCAS', value: String(stats.brandCount) },
+      { label: 'MONEDA', value: stats.currency },
     ]
     const chipH = 14
     const chipGap = 4
@@ -380,7 +380,7 @@ function addShowcasePage(doc, isLandscape) {
 /**
  * Generates a multi-brand PDF catalog.
  */
-export async function generateCatalogPDF(brandGroups, company, onProgress, orientation = 'landscape', coverOptions = null, showcase = false) {
+export async function generateCatalogPDF(brandGroups, company, onProgress, orientation = 'landscape', coverOptions = null, showcase = false, ivaLabel = 'Precios sin IVA') {
   const isLandscape = orientation === 'landscape'
   const doc = new jsPDF({ orientation, unit: 'mm', format: 'a4' })
 
@@ -445,18 +445,28 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
       doc.text('PROVEEDOR', SIDE_MARGIN + 5, 11)
       doc.setCharSpace(0)
 
-      // Chip "N productos" arriba a la derecha (se calcula antes para saber
-      // cuánto espacio le queda al nombre de marca sin pisarlo)
+      // Chips "N productos" + "Precios sin/con IVA" arriba a la derecha (se
+      // calculan antes para saber cuánto espacio le queda al nombre de marca)
       const chipText = `${products.length} producto${products.length !== 1 ? 's' : ''}`
       doc.setFontSize(7.5)
       setFont(doc, 'bold')
       const chipW = doc.getTextWidth(chipText) + 10
       const chipX = PW - SIDE_MARGIN - chipW
 
+      let ivaChipX = chipX
+      if (ivaLabel) {
+        const ivaChipW = doc.getTextWidth(ivaLabel) + 10
+        ivaChipX = chipX - ivaChipW - 4
+        doc.setFillColor('#F0EEE8')
+        doc.roundedRect(ivaChipX, 10, ivaChipW, 7.5, 3.75, 3.75, 'F')
+        doc.setTextColor('#6E7A76')
+        doc.text(ivaLabel, ivaChipX + ivaChipW / 2, 15, { align: 'center' })
+      }
+
       doc.setFontSize(16)
       setFont(doc, 'bold')
       doc.setTextColor('#171310')
-      const brandNameFit = fitText(doc, brandName, chipX - (SIDE_MARGIN + 5) - 6)
+      const brandNameFit = fitText(doc, brandName, ivaChipX - (SIDE_MARGIN + 5) - 6)
       doc.text(brandNameFit, SIDE_MARGIN + 5, 19)
 
       doc.setFontSize(7.5)

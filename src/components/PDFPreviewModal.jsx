@@ -32,6 +32,7 @@ export default function PDFPreviewModal({
   const [contacto, setContacto]         = useState('')
   const [clientName, setClientName]     = useState('')
   const [showTagline, setShowTagline]   = useState(true)
+  const [ivaMode, setIvaMode]           = useState('sin_iva') // 'sin_iva' | 'con_iva' | 'ninguno'
   const companyLogoUrl = company?.logo_url ?? ''
   const [logoUrlDark, setLogoUrlDark]   = useState(companyLogoUrl)
   const [logoUrlLight, setLogoUrlLight] = useState(companyLogoUrl)
@@ -94,6 +95,8 @@ export default function PDFPreviewModal({
         (current, total) => setProgress(`Procesando imagen ${current} de ${total}...`),
         orientation,
         coverOptions,
+        false,
+        ivaMode === 'con_iva' ? 'Precios con IVA' : ivaMode === 'sin_iva' ? 'Precios sin IVA' : '',
       )
       setProgress('¡Listo!')
     } catch (err) {
@@ -191,7 +194,15 @@ export default function PDFPreviewModal({
             </p>
           </div>
           {step === 'preview' && (
-            <div style={{ display: 'flex', gap: 6, marginLeft: 'auto', marginRight: 16 }}>
+            <div style={{ display: 'flex', gap: 6, marginLeft: 'auto', marginRight: 16, alignItems: 'center' }}>
+              <select value={ivaMode} onChange={e => setIvaMode(e.target.value)} style={{
+                padding: '6px 10px', borderRadius: 7, fontSize: 12, cursor: 'pointer',
+                border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text2)',
+              }}>
+                <option value="sin_iva">Precios sin IVA</option>
+                <option value="con_iva">Precios con IVA</option>
+                <option value="ninguno">No indicar IVA</option>
+              </select>
               {['landscape','portrait'].map(o => (
                 <button key={o} onClick={() => setOrientation(o)} style={{
                   padding: '6px 14px', borderRadius: 7, fontSize: 12, cursor: 'pointer',
