@@ -157,7 +157,7 @@ export default function PublicCatalog() {
         }}>
           <div style={{ maxWidth: 480 }}>
             <div style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 14, color: '#0F4C5C', marginBottom: 3 }}>
-              👋 Simulá el pedido de tu cliente
+              Simulá el pedido de tu cliente
             </div>
             <div style={{ fontSize: 12.5, color: '#4A5551', lineHeight: 1.45 }}>
               Esto de acá abajo es lo que ve tu cliente: elige productos y arma su pedido. Si en cambio querés ver el PDF descargable que le podés enviar por otro lado, usá el botón de la derecha.
@@ -171,7 +171,7 @@ export default function PublicCatalog() {
             cursor: generatingPdf ? 'not-allowed' : 'pointer', opacity: generatingPdf ? 0.7 : 1,
             boxShadow: '0 4px 14px rgba(139,127,232,0.4)',
           }}>
-            {generatingPdf ? 'Generando PDF…' : '📄 Simulá el PDF →'}
+            {generatingPdf ? 'Generando PDF…' : 'Simulá el PDF →'}
           </button>
         </div>
       )}
