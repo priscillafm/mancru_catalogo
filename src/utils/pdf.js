@@ -501,7 +501,7 @@ function addShowcasePage(doc, isLandscape) {
         const rowH = px(28), rowGap = px(7), toggleW = px(32)
         opts.forEach(([label, on], i) => {
           const rowY = y + i * (rowH + rowGap)
-          doc.setFontSize(px(12)); setFont(doc, 'ui'); doc.setTextColor('#4A5551')
+          doc.setFontSize(pxpt(12)); setFont(doc, 'ui'); doc.setTextColor('#4A5551')
           doc.text(label, x + px(12), rowY + rowH / 2 + px(12) * 0.32)
           drawToggle(doc, x + w - toggleW - px(12), rowY + rowH / 2, on)
         })
@@ -515,7 +515,7 @@ function addShowcasePage(doc, isLandscape) {
         const padX = px(13), padY = px(7)
         const pillH = padY * 2 + px(12)
         let curX = x
-        doc.setFontSize(px(12)); setFont(doc, 'bold')
+        doc.setFontSize(pxpt(12)); setFont(doc, 'bold')
         for (const p of pills) {
           const w = doc.getTextWidth(p) + padX * 2
           doc.setFillColor('#FFFFFF')
@@ -575,9 +575,15 @@ function addShowcasePage(doc, isLandscape) {
     setFont(doc, 'ui')
     doc.setTextColor(card.dark ? '#C9D3D6' : '#6E7A76')
     const lines = doc.splitTextToSize(card.desc, cardW - pad * 2)
-    doc.text(lines, x + pad, y + pad + circleSize + px(14), { lineHeightFactor: 1.55 })
+    const descTop = y + pad + circleSize + px(14)
+    const descLineH = px(13 * 1.55)
+    doc.text(lines, x + pad, descTop + descLineH * 0.8, { lineHeightFactor: 1.55 })
 
-    card.visual(x + pad, y + cardH - px(70), cardW - pad * 2)
+    // El visual arranca justo debajo del bloque completo de la descripción
+    // (no a una distancia fija del fondo — así ni se desborda en tarjetas
+    // con mucho contenido (toggles) ni deja hueco enorme en las livianas).
+    const visualTop = descTop + descLineH * lines.length + px(14)
+    card.visual(x + pad, visualTop, cardW - pad * 2)
   })
 }
 
