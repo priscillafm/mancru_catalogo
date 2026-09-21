@@ -148,28 +148,42 @@ export default function PublicCatalog() {
         <div style={{ color: 'rgba(247,245,240,.55)', fontSize: 12 }}>{company?.website}</div>
       </div>
 
-      {/* Catalog title */}
-      <div style={{ padding: '28px 24px 0', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-        <div>
-          <h1 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 24, fontWeight: 600, color: '#0E1A1E', letterSpacing: '-0.02em', marginBottom: 4 }}>
-            {catalog.name}
-          </h1>
-          <p style={{ fontSize: 13, color: '#6E7A76', marginBottom: 28 }}>
-            {brandGroups.reduce((n, g) => n + g.products.length, 0)} productos
-          </p>
-        </div>
-        {id === DEMO_CATALOG_ID && (
+      {/* Demo explainer — solo en el catálogo de ejemplo público, nunca en catálogos reales */}
+      {id === DEMO_CATALOG_ID && (
+        <div style={{
+          margin: '24px 24px 0', padding: '16px 20px', borderRadius: 16,
+          background: '#EAF0F0', border: '1px solid #D3E2E1',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap',
+        }}>
+          <div style={{ maxWidth: 480 }}>
+            <div style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 14, color: '#0F4C5C', marginBottom: 3 }}>
+              👋 Simulá el pedido de tu cliente
+            </div>
+            <div style={{ fontSize: 12.5, color: '#4A5551', lineHeight: 1.45 }}>
+              Esto de acá abajo es lo que ve tu cliente: elige productos y arma su pedido. Si en cambio querés ver el PDF descargable que le podés enviar por otro lado, usá el botón de la derecha.
+            </div>
+          </div>
           <button onClick={handleDownloadPdf} disabled={generatingPdf} style={{
-            display: 'flex', alignItems: 'center', gap: 8,
-            padding: '9px 16px', borderRadius: 999, border: 'none',
+            display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0,
+            padding: '10px 18px', borderRadius: 999, border: 'none',
             background: '#8B7FE8', color: '#fff', fontSize: 13, fontWeight: 700,
             fontFamily: "'IBM Plex Sans', sans-serif",
             cursor: generatingPdf ? 'not-allowed' : 'pointer', opacity: generatingPdf ? 0.7 : 1,
             boxShadow: '0 4px 14px rgba(139,127,232,0.4)',
           }}>
-            {generatingPdf ? 'Generando PDF…' : 'Ver PDF de ejemplo'}
+            {generatingPdf ? 'Generando PDF…' : '📄 Simulá el PDF →'}
           </button>
-        )}
+        </div>
+      )}
+
+      {/* Catalog title */}
+      <div style={{ padding: '28px 24px 0' }}>
+        <h1 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 24, fontWeight: 600, color: '#0E1A1E', letterSpacing: '-0.02em', marginBottom: 4 }}>
+          {catalog.name}
+        </h1>
+        <p style={{ fontSize: 13, color: '#6E7A76', marginBottom: 28 }}>
+          {brandGroups.reduce((n, g) => n + g.products.length, 0)} productos
+        </p>
       </div>
 
       {/* Brand groups */}
@@ -316,10 +330,15 @@ export default function PublicCatalog() {
             background: '#fff', borderRadius: '20px 20px 0 0', width: '100%', maxWidth: 560,
             padding: '24px 24px calc(40px + env(safe-area-inset-bottom, 16px))', maxHeight: '85vh', overflowY: 'auto',
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: id === DEMO_CATALOG_ID ? 4 : 20 }}>
               <h2 style={{ fontSize: 18, fontWeight: 700, color: '#111' }}>Tu pedido</h2>
               <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', fontSize: 22, cursor: 'pointer', color: '#888' }}>✕</button>
             </div>
+            {id === DEMO_CATALOG_ID && (
+              <p style={{ fontSize: 11.5, color: '#8A938E', marginBottom: 16 }}>
+                Esto es una simulación de lo que ve tu cliente — no se envía nada real.
+              </p>
+            )}
 
             {/* Product list */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
