@@ -35,16 +35,16 @@ export default function PublicCatalog() {
   })
 
   if (isLoading) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#0C0A07' }}>
-      <div style={{ color: '#E0B15B', fontFamily: 'system-ui', fontSize: 14 }}>Cargando catálogo...</div>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#0B2A31' }}>
+      <div style={{ color: '#E07A28', fontFamily: "'IBM Plex Sans', sans-serif", fontSize: 14 }}>Cargando catálogo...</div>
     </div>
   )
 
   if (error || !catalog) return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#0C0A07', gap: 12 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#0B2A31', gap: 12 }}>
       <div style={{ fontSize: 32, opacity: 0.3 }}>◻</div>
-      <div style={{ color: '#fff', fontWeight: 700, fontSize: 16 }}>Catálogo no disponible</div>
-      <div style={{ color: '#888', fontSize: 13 }}>Este link puede haber vencido o no estar activo.</div>
+      <div style={{ color: '#F7F5F0', fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 16 }}>Catálogo no disponible</div>
+      <div style={{ color: 'rgba(247,245,240,.55)', fontSize: 13 }}>Este link puede haber vencido o no estar activo.</div>
     </div>
   )
 
@@ -134,27 +134,27 @@ export default function PublicCatalog() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#F4EFE6', fontFamily: 'system-ui, sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: '#FAF8F4', fontFamily: "'IBM Plex Sans', sans-serif", color: '#0E1A1E' }}>
 
       {/* Header */}
-      <div style={{ background: '#0C0A07', padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ background: '#0B2A31', padding: '18px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
           {company?.logo_url ? (
             <img src={company.logo_url} alt={company.name} style={{ height: 32, objectFit: 'contain' }} />
           ) : (
-            <div style={{ color: '#fff', fontWeight: 700, fontSize: 16 }}>{company?.name}</div>
+            <div style={{ color: '#F7F5F0', fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 16 }}>{company?.name}</div>
           )}
         </div>
-        <div style={{ color: '#888', fontSize: 12 }}>{company?.website}</div>
+        <div style={{ color: 'rgba(247,245,240,.55)', fontSize: 12 }}>{company?.website}</div>
       </div>
 
       {/* Catalog title */}
       <div style={{ padding: '28px 24px 0', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
         <div>
-          <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1A1208', letterSpacing: '-0.5px', marginBottom: 4 }}>
+          <h1 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 24, fontWeight: 600, color: '#0E1A1E', letterSpacing: '-0.02em', marginBottom: 4 }}>
             {catalog.name}
           </h1>
-          <p style={{ fontSize: 13, color: '#888', marginBottom: 28 }}>
+          <p style={{ fontSize: 13, color: '#6E7A76', marginBottom: 28 }}>
             {brandGroups.reduce((n, g) => n + g.products.length, 0)} productos
           </p>
         </div>
@@ -163,6 +163,7 @@ export default function PublicCatalog() {
             display: 'flex', alignItems: 'center', gap: 8,
             padding: '9px 16px', borderRadius: 999, border: 'none',
             background: '#8B7FE8', color: '#fff', fontSize: 13, fontWeight: 700,
+            fontFamily: "'IBM Plex Sans', sans-serif",
             cursor: generatingPdf ? 'not-allowed' : 'pointer', opacity: generatingPdf ? 0.7 : 1,
             boxShadow: '0 4px 14px rgba(139,127,232,0.4)',
           }}>
@@ -177,7 +178,7 @@ export default function PublicCatalog() {
           <div key={brand.id} style={{ marginBottom: 36 }}>
             {/* Brand header */}
             <div style={{ marginBottom: 16 }}>
-              <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#8A8580', marginBottom: 6 }}>
+              <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#7A857F', marginBottom: 6 }}>
                 Proveedor
               </div>
               <div style={{
@@ -188,7 +189,7 @@ export default function PublicCatalog() {
                 {brand.logo_url ? (
                   <img src={brand.logo_url} alt={brand.name} style={{ height: 24, objectFit: 'contain' }} />
                 ) : (
-                  <span style={{ fontWeight: 700, fontSize: 14, color: brand.text_color ?? '#fff' }}>{brand.name}</span>
+                  <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 15, color: brand.text_color ?? '#fff' }}>{brand.name}</span>
                 )}
               </div>
             </div>
@@ -196,8 +197,8 @@ export default function PublicCatalog() {
             {/* Products grid */}
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(155px, 1fr))',
-              gap: 12,
+              gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+              gap: 14,
             }}>
               {products.map(p => {
                 const priceObj = prices[p.id]
@@ -207,49 +208,59 @@ export default function PublicCatalog() {
                 const selected = qty > 0
                 return (
                   <div key={p.id} style={{
-                    background: '#fff', borderRadius: 12,
-                    overflow: 'hidden',
-                    boxShadow: selected ? `0 0 0 2px ${brand.color ?? '#6366f1'}` : '0 1px 3px rgba(0,0,0,0.08)',
-                    transition: 'box-shadow 0.15s',
+                    display: 'flex', gap: 12, padding: 12,
+                    background: '#fff', borderRadius: 18,
+                    border: `1px solid ${selected ? (brand.color ?? '#6366f1') : '#E7E3DA'}`,
+                    boxShadow: selected ? `0 0 0 1px ${brand.color ?? '#6366f1'}` : '0 1px 2px rgba(14,26,30,.04)',
+                    transition: 'box-shadow 0.15s, border-color 0.15s',
                   }}>
                     {p.image_url ? (
                       <img src={p.image_url} alt={p.name}
-                        style={{ width: '100%', aspectRatio: '1', objectFit: 'contain', background: '#f8f8f8', display: 'block' }} />
+                        style={{ flex: '0 0 64px', width: 64, height: 64, borderRadius: 14, objectFit: 'contain', background: '#f8f8f8' }} />
                     ) : (
                       <div style={{
-                        width: '100%', aspectRatio: '1', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 32, fontWeight: 700,
-                        background: `color-mix(in srgb, ${brand.color ?? '#6366f1'} 12%, white)`,
-                        color: brand.color ?? '#6366f1',
+                        flex: '0 0 64px', width: 64, height: 64, borderRadius: 14,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontFamily: "'Outfit', sans-serif", fontSize: 24, fontWeight: 600,
+                        background: `color-mix(in srgb, ${brand.color ?? '#6366f1'} 10%, white)`,
+                        color: `color-mix(in srgb, ${brand.color ?? '#6366f1'} 70%, white)`,
                       }}>
                         {(p.name ?? '?').trim().charAt(0).toUpperCase() || '?'}
                       </div>
                     )}
-                    <div style={{ padding: '10px 12px 12px' }}>
-                      <div style={{ fontSize: 12, fontWeight: 600, lineHeight: 1.4, color: '#111', marginBottom: 7 }}>
-                        {p.name}
-                      </div>
-                      <div style={{
-                        display: 'inline-block', padding: '3px 10px', borderRadius: 999,
-                        fontSize: 10, fontWeight: 700,
-                        background: brand.color ?? '#6366f1',
-                        color: brand.text_color ?? '#fff',
-                      }}>
-                        {p.sku}
-                      </div>
-                      {priceAmount && (
-                        <div style={{ marginTop: 8, fontWeight: 700, fontSize: 14, color: '#111' }}>
-                          {priceCurrency} {priceAmount}
+                    <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                      <div>
+                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13.5, fontWeight: 600, lineHeight: 1.25, letterSpacing: '-0.01em', color: '#0E1A1E', marginBottom: 3 }}>
+                          {p.name}
                         </div>
-                      )}
+                        {p.description && (
+                          <div style={{ fontSize: 11, lineHeight: 1.35, color: '#6E7A76', marginBottom: 6 }}>
+                            {p.description}
+                          </div>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                        <span style={{
+                          padding: '3px 9px', borderRadius: 999,
+                          fontSize: 9.5, fontWeight: 600, letterSpacing: '0.04em',
+                          background: '#F3F1EB', color: '#8A938E',
+                        }}>
+                          {p.sku}
+                        </span>
+                        {priceAmount && (
+                          <div style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 15, color: '#0F4C5C', whiteSpace: 'nowrap' }}>
+                            {priceCurrency} {priceAmount}
+                          </div>
+                        )}
+                      </div>
                       {/* Quantity selector */}
-                      <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 6 }}>
                         <button onClick={() => setQty(p.id, qty - 1)} style={qtyBtn(brand.color)}>−</button>
                         <input
                           type="number" min="0" value={qty || ''}
                           placeholder="0"
                           onChange={e => setQty(p.id, e.target.value)}
-                          style={{ width: 44, textAlign: 'center', border: '1px solid #bbb', borderRadius: 6, padding: '4px 0', fontSize: 13, fontWeight: 700, outline: 'none', color: '#111', background: '#fff' }}
+                          style={{ width: 40, textAlign: 'center', border: '1px solid #E7E3DA', borderRadius: 6, padding: '4px 0', fontSize: 13, fontWeight: 700, outline: 'none', color: '#0E1A1E', background: '#fff' }}
                         />
                         <button onClick={() => setQty(p.id, qty + 1)} style={qtyBtn(brand.color)}>+</button>
                       </div>
@@ -263,11 +274,11 @@ export default function PublicCatalog() {
       </div>
 
       {/* Footer */}
-      <div style={{ borderTop: '1px solid #E5DDD0', padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#fff' }}>
-        <div style={{ fontSize: 12, color: '#888' }}>
+      <div style={{ borderTop: '1px solid #E3DFD5', padding: '20px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#fff' }}>
+        <div style={{ fontSize: 12, color: '#9AA29D' }}>
           {company?.name} {company?.website && `· ${company.website}`}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#aaa', fontSize: 11 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, color: '#9AA29D', fontSize: 11 }}>
           <PotatoMark size={14} />
           <span>Hecho con Potato</span>
         </div>
