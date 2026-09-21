@@ -362,12 +362,12 @@ async function addCoverPage(doc, company, coverOptions, isLandscape, stats = nul
       doc.restoreGraphicsState()
       setFont(doc, 'ui')
       doc.setCharSpace(px(11) * 0.14)
-      alphaText(doc, chip.label, chipX + chipPadX, bottomRowY + px(12) + px(11) * 0.32, fg, 0.55)
+      alphaText(doc, chip.label, chipX + w / 2, bottomRowY + px(12) + px(11) * 0.32, fg, 0.55, { align: 'center' })
       doc.setCharSpace(0)
       doc.setFontSize(pxpt(22))
       setFont(doc, 'title')
       doc.setTextColor(...fg)
-      doc.text(chip.value, chipX + chipPadX, bottomRowY + px(12) + px(4) + px(22) * 0.75)
+      doc.text(chip.value, chipX + w / 2, bottomRowY + px(12) + px(4) + px(22) * 0.75, { align: 'center' })
       chipX += w + chipGap
     }
   }
