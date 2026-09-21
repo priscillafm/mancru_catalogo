@@ -475,8 +475,23 @@ function addShowcasePage(doc, isLandscape) {
       num: 3, badge: '#0F4C5C', title: 'Horizontal o vertical',
       desc: 'A4 horizontal entra 9 productos por página en grilla 3×3. A4 vertical entra 8, en 2×4. La grilla se reacomoda sola.',
       visual: (x, y) => {
-        drawGridIcon(doc, x, y, 3, 3, 2.6, 1, '#E7E3DA')
-        drawGridIcon(doc, x + 15, y, 2, 4, 2.6, 1, '#E7E3DA')
+        // Miniaturas con la proporción real de una hoja A4 (297×210 / 210×297),
+        // bien grandes ya que la tarjeta tiene espacio de sobra.
+        const landH = 26, landW = landH * (297 / 210)
+        const portH = 26, portW = portH * (210 / 297)
+        const gap = 12
+
+        doc.setFillColor('#FFFFFF'); doc.setDrawColor('#E7E3DA'); doc.setLineWidth(0.3)
+        doc.roundedRect(x, y, landW, landH, 2.5, 2.5, 'FD')
+        drawGridIcon(doc, x + (landW - 14.4) / 2, y + (landH - 14.4) / 2, 3, 3, 4, 1.2, '#E7E3DA')
+        doc.setFontSize(pxpt(11)); setFont(doc, 'ui'); doc.setTextColor('#8A938E')
+        doc.text('Horizontal', x + landW / 2, y + landH + px(14), { align: 'center' })
+
+        const x2 = x + landW + gap
+        doc.setFillColor('#FFFFFF'); doc.setDrawColor('#E7E3DA')
+        doc.roundedRect(x2, y, portW, portH, 2.5, 2.5, 'FD')
+        drawGridIcon(doc, x2 + (portW - 7) / 2, y + (portH - 15) / 2, 2, 4, 3, 1, '#E7E3DA')
+        doc.text('Vertical', x2 + portW / 2, y + portH + px(14), { align: 'center' })
       },
     },
     {
@@ -668,11 +683,12 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
       doc.setFillColor(br, bg, bb)
       doc.roundedRect(SIDE_MARGIN, PAD_TOP, barW, HEADER_ROW_H, barW / 2, barW / 2, 'F')
       const textLeft = SIDE_MARGIN + barW + px(16)
+      const proveedorY = PAD_TOP + px(14)
       doc.setFontSize(pxpt(11))
       setFont(doc, 'ui')
       doc.setCharSpace(pxpt(11) * 0.16 * 0.3528)
       doc.setTextColor('#7A857F')
-      doc.text('PROVEEDOR', textLeft, PAD_TOP + px(14))
+      doc.text('PROVEEDOR', textLeft, proveedorY)
       doc.setCharSpace(0)
 
       // Chips "N productos" + "Precios sin/con IVA" arriba a la derecha, en ese
@@ -703,7 +719,9 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
       doc.setCharSpace(-0.02 * pxpt(34) * 0.3528)
       doc.setTextColor('#0E1A1E')
       const brandNameFit = fitText(doc, brandName, chipX - textLeft - px(10))
-      doc.text(brandNameFit, textLeft, PAD_TOP + HEADER_ROW_H * 0.82)
+      // Debajo de "PROVEEDOR" con aire, no a una fracción fija de la barra
+      // (que quedaba pisando la etiqueta con nombres de marca largos)
+      doc.text(brandNameFit, textLeft, proveedorY + px(6) + px(34) * 0.8)
       doc.setCharSpace(0)
 
       doc.setFontSize(pxpt(12.5))
