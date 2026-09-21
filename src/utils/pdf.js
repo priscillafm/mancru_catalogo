@@ -367,7 +367,7 @@ async function addCoverPage(doc, company, coverOptions, isLandscape, stats = nul
       doc.setFontSize(pxpt(22))
       setFont(doc, 'title')
       doc.setTextColor(...fg)
-      doc.text(chip.value, chipX + chipPadX, bottomRowY + px(12) + px(4) + pxpt(22) * 0.75)
+      doc.text(chip.value, chipX + chipPadX, bottomRowY + px(12) + px(4) + px(22) * 0.75)
       chipX += w + chipGap
     }
   }
@@ -786,16 +786,19 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
       doc.setCharSpace(-0.01 * pxpt(16.5) * 0.3528)
       doc.setTextColor('#0E1A1E')
       const nameLines = doc.splitTextToSize(String(p.name ?? ''), textW).slice(0, 2)
-      doc.text(nameLines, textX, y + CARD_PAD + px(16.5) * 0.35, { lineHeightFactor: 1.2 })
+      const nameLineH = px(16.5 * 1.2)
+      const nameTop = y + CARD_PAD
+      doc.text(nameLines, textX, nameTop + nameLineH * 0.8, { lineHeightFactor: 1.2 })
       doc.setCharSpace(0)
-      let cursorY = y + CARD_PAD + pxpt(16.5) * 0.35 + px(16.5 * 1.2) * (nameLines.length - 1) + px(5)
+      // Debajo de TODO el bloque del nombre (todas sus líneas), + margin-bottom:5px del spec
+      let cursorY = nameTop + nameLineH * nameLines.length + px(5)
 
       if (p.description) {
         doc.setFontSize(pxpt(12.5))
         setFont(doc, 'ui')
         doc.setTextColor('#6E7A76')
         const descLines = doc.splitTextToSize(String(p.description), textW).slice(0, 2)
-        doc.text(descLines, textX, cursorY + px(12.5) * 0.35, { lineHeightFactor: 1.4 })
+        doc.text(descLines, textX, cursorY + px(12.5) * 0.8, { lineHeightFactor: 1.4 })
       }
 
       // SKU pill (abajo-izq del bloque) + precio (abajo-der), alineados al piso de la tarjeta
