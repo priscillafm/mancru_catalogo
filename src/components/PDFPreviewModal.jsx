@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { generateCatalogPDF } from '@/utils/pdf'
 import { COVER_STYLES } from '@/utils/coverStyles'
 import { supabase } from '@/lib/supabase'
@@ -39,6 +39,36 @@ export default function PDFPreviewModal({
   const [logoUrlLight, setLogoUrlLight] = useState(companyLogoUrl)
   const [showCoverPanel, setShowCoverPanel] = useState(false)
   const [unbrandedColor, setUnbrandedColor] = useState('#6366f1')
+  const [logoUploading, setLogoUploading] = useState(false)
+  const [logoUploadErr, setLogoUploadErr] = useState('')
+  const logoFileRef = useRef()
+
+  const MAX_LOGO_BYTES = 3 * 1024 * 1024
+  const ALLOWED_LOGO_TYPES = ['image/svg+xml', 'image/png', 'image/jpeg', 'image/webp']
+
+  async function handleCoverLogoUpload(e) {
+    const file = e.target.files[0]
+    e.target.value = ''
+    if (!file) return
+    const companyId = membership?.company_id
+    if (!companyId) { setLogoUploadErr('Tu empresa todavía se está cargando, esperá unos segundos.'); return }
+    if (!ALLOWED_LOGO_TYPES.includes(file.type)) { setLogoUploadErr('Formato no soportado. Usá PNG, SVG, JPG o WEBP.'); return }
+    if (file.size > MAX_LOGO_BYTES) { setLogoUploadErr(`El archivo pesa demasiado (máximo ${MAX_LOGO_BYTES / 1024 / 1024}MB).`); return }
+
+    setLogoUploadErr(''); setLogoUploading(true)
+    try {
+      const ext  = file.name.split('.').pop()
+      const path = `${companyId}/cover-logo-${Date.now()}.${ext}`
+      const { error } = await supabase.storage.from('product-images').upload(path, file, { upsert: true })
+      if (error) throw error
+      const { data: { publicUrl } } = supabase.storage.from('product-images').getPublicUrl(path)
+      setLogoUrlDark(publicUrl); setLogoUrlLight(publicUrl)
+    } catch (err) {
+      setLogoUploadErr('Error subiendo el logo: ' + err.message)
+    } finally {
+      setLogoUploading(false)
+    }
+  }
 
   // Pre-populate prices from saved catalog
   const [prices, setPrices] = useState(() => {
@@ -170,11 +200,11 @@ export default function PDFPreviewModal({
   }
 
   return (
-    <div style={{
+    <div className="modal-overlay-in" style={{
       position: 'fixed', inset: 0, background: 'rgba(0,0,0,.85)',
       zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20
     }}>
-      <div style={{
+      <div className="modal-pop-in" style={{
         background: 'var(--surface)', border: '1px solid var(--border)',
         borderRadius: 14, width: '100%', maxWidth: 960,
         maxHeight: '90vh', display: 'flex', flexDirection: 'column'
@@ -313,8 +343,11 @@ export default function PDFPreviewModal({
                             <button key={key} onClick={() => setCoverStyle(key)} style={{
                               padding: 0, borderRadius: 8, overflow: 'hidden', cursor: 'pointer',
                               border: coverStyle === key ? `2px solid ${coverColor1}` : '2px solid var(--border)',
-                              transition: 'border-color 0.15s',
-                            }}>
+                              transition: 'var(--transition)',
+                            }}
+                            onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'}
+                            onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}
+                            >
                               <StyleThumb styleKey={key} blobs={cfg.blobs} color1={coverColor1} color2={coverColor2} theme={coverTheme} />
                               <div style={{
                                 fontSize: 10, fontWeight: 600, padding: '4px 0',
@@ -353,7 +386,10 @@ export default function PDFPreviewModal({
                                   width: 22, height: 22, borderRadius: 5, padding: 0, cursor: 'pointer',
                                   border: '1.5px solid rgba(128,128,128,0.3)',
                                   background: `linear-gradient(135deg, ${p.c1}, ${p.c2})`,
+                                  transition: 'var(--transition)',
                                 }}
+                                onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.18)'}
+                                onMouseLeave={e => e.currentTarget.style.transform = 'scale(1)'}
                                 title={p.label}
                               />
                             ))}
@@ -361,11 +397,11 @@ export default function PDFPreviewModal({
                         </div>
                       </div>
 
-                      {/* ── Logo URLs ── */}
+                      {/* ── Logo ── */}
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                            <label style={labelStyle}>Logo (URL de imagen)</label>
+                            <label style={labelStyle}>Logo</label>
                             {company?.logo_url && (
                               <button
                                 onClick={() => { setLogoUrlDark(company.logo_url); setLogoUrlLight(company.logo_url) }}
@@ -374,8 +410,24 @@ export default function PDFPreviewModal({
                               >Usar mi logo</button>
                             )}
                           </div>
-                          <input type="text" placeholder="https://... (dejá vacío para omitir logo)" value={logoUrlDark}
-                            onChange={e => { setLogoUrlDark(e.target.value); setLogoUrlLight(e.target.value) }} style={inputStyle} />
+                          <div style={{ display: 'flex', gap: 6 }}>
+                            <input type="text" placeholder="https://... (dejá vacío para omitir logo)" value={logoUrlDark}
+                              onChange={e => { setLogoUrlDark(e.target.value); setLogoUrlLight(e.target.value) }} style={{ ...inputStyle, flex: 1 }} />
+                            <input ref={logoFileRef} type="file" accept=".png,.svg,.jpg,.jpeg,.webp" style={{ display: 'none' }} onChange={handleCoverLogoUpload} />
+                            <button
+                              type="button" onClick={() => logoFileRef.current?.click()} disabled={logoUploading}
+                              style={{ ...presetBtn, display: 'flex', alignItems: 'center', gap: 6, padding: '0 12px', flexShrink: 0, transition: 'var(--transition)' }}
+                              onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent)'}
+                              onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
+                            >
+                              <Icon name="upload" size={13} />
+                              {logoUploading ? 'Subiendo...' : 'Subir'}
+                            </button>
+                          </div>
+                          <p style={{ fontSize: 11, color: 'var(--text3)', marginTop: 5 }}>
+                            Para que se vea mejor, subilo en <strong>PNG sin fondo</strong> (transparente).
+                          </p>
+                          {logoUploadErr && <p style={{ fontSize: 11, color: 'var(--danger)', marginTop: 4 }}>{logoUploadErr}</p>}
                         </div>
                       </div>
 
@@ -570,8 +622,10 @@ export default function PDFPreviewModal({
 
               {/* Save button — only when onSaved is provided */}
               {onSaved && (
-                <button onClick={() => { setSaveName(catalogName); setStep('saving') }} style={secondaryBtn}>
-                  💾 {catalogId ? 'Actualizar' : 'Guardar'}
+                <button onClick={() => { setSaveName(catalogName); setStep('saving') }}
+                  style={{ ...secondaryBtn, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Icon name="save" size={14} />
+                  {catalogId ? 'Actualizar' : 'Guardar'}
                 </button>
               )}
 
@@ -579,8 +633,11 @@ export default function PDFPreviewModal({
                 padding: '8px 22px', background: 'var(--accent)', color: 'var(--accent-text)',
                 border: 'none', borderRadius: 7, fontWeight: 700,
                 cursor: generating ? 'not-allowed' : 'pointer', fontSize: 13,
-                opacity: generating ? 0.7 : 1
-              }}>
+                opacity: generating ? 0.7 : 1, transition: 'var(--transition)',
+              }}
+              onMouseEnter={e => { if (!generating) e.currentTarget.style.transform = 'translateY(-2px)' }}
+              onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)' }}
+              >
                 {generating ? progress || 'Generando...' : '⬇ Descargar PDF'}
               </button>
             </div>
@@ -662,6 +719,21 @@ function StyleBlobs({ styleKey, color1, color2, mult }) {
     sweep: [
       { left:'-20%',  bottom:'-20%', w:'80%', h:'80%', c: color1, a: 0.55 },
       { right:'-20%', top:'-20%',    w:'80%', h:'80%', c: color2, a: 0.50 },
+    ],
+    bloom: [
+      { left:'15%', top:'-25%', w:'70%', h:'70%', c: color1, a: 0.48 },
+      { left:'28%', top:'-8%',  w:'44%', h:'44%', c: `#${blendHex(color1,color2)}`, a: 0.32 },
+    ],
+    spotlight: [
+      { left:'-18%', top:'-22%', w:'58%', h:'58%', c: color1, a: 0.65 },
+      { left:'-4%',  top:'-8%',  w:'34%', h:'34%', c: color2, a: 0.45 },
+    ],
+    mesh: [
+      { left:'-10%',  top:'-12%',    w:'42%', h:'42%', c: color1, a: 0.42 },
+      { left:'35%',   top:'-18%',    w:'40%', h:'40%', c: `#${blendHex(color1,color2)}`, a: 0.32 },
+      { right:'-10%', top:'5%',      w:'44%', h:'44%', c: color2, a: 0.38 },
+      { left:'0%',    bottom:'-18%', w:'38%', h:'38%', c: color2, a: 0.28 },
+      { right:'0%',   bottom:'-12%', w:'40%', h:'40%', c: color1, a: 0.28 },
     ],
   }
   const blobs = styles[styleKey] ?? styles.corners

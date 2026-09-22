@@ -109,6 +109,19 @@ const paths = {
       <path d="M8 16H3v5"/>
     </>
   ),
+  save: (
+    <>
+      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+      <path d="M17 21v-8H7v8"/>
+      <path d="M7 3v5h8"/>
+    </>
+  ),
+  upload: (
+    <>
+      <path d="M12 3v12"/><path d="m17 8-5-5-5 5"/>
+      <path d="M20 17v2a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2"/>
+    </>
+  ),
 }
 
 export default function Icon({ name, size = 20, color, style }) {

@@ -38,4 +38,29 @@ export const COVER_STYLES = {
       { cx:  0.50, cy:  0.50, r: 0.30, color: 'mix', alpha: 0.08 },
     ],
   },
+  bloom: {
+    label: 'Bloom',
+    blobs: [
+      { cx: 0.50, cy: 0.05, r: 0.68, color: 'c1',  alpha: 0.48 },
+      { cx: 0.50, cy: 0.15, r: 0.42, color: 'mix', alpha: 0.30 },
+      { cx: 0.50, cy: 1.00, r: 0.45, color: 'c2',  alpha: 0.22 },
+    ],
+  },
+  spotlight: {
+    label: 'Spotlight',
+    blobs: [
+      { cx: 0.14, cy: 0.10, r: 0.42, color: 'c1',  alpha: 0.65 },
+      { cx: 0.24, cy: 0.20, r: 0.28, color: 'c2',  alpha: 0.45 },
+    ],
+  },
+  mesh: {
+    label: 'Mesh',
+    blobs: [
+      { cx: 0.12, cy: 0.15, r: 0.32, color: 'c1',  alpha: 0.45 },
+      { cx: 0.55, cy: 0.05, r: 0.30, color: 'mix', alpha: 0.35 },
+      { cx: 0.88, cy: 0.30, r: 0.34, color: 'c2',  alpha: 0.40 },
+      { cx: 0.20, cy: 0.85, r: 0.30, color: 'c2',  alpha: 0.30 },
+      { cx: 0.80, cy: 0.90, r: 0.32, color: 'c1',  alpha: 0.30 },
+    ],
+  },
 }
