@@ -92,6 +92,14 @@ export default function Products() {
     onSuccess: () => { setEditing(null); invalidate() },
   })
 
+  const createProduct = useMutation({
+    mutationFn: async (fields) => {
+      const { error } = await supabase.from('products').insert({ ...fields, company_id: companyId })
+      if (error) throw error
+    },
+    onSuccess: () => { setEditing(null); invalidate() },
+  })
+
   const deleteProduct = useMutation({
     mutationFn: async (id) => {
       const { error } = await supabase.from('products')
@@ -171,6 +179,13 @@ export default function Products() {
           )}
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 12 }}>
             <PlanLimitBar used={usage.products} max={limits.max_products} label="productos" pct={pctProducts} />
+            <button
+              onClick={() => setEditing({ id: null, sku: '', name: '', brand_id: null, category_id: null, stock: null, active: true, image_url: null })}
+              disabled={!canAddProducts}
+              title={canAddProducts ? '' : 'Llegaste al límite de productos de tu plan'}
+              style={{ ...btnPrimary, whiteSpace: 'nowrap', opacity: canAddProducts ? 1 : 0.5, cursor: canAddProducts ? 'pointer' : 'not-allowed' }}>
+              + Agregar producto
+            </button>
           </div>
         </div>
 
@@ -263,8 +278,15 @@ export default function Products() {
       {/* ── Edit modal ── */}
       {editing && (
         <Modal onClose={() => setEditing(null)}>
-          <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>Editar producto</h3>
-          <code style={{ fontSize: 11, color: 'var(--accent)' }}>{editing.sku}</code>
+          <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>{editing.id ? 'Editar producto' : 'Nuevo producto'}</h3>
+          {editing.id ? (
+            <code style={{ fontSize: 11, color: 'var(--accent)' }}>{editing.sku}</code>
+          ) : (
+            <>
+              <label style={labelStyle}>SKU</label>
+              <input value={editing.sku} onChange={e => setEditing(p => ({ ...p, sku: e.target.value }))} placeholder="Ej: ABC-001" style={inputFull} />
+            </>
+          )}
 
           {/* Imagen */}
           <label style={labelStyle}>Imagen</label>
@@ -315,14 +337,18 @@ export default function Products() {
           <div style={{ display: 'flex', gap: 8, marginTop: 20, justifyContent: 'flex-end' }}>
             <button onClick={() => setEditing(null)} style={btnSecondary}>Cancelar</button>
             <button
-              onClick={() => updateProduct.mutate({ id: editing.id, name: editing.name, brand_id: editing.brand_id ?? null, category_id: editing.category_id, stock: editing.stock, active: editing.active, image_url: editing.image_url ?? null })}
-              disabled={updateProduct.isPending}
+              onClick={() => {
+                const fields = { name: editing.name, brand_id: editing.brand_id ?? null, category_id: editing.category_id, stock: editing.stock, active: editing.active, image_url: editing.image_url ?? null }
+                if (editing.id) updateProduct.mutate({ id: editing.id, ...fields })
+                else createProduct.mutate({ sku: editing.sku.trim(), ...fields })
+              }}
+              disabled={updateProduct.isPending || createProduct.isPending || (!editing.id && !editing.sku.trim()) || !editing.name.trim()}
               style={btnPrimary}>
-              {updateProduct.isPending ? 'Guardando...' : 'Guardar'}
+              {(updateProduct.isPending || createProduct.isPending) ? 'Guardando...' : 'Guardar'}
             </button>
           </div>
-          {updateProduct.isError && (
-            <div style={{ marginTop: 8, fontSize: 12, color: '#ef4444' }}>Error: {updateProduct.error?.message}</div>
+          {(updateProduct.isError || createProduct.isError) && (
+            <div style={{ marginTop: 8, fontSize: 12, color: '#ef4444' }}>Error: {(updateProduct.error ?? createProduct.error)?.message}</div>
           )}
         </Modal>
       )}

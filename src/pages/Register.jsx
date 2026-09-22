@@ -9,6 +9,7 @@ export default function RegisterPage() {
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
   const [company, setCompany]   = useState('')
+  const [termsAccepted, setTermsAccepted] = useState(false)
   const [loading, setLoading]   = useState(false)
   const [error, setError]       = useState('')
 
@@ -16,6 +17,7 @@ export default function RegisterPage() {
     e.preventDefault()
     if (step === 1) { setStep(2); return }
 
+    if (!termsAccepted) { setError('Tenés que aceptar los términos de uso y la política de privacidad'); return }
     if (password.length < 8) { setError('La contraseña debe tener al menos 8 caracteres'); return }
     setLoading(true); setError('')
     try {
@@ -119,6 +121,25 @@ export default function RegisterPage() {
               <Field label="Nombre de la empresa" type="text" value={company} onChange={e => setCompany(e.target.value)} placeholder="Ej: Distribuidora García" autoFocus />
             )}
 
+            {step === 2 && (
+              <label style={{
+                display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 16,
+                fontSize: 12, color: 'var(--text2)', cursor: 'pointer', lineHeight: 1.5,
+              }}>
+                <input
+                  type="checkbox" checked={termsAccepted}
+                  onChange={e => setTermsAccepted(e.target.checked)}
+                  style={{ marginTop: 2, width: 15, height: 15, flexShrink: 0, accentColor: 'var(--accent)', cursor: 'pointer' }}
+                />
+                <span>
+                  Acepto los{' '}
+                  <Link to="/terms" target="_blank" style={{ color: 'var(--text2)', textDecoration: 'underline' }}>términos de uso</Link>
+                  {' '}y la{' '}
+                  <Link to="/privacy" target="_blank" style={{ color: 'var(--text2)', textDecoration: 'underline' }}>política de privacidad</Link>.
+                </span>
+              </label>
+            )}
+
             {error && (
               <p style={{ fontSize: 12, color: 'var(--danger)', marginBottom: 14 }}>{error}</p>
             )}
@@ -154,12 +175,14 @@ export default function RegisterPage() {
           )}
         </div>
 
-        <p style={{ textAlign: 'center', fontSize: 11, color: 'var(--text3)', marginTop: 16 }}>
-          Al registrarte aceptás los{' '}
-          <Link to="/terms" style={{ color: 'var(--text3)', textDecoration: 'underline' }}>términos de uso</Link>
-          {' '}y la{' '}
-          <Link to="/privacy" style={{ color: 'var(--text3)', textDecoration: 'underline' }}>política de privacidad</Link>.
-        </p>
+        {step === 1 && (
+          <p style={{ textAlign: 'center', fontSize: 11, color: 'var(--text3)', marginTop: 16 }}>
+            Al registrarte aceptás los{' '}
+            <Link to="/terms" style={{ color: 'var(--text3)', textDecoration: 'underline' }}>términos de uso</Link>
+            {' '}y la{' '}
+            <Link to="/privacy" style={{ color: 'var(--text3)', textDecoration: 'underline' }}>política de privacidad</Link>.
+          </p>
+        )}
       </div>
     </div>
   )

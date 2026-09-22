@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase'
 import { ExcelConnector } from '@/utils/connectors/excel.connector'
 import { computeDiff, summarizeDiff } from '@/utils/sync/diff'
 import { applyDiff } from '@/utils/sync/apply'
+import { IconImport } from '@/components/NavIcons'
 
 const STEPS = { idle: 0, parsing: 1, review: 2, applying: 3, done: 4 }
 const CHANGE_COLORS = {
@@ -159,7 +160,7 @@ export default function Sync() {
           onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.color = 'var(--accent)' }}
           onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text3)' }}
         >
-          <div style={{ fontSize: 32, marginBottom: 10 }}>📊</div>
+          <div style={{ marginBottom: 10, display: 'flex', justifyContent: 'center' }}><IconImport size={32} /></div>
           <div style={{ fontWeight: 600 }}>Arrastrá tu Excel aquí o hacé clic para seleccionar</div>
           <div style={{ fontSize: 12, marginTop: 6 }}>Formatos: .xlsx, .xls</div>
           <input ref={fileRef} type="file" accept=".xlsx,.xls" style={{ display: 'none' }} onChange={handleFile} />
