@@ -362,12 +362,17 @@ async function addCoverPage(doc, company, coverOptions, isLandscape, stats = nul
       doc.restoreGraphicsState()
       setFont(doc, 'ui')
       doc.setCharSpace(px(11) * 0.14)
-      alphaText(doc, chip.label, chipX + w / 2, bottomRowY + px(12) + px(11) * 0.32, fg, 0.55, { align: 'center' })
+      // Apilado por bloque completo (top + line-height), no una fracción
+      // fija — si no, la etiqueta y el valor quedan casi pegados.
+      const labelTop = bottomRowY + px(12)
+      const labelLineH = px(11 * 1.3)
+      alphaText(doc, chip.label, chipX + w / 2, labelTop + labelLineH * 0.8, fg, 0.55, { align: 'center' })
       doc.setCharSpace(0)
+      const valueTop = labelTop + labelLineH + px(4)
       doc.setFontSize(pxpt(22))
       setFont(doc, 'title')
       doc.setTextColor(...fg)
-      doc.text(chip.value, chipX + w / 2, bottomRowY + px(12) + px(4) + px(22) * 0.75, { align: 'center' })
+      doc.text(chip.value, chipX + w / 2, valueTop + px(22) * 0.8, { align: 'center' })
       chipX += w + chipGap
     }
   }
@@ -451,13 +456,24 @@ function addShowcasePage(doc, isLandscape) {
       num: 1, badge: '#0F4C5C', title: 'Subí tu marca',
       desc: 'Cargás tu logo (PNG o SVG), el nombre comercial y los datos de contacto. Se aplican a la portada y al pie de todas las páginas.',
       visual: (x, y, w) => {
+        // Mini preview: caja con borde (si no, el círculo + rayas quedan
+        // flotando sueltos y no se entiende qué representan) simulando
+        // "así se va a ver tu marca" — logo + nombre placeholder.
+        const boxPad = px(12), boxH = px(34), logoSize = px(34)
+        doc.setFillColor('#FFFFFF'); doc.setDrawColor('#E7E3DA'); doc.setLineWidth(0.2)
+        doc.roundedRect(x, y, w, boxH, px(18), px(18), 'FD')
+
         doc.setFillColor('#0F4C5C')
-        doc.circle(x + 5, y + 5, 4, 'F')
-        doc.setFontSize(7); setFont(doc, 'bold'); doc.setTextColor('#FFFFFF')
-        doc.text('D', x + 5, y + 6.5, { align: 'center' })
+        doc.roundedRect(x + boxPad, y + (boxH - logoSize) / 2, logoSize, logoSize, px(11), px(11), 'F')
+        doc.setFontSize(pxpt(15)); setFont(doc, 'title'); doc.setTextColor('#FFFFFF')
+        doc.text('D', x + boxPad + logoSize / 2, y + boxH / 2 + px(15) * 0.32, { align: 'center' })
+
+        const barsX = x + boxPad + logoSize + px(10)
+        const barsW = x + w - boxPad - barsX
         doc.setFillColor('#E7E3DA')
-        doc.roundedRect(x + 13, y + 3, w - 13, 2, 1, 1, 'F')
-        doc.roundedRect(x + 13, y + 7, (w - 13) * 0.6, 2, 1, 1, 'F')
+        doc.roundedRect(barsX, y + boxH / 2 - px(7), barsW, px(8), px(4), px(4), 'F')
+        doc.setFillColor('#EFECE4')
+        doc.roundedRect(barsX, y + boxH / 2 + px(3), barsW * 0.55, px(8), px(4), px(4), 'F')
       },
     },
     {
