@@ -202,7 +202,7 @@ export default function LandingPage() {
           borderRadius: 20, padding: '48px 32px',
         }}>
           <div style={{
-            position: 'absolute', inset: 0, opacity: 0.5,
+            position: 'absolute', inset: 0, opacity: 0.5, pointerEvents: 'none',
             background: 'radial-gradient(80% 100% at 50% 0%, color-mix(in srgb, var(--violet) 16%, transparent) 0%, transparent 60%)',
           }} />
           <div style={{ marginBottom: 16, display: 'flex', justifyContent: 'center' }}><PotatoMark size={48} /></div>
