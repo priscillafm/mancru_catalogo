@@ -18,6 +18,7 @@ export default function Products() {
   const [categoryId, setCategoryId] = useState('all')
   const [page, setPage]           = useState(0)
   const [editing, setEditing]     = useState(null)
+  const [newCategoryName, setNewCategoryName] = useState(null)
   const [confirmDel, setConfirmDel] = useState(null)
   const [imgUploading, setImgUploading] = useState(false)
   const [cropFile, setCropFile] = useState(null)  // file pending crop
@@ -89,7 +90,7 @@ export default function Products() {
       const { error } = await supabase.from('products').update(fields).eq('id', id)
       if (error) throw error
     },
-    onSuccess: () => { setEditing(null); invalidate() },
+    onSuccess: () => { closeEdit(); invalidate() },
   })
 
   const createProduct = useMutation({
@@ -97,7 +98,23 @@ export default function Products() {
       const { error } = await supabase.from('products').insert({ ...fields, company_id: companyId })
       if (error) throw error
     },
-    onSuccess: () => { setEditing(null); invalidate() },
+    onSuccess: () => { closeEdit(); invalidate() },
+  })
+
+  const createCategory = useMutation({
+    mutationFn: async (name) => {
+      const slug = name.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+      const { data, error } = await supabase.from('categories')
+        .insert({ company_id: companyId, name: name.trim(), slug, active: true })
+        .select('id, name').single()
+      if (error) throw error
+      return data
+    },
+    onSuccess: (cat) => {
+      qc.invalidateQueries({ queryKey: ['admin-categories'] })
+      setEditing(p => ({ ...p, category_id: cat.id }))
+      setNewCategoryName(null)
+    },
   })
 
   const deleteProduct = useMutation({
@@ -138,6 +155,10 @@ export default function Products() {
 
   function resetFilters() {
     setSearch(''); setBrandId('all'); setCategoryId('all'); setPage(0)
+  }
+
+  function closeEdit() {
+    setEditing(null); setNewCategoryName(null)
   }
 
   return (
@@ -277,7 +298,7 @@ export default function Products() {
 
       {/* ── Edit modal ── */}
       {editing && (
-        <Modal onClose={() => setEditing(null)}>
+        <Modal onClose={closeEdit}>
           <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>{editing.id ? 'Editar producto' : 'Nuevo producto'}</h3>
           {editing.id ? (
             <code style={{ fontSize: 11, color: 'var(--accent)' }}>{editing.sku}</code>
@@ -320,10 +341,31 @@ export default function Products() {
           </select>
 
           <label style={labelStyle}>Categoría</label>
-          <select value={editing.category_id ?? ''} onChange={e => setEditing(p => ({ ...p, category_id: e.target.value || null }))} style={inputFull}>
-            <option value="">— Sin categoría —</option>
-            {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
+          <div style={{ display: 'flex', gap: 6, marginTop: 4 }}>
+            <select value={editing.category_id ?? ''} onChange={e => setEditing(p => ({ ...p, category_id: e.target.value || null }))} style={{ ...inputFull, marginTop: 0, flex: 1 }}>
+              <option value="">— Sin categoría —</option>
+              {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+            <button type="button" onClick={() => setNewCategoryName(n => n === null ? '' : null)} style={{ ...btnSecondary, whiteSpace: 'nowrap' }}>
+              + Nueva
+            </button>
+          </div>
+          {newCategoryName !== null && (
+            <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+              <input
+                value={newCategoryName} onChange={e => setNewCategoryName(e.target.value)}
+                placeholder="Nombre de la categoría" style={{ ...inputFull, marginTop: 0, flex: 1 }}
+                onKeyDown={e => { if (e.key === 'Enter' && newCategoryName.trim()) { e.preventDefault(); createCategory.mutate(newCategoryName) } }}
+              />
+              <button type="button" disabled={!newCategoryName.trim() || createCategory.isPending}
+                onClick={() => createCategory.mutate(newCategoryName)} style={btnPrimary}>
+                {createCategory.isPending ? '...' : 'Crear'}
+              </button>
+            </div>
+          )}
+          {createCategory.isError && (
+            <div style={{ marginTop: 6, fontSize: 12, color: '#ef4444' }}>Error: {createCategory.error?.message}</div>
+          )}
 
           <label style={labelStyle}>Stock</label>
           <input type="number" value={editing.stock ?? ''} onChange={e => setEditing(p => ({ ...p, stock: e.target.value === '' ? null : Number(e.target.value) }))} style={inputFull} />
@@ -335,7 +377,7 @@ export default function Products() {
           </select>
 
           <div style={{ display: 'flex', gap: 8, marginTop: 20, justifyContent: 'flex-end' }}>
-            <button onClick={() => setEditing(null)} style={btnSecondary}>Cancelar</button>
+            <button onClick={closeEdit} style={btnSecondary}>Cancelar</button>
             <button
               onClick={() => {
                 const fields = { name: editing.name, brand_id: editing.brand_id ?? null, category_id: editing.category_id, stock: editing.stock, active: editing.active, image_url: editing.image_url ?? null }
