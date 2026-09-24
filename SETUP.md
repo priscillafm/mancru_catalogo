@@ -58,7 +58,7 @@ src/
   store/         — Zustand stores (auth)
   pages/
     Login.jsx
-    Catalog.jsx  — Vista del vendedor
+    Catalog.jsx  — Vista de armado de catálogos
     admin/       — Panel de administración
   utils/
     connectors/  — Sistema de conectores (Excel, CSV, etc.)

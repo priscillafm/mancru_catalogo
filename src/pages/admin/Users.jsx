@@ -6,7 +6,7 @@ import { useAuthStore } from '@/store/auth.store'
 import { usePlanLimits } from '@/hooks/usePlanLimits'
 import Icon from '@/components/Icon'
 
-const ROLE_LABELS = { super_admin: 'Super Admin', company_admin: 'Administrador', vendor: 'Vendedor' }
+const ROLE_LABELS = { super_admin: 'Super Admin', company_admin: 'Administrador', vendor: 'Colaborador' }
 const ROLE_COLORS = { super_admin: '#ef4444', company_admin: '#3b82f6', vendor: '#22c55e' }
 
 export default function Users() {
@@ -180,7 +180,7 @@ export default function Users() {
                 border: '1px solid var(--border)', borderRadius: 7,
                 color: 'var(--text)', fontSize: 13, outline: 'none', cursor: 'pointer',
               }}>
-              <option value="vendor">Vendedor</option>
+              <option value="vendor">Colaborador</option>
               <option value="company_admin">Administrador</option>
             </select>
           </div>

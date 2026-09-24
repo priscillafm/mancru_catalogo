@@ -51,7 +51,7 @@ export default function ProfilePage() {
     loadMembership(user.id)
   }
 
-  const ROLE_LABELS = { super_admin: 'Super Admin', company_admin: 'Administrador', vendor: 'Vendedor' }
+  const ROLE_LABELS = { super_admin: 'Super Admin', company_admin: 'Administrador', vendor: 'Colaborador' }
 
   async function handleChangePassword(e) {
     e.preventDefault()
