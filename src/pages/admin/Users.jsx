@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/auth.store'
 import { usePlanLimits } from '@/hooks/usePlanLimits'
+import Icon from '@/components/Icon'
 
 const ROLE_LABELS = { super_admin: 'Super Admin', company_admin: 'Administrador', vendor: 'Vendedor' }
 const ROLE_COLORS = { super_admin: '#ef4444', company_admin: '#3b82f6', vendor: '#22c55e' }
@@ -142,7 +143,7 @@ export default function Users() {
         <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>Crear usuario</h3>
         {!canAddUser && (
           <p style={{ fontSize: 12, color: '#f97316', marginBottom: 12 }}>
-            ⚠️ Alcanzaste el límite de {limits.max_users} usuario{limits.max_users !== 1 ? 's' : ''} de tu plan.{' '}
+            <span style={{ display: 'inline-flex', verticalAlign: 'middle', marginRight: 6 }}><Icon name="alert" size={14} /></span>Alcanzaste el límite de {limits.max_users} usuario{limits.max_users !== 1 ? 's' : ''} de tu plan.{' '}
             <Link to="/pricing" style={{ color: 'var(--accent)', textDecoration: 'none' }}>Actualizar plan →</Link>
           </p>
         )}

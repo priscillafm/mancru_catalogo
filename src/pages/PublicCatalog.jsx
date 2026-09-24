@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { PotatoMark } from '@/components/PotatoLogo'
 import { DEMO_CATALOG_ID } from '@/utils/demoCatalog'
 import { generateCatalogPDF } from '@/utils/pdf'
+import Icon from '@/components/Icon'
 
 export default function PublicCatalog() {
   const { id } = useParams()
@@ -404,7 +405,7 @@ export default function PublicCatalog() {
                   background: '#fff', color: '#333', fontSize: 14, cursor: 'pointer', fontWeight: 600,
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                 }}>
-                  ✉️ Enviar pedido por email
+                  <Icon name="mail" size={16} /> Enviar pedido por email
                 </button>
               )}
               <button onClick={handleCopyOrder} style={{

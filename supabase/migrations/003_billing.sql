@@ -1,7 +1,7 @@
 -- ============================================================
 -- 003_billing.sql
 -- Cobro con Mercado Pago + fix de datos del plan mismatch
--- Correr una sola vez en el SQL Editor de Supabase (proyecto MANCRU).
+-- Correr una sola vez en el SQL Editor de Supabase (proyecto Potato).
 -- ============================================================
 
 -- ------------------------------------------------------------

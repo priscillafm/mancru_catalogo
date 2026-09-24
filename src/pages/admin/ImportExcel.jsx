@@ -219,7 +219,7 @@ export default function ImportExcel() {
       if (toInsert.length > remaining) {
         skippedByPlan = toInsert.length - remaining
         toInsert.splice(remaining)
-        addLog(`⚠️ Límite del plan: se omiten ${skippedByPlan} productos nuevos. Actualizaciones continúan igual.`)
+        addLog(`Aviso — límite del plan: se omiten ${skippedByPlan} productos nuevos. Actualizaciones continúan igual.`)
       }
 
       const sinMarca = rows.filter(r => !r.brand).length
@@ -244,7 +244,7 @@ export default function ImportExcel() {
         addLog(`  Actualizados ${updated} / ${toUpdate.length}...`)
       }
 
-      addLog(`✅ Listo. ${inserted} creados · ${updated} actualizados${skippedByPlan ? ` · ${skippedByPlan} omitidos por límite de plan` : ''}`)
+      addLog(`Listo. ${inserted} creados · ${updated} actualizados${skippedByPlan ? ` · ${skippedByPlan} omitidos por límite de plan` : ''}`)
       setStep('done')
     } catch (err) {
       addLog('✗ Error inesperado: ' + err.message)
@@ -314,7 +314,7 @@ export default function ImportExcel() {
 
           {limits.max_products !== null && newCount > remaining && (
             <div style={{ padding: '10px 14px', background: 'rgba(249,115,22,.1)', border: '1px solid rgba(249,115,22,.3)', borderRadius: 8, fontSize: 13, color: '#f97316', marginBottom: 16 }}>
-              ⚠️ Tu plan permite {limits.max_products} productos. Tenés {usage.products} — solo se importarán {remaining} de los {newCount} nuevos.
+              <span style={{ display: 'inline-flex', verticalAlign: 'middle', marginRight: 6 }}><Icon name="alert" size={14} /></span>Tu plan permite {limits.max_products} productos. Tenés {usage.products} — solo se importarán {remaining} de los {newCount} nuevos.
             </div>
           )}
 
@@ -330,7 +330,7 @@ export default function ImportExcel() {
                   opacity: brand === '(sin marca)' ? 0.5 : 1,
                 }}>
                   <span style={{ fontSize: 13 }}>
-                    {brand === '(sin marca)' ? '⚠️ Sin marca (se omiten nuevos)' : brand}
+                    {brand === '(sin marca)' ? 'Sin marca (se omiten nuevos)' : brand}
                   </span>
                   <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text2)' }}>{count}</span>
                 </div>

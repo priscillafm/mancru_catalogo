@@ -96,7 +96,7 @@ export default function Dashboard() {
       {/* Greeting */}
       <div style={{ marginBottom: 24 }}>
         <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>
-          Hola, {authUser?.name ?? membership?.companies?.name ?? 'bienvenido'} 👋
+          Hola, {authUser?.name ?? membership?.companies?.name ?? 'bienvenido'}
         </h2>
         <p style={{ fontSize: 13, color: 'var(--text3)' }}>
           Acá tenés un resumen de la actividad de tu empresa.

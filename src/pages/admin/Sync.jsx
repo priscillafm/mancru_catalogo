@@ -5,6 +5,7 @@ import { ExcelConnector } from '@/utils/connectors/excel.connector'
 import { computeDiff, summarizeDiff } from '@/utils/sync/diff'
 import { applyDiff } from '@/utils/sync/apply'
 import { IconImport } from '@/components/NavIcons'
+import Icon from '@/components/Icon'
 
 const STEPS = { idle: 0, parsing: 1, review: 2, applying: 3, done: 4 }
 const CHANGE_COLORS = {
@@ -275,7 +276,7 @@ export default function Sync() {
 
       {step === STEPS.done && (
         <div style={{ textAlign: 'center', padding: '40px 0' }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>✅</div>
+          <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'center', color: '#22c55e' }}><Icon name="check-circle" size={40} /></div>
           <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>Sincronización completada</h3>
           <p style={{ color: 'var(--text2)', marginBottom: 20, fontSize: 13 }}>{message}</p>
           <button onClick={() => { setStep(STEPS.idle); setDiffRows([]); setSummary(null); setMessage('') }}

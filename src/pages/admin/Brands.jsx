@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/auth.store'
+import Icon from '@/components/Icon'
 
 function slugify(str) {
   return str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
@@ -123,7 +124,7 @@ export default function Brands() {
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               {modal.logoUrl
                 ? <img src={modal.logoUrl} alt="logo" style={{ height: 36, maxWidth: 80, objectFit: 'contain', background: modal.color, borderRadius: 6, padding: 4 }} />
-                : <div style={{ width: 52, height: 36, background: 'var(--bg-panel)', borderRadius: 6, border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>🖼️</div>
+                : <div style={{ width: 52, height: 36, background: 'var(--bg-panel)', borderRadius: 6, border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}><Icon name="image" size={18} /></div>
               }
               <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading}
                 style={{ ...btnSm, padding: '6px 14px' }}>

@@ -52,12 +52,12 @@ export const ExcelConnector = {
   },
 
   /**
-   * Opinionated default mapping for the Mancru-style Excel format.
+   * Opinionated default mapping for the standard Excel format.
    * Companies can override this per connector configuration.
    */
   getDefaultFieldMapping() {
     return {
-      // Mancru format
+      // Standard format
       'marca':              'brand',
       'código':             'sku',
       'codigo':             'sku',

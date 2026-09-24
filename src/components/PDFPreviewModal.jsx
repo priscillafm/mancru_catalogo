@@ -242,7 +242,7 @@ export default function PDFPreviewModal({
                   color: orientation === o ? 'var(--accent-text)' : 'var(--text2)',
                   fontWeight: orientation === o ? 700 : 400,
                 }}>
-                  {o === 'landscape' ? '⬛ Horizontal' : '▯ Vertical'}
+                  {o === 'landscape' ? <><Icon name="landscape" size={13} /> Horizontal</> : <><Icon name="portrait" size={13} /> Vertical</>}
                 </button>
               ))}
             </div>
@@ -638,7 +638,7 @@ export default function PDFPreviewModal({
               onMouseEnter={e => { if (!generating) e.currentTarget.style.transform = 'translateY(-2px)' }}
               onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)' }}
               >
-                {generating ? progress || 'Generando...' : '⬇ Descargar PDF'}
+                {generating ? progress || 'Generando...' : <><Icon name="download" size={14} /> Descargar PDF</>}
               </button>
             </div>
           </div>

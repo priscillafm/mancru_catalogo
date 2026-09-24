@@ -111,9 +111,9 @@ export default function NotificationBell() {
                 >
                   <span style={{ flexShrink: 0, color: 'var(--text3)', display: 'flex', alignItems: 'center' }}>
                     {n.type === 'catalog_view' ? <Icon name="view" size={16} />
-                      : n.type === 'new_order'  ? '🛒'
-                      : n.type === 'plan_limit' ? '⚠️'
-                      : '🔔'}
+                      : n.type === 'new_order'  ? <Icon name="cart" size={16} />
+                      : n.type === 'plan_limit' ? <Icon name="alert" size={16} />
+                      : <Icon name="bell" size={16} />}
                   </span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13, color: 'var(--text)', lineHeight: 1.4 }}>{n.message}</div>

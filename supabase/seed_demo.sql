@@ -2,7 +2,7 @@
 -- seed_demo.sql
 -- Catálogo de ejemplo público, enlazado desde la landing
 -- ("Ver catálogo de ejemplo →"). Correr en el SQL Editor de
--- Supabase. No toca seed_mancru.sql ni datos reales.
+-- Supabase. No toca datos reales.
 --
 -- El id del catálogo tiene que coincidir con DEMO_CATALOG_ID en
 -- src/utils/demoCatalog.js. Usa DO UPDATE para poder re-correrlo

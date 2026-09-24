@@ -164,7 +164,7 @@ export default function CatalogPage() {
                 letterSpacing: '0.02em', fontWeight: 500,
               }}
             >
-              {theme === 'dark' ? '☀ Claro' : '☾ Oscuro'}
+              {theme === 'dark' ? <><Icon name="sun" size={12} /> Claro</> : <><Icon name="moon" size={12} /> Oscuro</>}
             </button>
           </div>
           {/* Company + page title */}

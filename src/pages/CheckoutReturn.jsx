@@ -51,7 +51,7 @@ export default function CheckoutReturn() {
         )}
         {status === 'active' && (
           <>
-            <h1 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>¡Listo! Tu plan Pro está activo 🎉</h1>
+            <h1 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>¡Listo! Tu plan Pro está activo</h1>
             <p style={{ fontSize: 13, color: 'var(--text3)' }}>Te llevamos a tu panel...</p>
           </>
         )}

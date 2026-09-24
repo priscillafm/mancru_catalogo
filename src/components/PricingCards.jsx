@@ -1,3 +1,5 @@
+import Icon from '@/components/Icon'
+
 const DISPLAY = {
   free:       { desc: 'Para empezar', features: ['75 productos', '1 catálogo activo', '1 usuario', 'Link público'] },
   pro:        { desc: 'Para crecer', features: ['5.000 productos', 'Catálogos ilimitados', 'Usuarios ilimitados', 'Soporte prioritario'] },
@@ -42,7 +44,7 @@ export default function PricingCards({ plans, renderCta }) {
             <div style={{ fontSize: 26, fontWeight: 700, marginBottom: price.sub ? 2 : 4 }}>{price.main}</div>
             {price.sub && (
               <div style={{ fontSize: 11, fontWeight: 600, marginBottom: 16, color: accent ? 'var(--accent-text)' : 'var(--accent)' }}>
-                🚀 {price.sub}
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><Icon name="rocket" size={12} /> {price.sub}</span>
               </div>
             )}
             <div style={{ fontSize: 12, opacity: 0.6, marginBottom: 20 }}>{info.desc}</div>

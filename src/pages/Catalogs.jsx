@@ -194,7 +194,7 @@ export default function CatalogsPage() {
                           const url = `${window.location.origin}/c/${cat.id}`
                           navigator.clipboard.writeText(url)
                           alert(`Link copiado:\n${url}`)
-                        }} style={actionBtn('var(--accent)')}>🔗 Copiar link</button>
+                        }} style={{ ...actionBtn('var(--accent)'), display: 'inline-flex', alignItems: 'center', gap: 5 }}><Icon name="link" size={13} /> Copiar link</button>
                       ) : (
                         <button onClick={() => shareCatalog(cat)} style={actionBtn('#10b981')}>Compartir link</button>
                       )}
