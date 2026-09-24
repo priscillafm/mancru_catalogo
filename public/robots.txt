@@ -1,0 +1,14 @@
+User-agent: *
+Allow: /
+# Zonas privadas y catálogos compartidos con clientes: no deben aparecer en buscadores
+Disallow: /c/
+Disallow: /app
+Disallow: /admin
+Disallow: /catalogs
+Disallow: /profile
+Disallow: /onboarding
+Disallow: /pricing
+Disallow: /checkout
+Disallow: /reset-password
+
+Sitemap: https://potatoui.com/sitemap.xml
