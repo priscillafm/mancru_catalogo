@@ -65,7 +65,7 @@ export default function CatalogPage() {
     queryFn: async () => {
       let q = supabase
         .from('products')
-        .select('id, sku, name, description, image_url, category_id, brand_id, categories(name)')
+        .select('id, sku, name, description, image_url, price, category_id, brand_id, categories(name)')
         .eq('company_id', companyId)
         .eq('active', true)
         .is('deleted_at', null)

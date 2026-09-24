@@ -4,17 +4,20 @@ import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/auth.store'
 import { PotatoMark } from '@/components/PotatoLogo'
 import Icon from '@/components/Icon'
+import { normalizeWhatsapp } from '@/utils/phone'
 
 const STEPS = [
   { id: 1, label: 'Bienvenida' },
-  { id: 2, label: 'Tu marca' },
-  { id: 3, label: 'Primer producto' },
-  { id: 4, label: 'Listo' },
+  { id: 2, label: 'Tu empresa' },
+  { id: 3, label: 'Tu marca' },
+  { id: 4, label: 'Primer producto' },
+  { id: 5, label: 'Listo' },
 ]
 
 export default function OnboardingPage() {
   const navigate   = useNavigate()
   const membership = useAuthStore(s => s.membership)
+  const loadMembership = useAuthStore(s => s.loadMembership)
 
   const [step, setStep]           = useState(1)
   const [saving, setSaving]       = useState(false)
@@ -46,11 +49,15 @@ export default function OnboardingPage() {
     })
   }, [])
 
-  // Step 2 — marca
+  // Step 2 — empresa + WhatsApp
+  const [companyName, setCompanyName] = useState(membership?.companies?.name ?? '')
+  const [whatsapp, setWhatsapp]       = useState('')
+
+  // Step 3 — marca
   const [brandName, setBrandName]   = useState('')
   const [brandColor, setBrandColor] = useState('#6366f1')
 
-  // Step 3 — producto
+  // Step 4 — producto
   const [productName, setProductName] = useState('')
   const [productSku, setProductSku]   = useState('')
   const [productPrice, setProductPrice] = useState('')
@@ -60,6 +67,24 @@ export default function OnboardingPage() {
       Cargando...
     </div>
   )
+
+  async function handleCompany() {
+    if (!companyId) { setError('Error: no se encontró la empresa. Recargá la página.'); return }
+    if (!companyName.trim()) { setError('Ingresá el nombre de tu empresa'); return }
+    const wa = normalizeWhatsapp(whatsapp)
+    if (!wa.ok) { setError(wa.error); return }
+    setSaving(true); setError('')
+    const { error: cErr } = await supabase.from('companies').update({ name: companyName.trim() }).eq('id', companyId)
+    if (cErr) { setSaving(false); setError(cErr.message); return }
+    if (wa.value) {
+      const { data: { user } } = await supabase.auth.getUser()
+      const { error: wErr } = await supabase.from('users').update({ whatsapp: wa.value }).eq('id', user.id)
+      if (wErr) { setSaving(false); setError(wErr.message); return }
+      await loadMembership(user.id)
+    }
+    setSaving(false)
+    setStep(3)
+  }
 
   async function handleStep2() {
     if (!companyId) { setError('Error: no se encontró la empresa. Recargá la página.'); return }
@@ -77,7 +102,7 @@ export default function OnboardingPage() {
       setSaving(false)
       if (err) { setError(err.message); return }
     }
-    setStep(3)
+    setStep(4)
   }
 
   async function handleStep3() {
@@ -107,7 +132,7 @@ export default function OnboardingPage() {
     })
     setSaving(false)
     if (err) { setError(err.message); return }
-    setStep(4)
+    setStep(5)
   }
 
   return (
@@ -150,7 +175,7 @@ export default function OnboardingPage() {
               <p style={{ fontSize: 14, color: 'var(--text2)', lineHeight: 1.6, marginBottom: 28 }}>
                 En menos de 5 minutos vas a tener tu primer catálogo listo para compartir.
                 <br /><br />
-                Empezamos con lo básico: tu marca y un producto.
+                Empezamos con lo básico: los datos de tu empresa, una marca y un producto.
               </p>
               <button onClick={() => setStep(2)} style={primaryBtn}>
                 Empezar →
@@ -158,12 +183,34 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* Step 2 — Marca */}
+          {/* Step 2 — Empresa + WhatsApp */}
           {step === 2 && (
+            <div>
+              <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>Tu empresa</h2>
+              <p style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 24 }}>
+                Estos datos aparecen en tus catálogos y en los pedidos de tus clientes.
+              </p>
+
+              <Field label="Nombre de tu empresa" value={companyName} onChange={e => setCompanyName(e.target.value)} placeholder="Ej: Distribuidora García" autoFocus />
+              <Field label="WhatsApp para recibir pedidos" type="tel" value={whatsapp} onChange={e => setWhatsapp(e.target.value)} placeholder="Ej: 59899123456" />
+              <p style={{ fontSize: 12, color: 'var(--text3)', marginTop: -8, marginBottom: 20, lineHeight: 1.5 }}>
+                Con código de país, sin + ni espacios. Sin este número, tus clientes solo podrán enviarte el pedido por email.
+              </p>
+
+              {error && <p style={{ fontSize: 12, color: 'var(--danger)', marginBottom: 12 }}>{error}</p>}
+
+              <button onClick={handleCompany} disabled={saving} style={primaryBtn}>
+                {saving ? 'Guardando...' : whatsapp.trim() ? 'Guardar y continuar →' : 'Continuar sin WhatsApp →'}
+              </button>
+            </div>
+          )}
+
+          {/* Step 3 — Marca */}
+          {step === 3 && (
             <div>
               <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>Tu primera marca <span style={{ fontSize: 12, fontWeight: 400, color: 'var(--text3)' }}>(opcional)</span></h2>
               <p style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 24 }}>
-                Si vendés productos de varias marcas, podés organizarlos así. Si preferís productos genéricos, dejalo en blanco.
+                La marca es el proveedor o la línea a la que pertenecen tus productos (tu empresa ya está creada). Si vendés de varias marcas, organizalos así; si no, dejalo en blanco.
               </p>
 
               <Field label="Nombre de la marca" value={brandName} onChange={e => setBrandName(e.target.value)} placeholder="Ej: Nike, Línea Premium, Marca XYZ" autoFocus />
@@ -192,8 +239,8 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* Step 3 — Producto */}
-          {step === 3 && (
+          {/* Step 4 — Producto */}
+          {step === 4 && (
             <div>
               <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>Tu primer producto</h2>
               <p style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 24 }}>
@@ -209,22 +256,21 @@ export default function OnboardingPage() {
               <button onClick={handleStep3} disabled={saving} style={primaryBtn}>
                 {saving ? 'Guardando...' : 'Continuar →'}
               </button>
-              <button onClick={() => setStep(4)} style={skipBtn}>
+              <button onClick={() => setStep(5)} style={skipBtn}>
                 Saltar por ahora
               </button>
             </div>
           )}
 
-          {/* Step 4 — Listo */}
-          {step === 4 && (
+          {/* Step 5 — Listo */}
+          {step === 5 && (
             <div style={{ textAlign: 'center' }}>
               <div style={{ marginBottom: 16, color: 'var(--accent)' }}><Icon name="celebrate" size={48} /></div>
               <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 10 }}>
                 ¡Todo listo!
               </h2>
               <p style={{ fontSize: 14, color: 'var(--text2)', lineHeight: 1.6, marginBottom: 28 }}>
-                Ya tenés tu primera marca y producto cargados.
-                Ahora creá tu primer catálogo y compartilo con un cliente.
+                Tu cuenta está lista. Ahora creá tu primer catálogo y compartilo con un cliente.
               </p>
               <button onClick={() => navigate('/app')} style={primaryBtn}>
                 Ir al catálogo →
@@ -236,7 +282,7 @@ export default function OnboardingPage() {
           )}
         </div>
 
-        {step > 1 && step < 4 && (
+        {step > 1 && step < 5 && (
           <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--text3)', marginTop: 16 }}>
             Paso {step} de {STEPS.length}
           </p>

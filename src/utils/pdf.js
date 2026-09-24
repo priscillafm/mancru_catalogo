@@ -852,10 +852,12 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
       const skuPadX = px(11)
       const skuH = px(5) * 2 + pxpt(11) * 0.3528
       const skuW = doc.getTextWidth(skuText) + skuTrackGap * skuText.length + skuPadX * 2
-      doc.setFillColor('#F3F1EB')
-      doc.roundedRect(textX, bottomY - skuH, skuW, skuH, skuH / 2, skuH / 2, 'F')
-      doc.setTextColor('#8A938E')
-      doc.text(skuText, textX + skuW / 2, bottomY - skuH / 2 + px(11) * 0.32, { align: 'center' })
+      if (skuText.trim()) {
+        doc.setFillColor('#F3F1EB')
+        doc.roundedRect(textX, bottomY - skuH, skuW, skuH, skuH / 2, skuH / 2, 'F')
+        doc.setTextColor('#8A938E')
+        doc.text(skuText, textX + skuW / 2, bottomY - skuH / 2 + px(11) * 0.32, { align: 'center' })
+      }
       doc.setCharSpace(0)
 
       if (p._price) {

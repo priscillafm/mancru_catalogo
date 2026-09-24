@@ -9,11 +9,13 @@ import { usePlanLimits } from '@/hooks/usePlanLimits'
 
 export default function CatalogsPage() {
   const membership  = useAuthStore(s => s.membership)
+  const authUser    = useAuthStore(s => s.user)
   const companyId   = membership?.company_id
   const navigate    = useNavigate()
   const qc          = useQueryClient()
 
   const [openCatalog, setOpenCatalog] = useState(null) // catalog to reopen in PDF modal
+  const [wappPrompt, setWappPrompt] = useState(null)     // catalogo que se iba a compartir sin WhatsApp configurado
   const { canAddCatalog, usage, limits } = usePlanLimits()
 
   const { data: catalogs = [], isLoading } = useQuery({
@@ -35,8 +37,11 @@ export default function CatalogsPage() {
     enabled: !!companyId,
   })
 
-  async function shareCatalog(cat) {
-    await supabase.from('catalogs').update({ status: 'shared' }).eq('id', cat.id)
+  async function shareCatalog(cat, force = false) {
+    if (!authUser?.whatsapp && !force) { setWappPrompt(cat); return }
+    setWappPrompt(null)
+    const snapshot = { ...(cat.snapshot_data ?? {}), vendorWhatsapp: authUser?.whatsapp ?? null, vendorEmail: authUser?.email ?? null }
+    await supabase.from('catalogs').update({ status: 'shared', snapshot_data: snapshot }).eq('id', cat.id)
     qc.invalidateQueries(['catalogs', companyId])
     const url = `${window.location.origin}/c/${cat.id}`
     await navigator.clipboard.writeText(url)
@@ -210,6 +215,22 @@ export default function CatalogsPage() {
           )}
         </div>
       </main>
+
+      {wappPrompt && (
+        <div className="modal-overlay-in" onClick={e => e.target === e.currentTarget && setWappPrompt(null)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.75)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div className="modal-pop-in" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 24, width: '100%', maxWidth: 420 }}>
+            <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>Configurá tu WhatsApp para recibir pedidos</h3>
+            <p style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.6, marginBottom: 20 }}>
+              Todavía no cargaste tu número. Si compartís el catálogo así, tus clientes solo van a poder enviarte el pedido por email o copiarlo.
+            </p>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+              <button onClick={() => shareCatalog(wappPrompt, true)} style={sideBtn}>Compartir igual</button>
+              <button onClick={() => navigate('/profile')} style={{ ...sideBtn, background: 'var(--accent)', color: 'var(--accent-text)', border: 'none', fontWeight: 700 }}>Configurar WhatsApp</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {openCatalog && (
         <PDFPreviewModal

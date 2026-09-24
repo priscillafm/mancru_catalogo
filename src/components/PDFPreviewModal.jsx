@@ -73,6 +73,11 @@ export default function PDFPreviewModal({
   // Pre-populate prices from saved catalog
   const [prices, setPrices] = useState(() => {
     const init = {}
+    for (const g of brandGroups) {
+      for (const p of g.products) {
+        if (p.price != null && p.price !== '') init[p.id] = { amount: String(p.price), currency: '$' }
+      }
+    }
     for (const [id, val] of Object.entries(initialPrices)) {
       init[id] = typeof val === 'object' ? val : { amount: val, currency: '$' }
     }
@@ -523,7 +528,7 @@ export default function PDFPreviewModal({
                     Todo {cur === '$' ? '$ UYU' : 'USD'}
                   </button>
                 ))}
-                <span style={{ fontSize: 11, color: 'var(--text3)', marginLeft: 4 }}>Dejá el precio en blanco para no imprimirlo.</span>
+                <span style={{ fontSize: 11, color: 'var(--text3)', marginLeft: 4 }}>Dejá el precio en blanco para no imprimirlo. Cargamos el precio guardado de cada producto; si lo cambiás acá, vale solo para este catálogo.</span>
               </div>
               {brandGroups.map(({ brand, products }) => (
                 <div key={brand.id} style={{ marginBottom: 24 }}>

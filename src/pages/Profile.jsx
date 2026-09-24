@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/auth.store'
 import { signOut } from '@/lib/auth'
+import { normalizeWhatsapp } from '@/utils/phone'
 
 export default function ProfilePage() {
   const navigate  = useNavigate()
@@ -27,11 +28,18 @@ export default function ProfilePage() {
 
   async function handleSaveWhatsapp(e) {
     e.preventDefault()
+    const wa = normalizeWhatsapp(whatsapp)
+    if (!wa.ok) { setWappMsg(wa.error); return }
     setWappSaving(true); setWappMsg('')
-    const { error } = await supabase.from('users').update({ whatsapp: whatsapp.trim() || null }).eq('id', user.id)
+    const { error } = await supabase.from('users').update({ whatsapp: wa.value }).eq('id', user.id)
+    if (error) { setWappSaving(false); setWappMsg('Error al guardar'); return }
+    // El número se copia dentro de cada catálogo al guardarlo: actualizamos los ya creados.
+    const { data: cats } = await supabase.from('catalogs').select('id, snapshot_data').eq('created_by', user.id).is('deleted_at', null)
+    await Promise.all((cats ?? []).map(c => supabase.from('catalogs')
+      .update({ snapshot_data: { ...(c.snapshot_data ?? {}), vendorWhatsapp: wa.value } }).eq('id', c.id)))
+    setWhatsapp(wa.value ?? '')
     setWappSaving(false)
-    if (error) setWappMsg('Error al guardar')
-    else { setWappMsg('Guardado'); loadMembership(user.id) }
+    setWappMsg('Guardado'); loadMembership(user.id)
   }
 
   async function toggleNotifPref(key) {

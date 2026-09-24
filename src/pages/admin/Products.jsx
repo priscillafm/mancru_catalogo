@@ -54,7 +54,7 @@ export default function Products() {
     queryFn: async () => {
       let q = supabase
         .from('products')
-        .select('id, sku, name, active, image_url, stock, brand_id, category_id, brands(name,color), categories(name)', { count: 'exact' })
+        .select('id, sku, name, active, image_url, stock, price, brand_id, category_id, brands(name,color), categories(name)', { count: 'exact' })
         .eq('company_id', companyId)
         .is('deleted_at', null)
         .order('name', { ascending: true })
@@ -201,7 +201,7 @@ export default function Products() {
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 12 }}>
             <PlanLimitBar used={usage.products} max={limits.max_products} label="productos" pct={pctProducts} />
             <button
-              onClick={() => setEditing({ id: null, sku: '', name: '', brand_id: null, category_id: null, stock: null, active: true, image_url: null })}
+              onClick={() => setEditing({ id: null, sku: '', name: '', brand_id: null, category_id: null, stock: null, price: null, active: true, image_url: null })}
               disabled={!canAddProducts}
               title={canAddProducts ? '' : 'Llegaste al límite de productos de tu plan'}
               style={{ ...btnPrimary, whiteSpace: 'nowrap', opacity: canAddProducts ? 1 : 0.5, cursor: canAddProducts ? 'pointer' : 'not-allowed' }}>
@@ -370,6 +370,9 @@ export default function Products() {
           <label style={labelStyle}>Stock</label>
           <input type="number" value={editing.stock ?? ''} onChange={e => setEditing(p => ({ ...p, stock: e.target.value === '' ? null : Number(e.target.value) }))} style={inputFull} />
 
+          <label style={labelStyle}>Precio (opcional)</label>
+          <input type="number" min="0" step="any" value={editing.price ?? ''} onChange={e => setEditing(p => ({ ...p, price: e.target.value === '' ? null : Number(e.target.value) }))} placeholder="Se precarga al armar catálogos" style={inputFull} />
+
           <label style={labelStyle}>Estado</label>
           <select value={editing.active ? '1' : '0'} onChange={e => setEditing(p => ({ ...p, active: e.target.value === '1' }))} style={inputFull}>
             <option value="1">Activo</option>
@@ -380,7 +383,7 @@ export default function Products() {
             <button onClick={closeEdit} style={btnSecondary}>Cancelar</button>
             <button
               onClick={() => {
-                const fields = { name: editing.name, brand_id: editing.brand_id ?? null, category_id: editing.category_id, stock: editing.stock, active: editing.active, image_url: editing.image_url ?? null }
+                const fields = { name: editing.name, brand_id: editing.brand_id ?? null, category_id: editing.category_id, stock: editing.stock, price: editing.price ?? null, active: editing.active, image_url: editing.image_url ?? null }
                 if (editing.id) updateProduct.mutate({ id: editing.id, ...fields })
                 else createProduct.mutate({ sku: editing.sku.trim(), ...fields })
               }}
