@@ -18,7 +18,7 @@ SaaS para distribuidores/mayoristas de Latam: cargan productos (Excel o a mano),
 - Hablar en español rioplatense, respuestas cortas y directas; ella prefiere que se tomen decisiones técnicas y se avance sin preguntar de más.
 - Hacer commit y push al terminar cada tanda de cambios.
 - Los commits NO llevan la línea `Co-Authored-By` de Claude ni "Generated with Claude Code".
-- Nada del proyecto debe llevar el nombre "mancru" (código, comentarios, archivos, ejemplos). Usar nombres genéricos como "Distribuidora Demo".
+- Nada del proyecto debe llevar el nombre del cliente original con el que nació (código, comentarios, archivos, ejemplos; Priscilla sabe cuál es). Usar nombres genéricos como "Distribuidora Demo".
 - No agregar funciones no pedidas. Iconos siempre en SVG (`src/components/Icon.jsx`), nunca emojis. Tipografía Inter.
 - Operaciones sobre producción (deploy de funciones, cambios en la base, secretos) las corre Priscilla o requieren su aprobación.
 
