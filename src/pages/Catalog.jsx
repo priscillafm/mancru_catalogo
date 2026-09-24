@@ -355,7 +355,7 @@ export default function CatalogPage() {
           brandGroups={buildBrandGroups()}
           company={membership?.companies}
           onClose={() => setShowPDF(false)}
-          onSaved={() => setShowPDF(false)}
+          onSaved={() => { setShowPDF(false); navigate('/catalogs') }}
         />
       )}
     </div>
@@ -453,8 +453,8 @@ function CatalogInstructions({ isMobile }) {
   const steps = [
     { n: '1', title: 'Elegí una marca', desc: 'Seleccioná una marca del panel izquierdo para ver sus productos.' },
     { n: '2', title: 'Seleccioná productos', desc: 'Hacé clic en los productos que querés incluir en el catálogo. Podés filtrar por categoría o buscar por nombre.' },
-    { n: '3', title: 'Ajustá los precios', desc: 'Con productos seleccionados, editá los precios directamente en el panel de exportación.' },
-    { n: '4', title: 'Exportá el PDF', desc: 'Configurá la portada, el tema y el formato, y descargá el catálogo listo para compartir.' },
+    { n: '3', title: 'Ajustá los precios', desc: 'Se cargan los precios guardados de cada producto; podés cambiarlos para este cliente en el panel de precios.' },
+    { n: '4', title: 'Guardá y compartí', desc: 'Guardalo como borrador y activá «Compartir link» en Mis catálogos para que tu cliente lo abra y te mande el pedido por WhatsApp. También podés descargar el PDF.' },
   ]
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: isMobile ? 'flex-start' : 'center', height: '100%', minHeight: 240, padding: isMobile ? '24px 4px 0' : '0 48px' }}>

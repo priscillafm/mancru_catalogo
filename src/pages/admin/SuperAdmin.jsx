@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
+import { plural } from '@/utils/format'
 
 const PLANS = {
   free:       { label: 'Free',       color: '#6b7280' },
@@ -119,8 +120,8 @@ export default function SuperAdmin() {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: 700, fontSize: 14 }}>{c.name}</div>
                   <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 3, display: 'flex', gap: 12 }}>
-                    <span>{c.productCount} productos</span>
-                    <span>{c.catalogCount} catálogos</span>
+                    <span>{plural(c.productCount, 'producto')}</span>
+                    <span>{plural(c.catalogCount, 'catálogo')}</span>
                     <span>{c.userCount} usuario{c.userCount !== 1 ? 's' : ''}</span>
                     <span>Actividad: {new Date(c.lastActivity).toLocaleDateString('es-UY', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                   </div>

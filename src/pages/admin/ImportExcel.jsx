@@ -4,6 +4,8 @@ import { supabase } from '@/lib/supabase'
 import ExcelJS from 'exceljs'
 import { usePlanLimits } from '@/hooks/usePlanLimits'
 import Icon from '@/components/Icon'
+import { parseNumber, cellText } from '@/utils/excel'
+import { plural } from '@/utils/format'
 
 /**
  * Importación genérica desde Excel.
@@ -16,6 +18,16 @@ import Icon from '@/components/Icon'
  *
  * La primera fila se trata como encabezado y se ignora.
  */
+
+function downloadSkipped(skipped) {
+  const esc = v => '"' + String(v ?? '').replace(/"/g, '""') + '"'
+  const csv = ['Fila,Motivo,SKU,Nombre', ...skipped.map(s => [s.row, esc(s.reason), esc(s.sku), esc(s.name)].join(','))].join('\n')
+  const a = document.createElement('a')
+  a.href = URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' }))
+  a.download = 'filas-omitidas.csv'
+  a.click()
+  URL.revokeObjectURL(a.href)
+}
 
 async function downloadTemplate() {
   const wb = new ExcelJS.Workbook()
@@ -113,34 +125,40 @@ export default function ImportExcel() {
 
       // Auto-detect columns from headers
       const autoMap = { sku: 1, name: 3, stock: 6, price: null, brand: null }
+      const found = { sku: false, name: false, stock: false, price: false, brand: false }
+      const detect = (key, i) => { autoMap[key] = i; found[key] = true }
       hdrs.forEach((h, i) => {
-        const l = h.toLowerCase()
-        if (l.includes('sku') || l.includes('cod'))           autoMap.sku   = i
-        if (l.includes('nombre') || l.includes('descrip') || l.includes('product')) autoMap.name  = i
-        if (l.includes('stock') || l.includes('cant'))        autoMap.stock = i
-        if (l.includes('precio') || l.includes('price'))      autoMap.price = i
-        if (l.includes('marca') || l.includes('brand'))       autoMap.brand = i
+        const l = h.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+        if (l.includes('sku') || l.includes('cod'))           detect('sku', i)
+        if (l.includes('nombre') || l.includes('descrip') || l.includes('product')) detect('name', i)
+        if (l.includes('stock') || l.includes('cant'))        detect('stock', i)
+        if (l.includes('precio') || l.includes('price'))      detect('price', i)
+        if (l.includes('marca') || l.includes('brand'))       detect('brand', i)
       })
       setColMap(autoMap)
 
-      const parsed = []
+      const bySku = new Map()
+      const skipped = []
+      let duplicates = 0
       ws.eachRow((row, i) => {
         if (i === 1) return
-        const get  = (col) => col ? String(row.getCell(col).value ?? '').trim() : ''
-        const getN = (col) => { if (!col) return null; const v = parseFloat(get(col)); return isNaN(v) ? null : v }
-
+        const get = (col) => col ? cellText(row.getCell(col)) : ''
+        const raw = (col) => {
+          if (!col) return null
+          const c = row.getCell(col)
+          const v = c.value
+          return (v && typeof v === 'object' && !(v instanceof Date)) ? (v.result ?? c.text) : v
+        }
         const sku  = get(autoMap.sku)
         const name = get(autoMap.name)
-        if (!sku || !name) return
-
-        parsed.push({
-          sku,
-          name,
-          stock: getN(autoMap.stock) ?? 0,
-          price: getN(autoMap.price),
-          brand: get(autoMap.brand) || null,
-        })
+        if (!sku && !name) return
+        if (!sku)  { skipped.push({ row: i, reason: 'Falta el SKU', sku, name }); return }
+        if (!name) { skipped.push({ row: i, reason: 'Falta el nombre', sku, name }); return }
+        const key = sku.toUpperCase()
+        if (bySku.has(key)) duplicates++
+        bySku.set(key, { sku, name, stock: parseNumber(raw(autoMap.stock)) ?? 0, price: parseNumber(raw(autoMap.price)), brand: get(autoMap.brand) || null })
       })
+      const parsed = [...bySku.values()]
 
       const byBrand = {}
       for (const p of parsed) {
@@ -148,8 +166,14 @@ export default function ImportExcel() {
         byBrand[key] = (byBrand[key] ?? 0) + 1
       }
 
+      const mapping = Object.fromEntries(Object.keys(autoMap).map(k => [k, found[k] ? hdrs[autoMap[k]] : null]))
       setRows(parsed)
-      setSummary({ total: parsed.length, byBrand: Object.entries(byBrand).sort((a, b) => b[1] - a[1]) })
+      setSummary({
+        total: parsed.length,
+        byBrand: Object.entries(byBrand).sort((a, b) => b[1] - a[1]),
+        skipped, duplicates, mapping, found,
+        sample: parsed.slice(0, 8),
+      })
       setStep('preview')
     } catch (err) {
       setError('Error al leer el archivo: ' + err.message)
@@ -219,7 +243,7 @@ export default function ImportExcel() {
       if (toInsert.length > remaining) {
         skippedByPlan = toInsert.length - remaining
         toInsert.splice(remaining)
-        addLog(`Aviso — límite del plan: se omiten ${skippedByPlan} productos nuevos. Actualizaciones continúan igual.`)
+        addLog(`Aviso — límite del plan: quedan afuera ${plural(skippedByPlan, 'producto nuevo', 'productos nuevos')}. Las actualizaciones continúan igual.`)
       }
 
       const sinMarca = rows.filter(r => !r.brand).length
@@ -252,7 +276,7 @@ export default function ImportExcel() {
     }
   }
 
-  const newCount = summary?.byBrand.filter(([b]) => b !== '(sin marca)').reduce((a, [, c]) => a + c, 0) ?? 0
+  const newCount = summary?.total ?? 0
   const remaining = limits.max_products !== null ? Math.max(0, limits.max_products - usage.products) : Infinity
 
   return (
@@ -312,9 +336,73 @@ export default function ImportExcel() {
             <Stat label="Sin marca" value={summary.byBrand.find(([b]) => b === '(sin marca)')?.[1] ?? 0} color="#f97316" />
           </div>
 
+          <div style={{ fontSize: 12, color: 'var(--text2)', marginBottom: 14, lineHeight: 1.8 }}>
+            {[['SKU', 'sku'], ['Nombre', 'name'], ['Stock', 'stock'], ['Precio', 'price'], ['Marca', 'brand']].map(([label, k]) => (
+              <span key={k} style={{ marginRight: 16, whiteSpace: 'nowrap' }}>
+                <strong>{label}</strong> → {summary.mapping[k] ? '«' + summary.mapping[k] + '»' : <span style={{ color: 'var(--text3)' }}>no detectada</span>}
+              </span>
+            ))}
+          </div>
+
+          {(!summary.found.sku || !summary.found.name) && (
+            <div style={{ padding: '10px 14px', background: 'rgba(239,68,68,.1)', border: '1px solid rgba(239,68,68,.3)', borderRadius: 8, fontSize: 13, color: '#ef4444', marginBottom: 14 }}>
+              No encontramos por encabezado la columna de {!summary.found.sku ? 'SKU' : 'Nombre'}, así que usamos una posición por defecto. Revisá la muestra de abajo antes de importar; si está mal, corregí los encabezados del Excel (SKU, Nombre) o descargá la plantilla.
+            </div>
+          )}
+          {!summary.found.price && (
+            <div style={{ padding: '8px 14px', background: 'var(--surface-h)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12, color: 'var(--text2)', marginBottom: 14 }}>
+              No detectamos una columna de Precio: los productos se van a importar sin precio.
+            </div>
+          )}
+          {summary.duplicates > 0 && (
+            <div style={{ padding: '8px 14px', background: 'rgba(249,115,22,.1)', border: '1px solid rgba(249,115,22,.3)', borderRadius: 8, fontSize: 12, color: '#f97316', marginBottom: 14 }}>
+              {plural(summary.duplicates, 'fila repite', 'filas repiten')} un SKU que ya estaba en el archivo; se usa la última.
+            </div>
+          )}
+          {summary.skipped.length > 0 && (
+            <div style={{ padding: '8px 14px', background: 'rgba(249,115,22,.1)', border: '1px solid rgba(249,115,22,.3)', borderRadius: 8, fontSize: 12, color: '#f97316', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+              <span>{plural(summary.skipped.length, 'fila se omite', 'filas se omiten')} por datos incompletos (por ejemplo, fila {summary.skipped[0].row}: {summary.skipped[0].reason.toLowerCase()}).</span>
+              <button onClick={() => downloadSkipped(summary.skipped)} style={{ ...btnSecondary, padding: '4px 10px', fontSize: 11 }}>Descargar detalle (.csv)</button>
+            </div>
+          )}
+
+          {summary.total === 0 && (
+            <div style={{ padding: '10px 14px', background: 'rgba(239,68,68,.1)', border: '1px solid rgba(239,68,68,.3)', borderRadius: 8, fontSize: 13, color: '#ef4444', marginBottom: 14 }}>
+              No encontramos productos válidos en el archivo. Cada fila necesita al menos SKU y nombre.
+            </div>
+          )}
+
+          {summary.sample.length > 0 && (
+            <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden', marginBottom: 20 }}>
+              <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', fontSize: 12, fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.05em' }}>
+                Muestra ({summary.sample.length} de {summary.total})
+              </div>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                  <thead>
+                    <tr>{['SKU', 'Nombre', 'Marca', 'Precio', 'Stock'].map(h => (
+                      <th key={h} style={{ padding: '8px 14px', textAlign: 'left', fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.5px', borderBottom: '1px solid var(--border)' }}>{h}</th>
+                    ))}</tr>
+                  </thead>
+                  <tbody>
+                    {summary.sample.map(r => (
+                      <tr key={r.sku}>
+                        <td style={{ padding: '8px 14px', borderBottom: '1px solid var(--border)' }}><code style={{ color: 'var(--accent)' }}>{r.sku}</code></td>
+                        <td style={{ padding: '8px 14px', borderBottom: '1px solid var(--border)' }}>{r.name}</td>
+                        <td style={{ padding: '8px 14px', borderBottom: '1px solid var(--border)', color: r.brand ? 'var(--text)' : 'var(--text3)' }}>{r.brand ?? '—'}</td>
+                        <td style={{ padding: '8px 14px', borderBottom: '1px solid var(--border)' }}>{r.price ?? '—'}</td>
+                        <td style={{ padding: '8px 14px', borderBottom: '1px solid var(--border)' }}>{r.stock}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
           {limits.max_products !== null && newCount > remaining && (
             <div style={{ padding: '10px 14px', background: 'rgba(249,115,22,.1)', border: '1px solid rgba(249,115,22,.3)', borderRadius: 8, fontSize: 13, color: '#f97316', marginBottom: 16 }}>
-              <span style={{ display: 'inline-flex', verticalAlign: 'middle', marginRight: 6 }}><Icon name="alert" size={14} /></span>Tu plan permite {limits.max_products} productos. Tenés {usage.products} — solo se importarán {remaining} de los {newCount} nuevos.
+              <span style={{ display: 'inline-flex', verticalAlign: 'middle', marginRight: 6 }}><Icon name="alert" size={14} /></span>Tu plan permite {plural(limits.max_products, 'producto')} y ya tenés {usage.products}: si son todos nuevos, solo se importarán {remaining} de los {newCount}.
             </div>
           )}
 
@@ -330,7 +418,7 @@ export default function ImportExcel() {
                   opacity: brand === '(sin marca)' ? 0.5 : 1,
                 }}>
                   <span style={{ fontSize: 13 }}>
-                    {brand === '(sin marca)' ? 'Sin marca (se omiten nuevos)' : brand}
+                    {brand === '(sin marca)' ? 'Sin marca' : brand}
                   </span>
                   <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text2)' }}>{count}</span>
                 </div>
@@ -340,8 +428,8 @@ export default function ImportExcel() {
 
           <div style={{ display: 'flex', gap: 10 }}>
             <button onClick={reset} style={btnSecondary}>Cancelar</button>
-            <button onClick={handleImport} style={btnPrimary}>
-              Importar {summary.total} productos
+            <button onClick={handleImport} disabled={summary.total === 0} style={{ ...btnPrimary, opacity: summary.total === 0 ? 0.5 : 1 }}>
+              Importar {plural(summary.total, 'producto')}
             </button>
           </div>
         </div>

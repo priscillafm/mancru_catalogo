@@ -311,6 +311,7 @@ export default function Products() {
 
           {/* Imagen */}
           <label style={labelStyle}>Imagen</label>
+          <p style={{ fontSize: 11, color: 'var(--text3)', marginTop: 2 }}>Con foto, tu catálogo se ve mucho más profesional.</p>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 6 }}>
             <div style={{ width: 64, height: 64, borderRadius: 8, background: 'var(--bg-panel)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
               {editing.image_url

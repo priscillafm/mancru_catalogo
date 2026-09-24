@@ -127,7 +127,7 @@ export default function Users() {
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
         <h2 style={{ fontSize: 18, fontWeight: 700 }}>Usuarios</h2>
         <span style={{ fontSize: 12, color: 'var(--text3)' }}>
-          {usage.users}/{limits.max_users === null ? '∞' : limits.max_users} usuarios
+          {usage.users}/{limits.max_users === null ? '∞' : limits.max_users} usuario{limits.max_users === 1 ? '' : 's'}
         </span>
       </div>
       <p style={{ color: 'var(--text2)', fontSize: 13, marginBottom: 24 }}>
@@ -147,6 +147,10 @@ export default function Users() {
             <Link to="/pricing" style={{ color: 'var(--accent)', textDecoration: 'none' }}>Actualizar plan →</Link>
           </p>
         )}
+        <p style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 14, lineHeight: 1.5 }}>
+          Creás el usuario con una contraseña inicial y se la pasás a la persona; después puede cambiarla desde su perfil.
+        </p>
+        <fieldset disabled={!canAddUser} style={{ border: 'none', padding: 0, margin: 0, minWidth: 0 }}>
         <form onSubmit={e => { if (!canAddUser) { e.preventDefault(); return }; handleInvite(e) }} style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
           <div style={{ flex: 1, minWidth: 200 }}>
             <label style={{ fontSize: 11, color: 'var(--text3)', display: 'block', marginBottom: 5 }}>EMAIL</label>
@@ -188,6 +192,7 @@ export default function Users() {
             {inviting ? 'Creando...' : 'Crear usuario'}
           </button>
         </form>
+        </fieldset>
         {inviteMsg && (
           <p style={{ marginTop: 12, fontSize: 13, color: inviteMsg.startsWith('✓') ? '#22c55e' : '#ef4444' }}>
             {inviteMsg}

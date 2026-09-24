@@ -6,6 +6,7 @@ import { computeDiff, summarizeDiff } from '@/utils/sync/diff'
 import { applyDiff } from '@/utils/sync/apply'
 import { IconImport } from '@/components/NavIcons'
 import Icon from '@/components/Icon'
+import { plural } from '@/utils/format'
 
 const STEPS = { idle: 0, parsing: 1, review: 2, applying: 3, done: 4 }
 const CHANGE_COLORS = {
@@ -268,7 +269,7 @@ export default function Sync() {
                 border: 'none', borderRadius: 7, fontWeight: 700, cursor: 'pointer', fontSize: 14,
                 opacity: actionable.length === 0 ? 0.5 : 1,
               }}>
-              Aplicar {actionable.length} cambios
+              Aplicar {plural(actionable.length, 'cambio')}
             </button>
           </div>
         </>

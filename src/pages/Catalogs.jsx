@@ -15,6 +15,8 @@ export default function CatalogsPage() {
   const qc          = useQueryClient()
 
   const [openCatalog, setOpenCatalog] = useState(null) // catalog to reopen in PDF modal
+  const [linkModal, setLinkModal] = useState(null)     // { url, published } — confirmación dentro de la interfaz
+  const [copied, setCopied] = useState(false)
   const [wappPrompt, setWappPrompt] = useState(null)     // catalogo que se iba a compartir sin WhatsApp configurado
   const { canAddCatalog, usage, limits } = usePlanLimits()
 
@@ -44,8 +46,8 @@ export default function CatalogsPage() {
     await supabase.from('catalogs').update({ status: 'shared', snapshot_data: snapshot }).eq('id', cat.id)
     qc.invalidateQueries(['catalogs', companyId])
     const url = `${window.location.origin}/c/${cat.id}`
-    await navigator.clipboard.writeText(url)
-    alert(`Link copiado:\n${url}`)
+    setCopied(false)
+    setLinkModal({ url, published: true })
   }
 
   async function unshareCatalog(id) {
@@ -197,8 +199,8 @@ export default function CatalogsPage() {
                       {cat.status === 'shared' ? (
                         <button onClick={() => {
                           const url = `${window.location.origin}/c/${cat.id}`
-                          navigator.clipboard.writeText(url)
-                          alert(`Link copiado:\n${url}`)
+                          setCopied(false)
+                          setLinkModal({ url })
                         }} style={{ ...actionBtn('var(--accent)'), display: 'inline-flex', alignItems: 'center', gap: 5 }}><Icon name="link" size={13} /> Copiar link</button>
                       ) : (
                         <button onClick={() => shareCatalog(cat)} style={actionBtn('#10b981')}>Compartir link</button>
@@ -215,6 +217,30 @@ export default function CatalogsPage() {
           )}
         </div>
       </main>
+
+      {linkModal && (
+        <div className="modal-overlay-in" onClick={e => e.target === e.currentTarget && setLinkModal(null)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.75)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+          <div className="modal-pop-in" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 24, width: '100%', maxWidth: 460 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, color: 'var(--success)' }}>
+              <Icon name="check-circle" size={22} />
+              <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>{linkModal.published ? 'Catálogo publicado' : 'Link de tu catálogo'}</h3>
+            </div>
+            <p style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.6, marginBottom: 14 }}>
+              Cualquiera con este link puede ver el catálogo y armar su pedido. Podés desactivarlo cuando quieras con «Desactivar».
+            </p>
+            <input readOnly value={linkModal.url} onFocus={e => e.target.select()}
+              style={{ width: '100%', padding: '10px 12px', background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text)', fontSize: 13, boxSizing: 'border-box', marginBottom: 14 }} />
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button onClick={() => setLinkModal(null)} style={sideBtn}>Cerrar</button>
+              <button onClick={async () => { try { await navigator.clipboard.writeText(linkModal.url); setCopied(true) } catch { setCopied(false) } }}
+                style={{ ...sideBtn, background: 'var(--accent)', color: 'var(--accent-text)', border: 'none', fontWeight: 700 }}>
+                {copied ? '¡Copiado!' : 'Copiar link'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {wappPrompt && (
         <div className="modal-overlay-in" onClick={e => e.target === e.currentTarget && setWappPrompt(null)}

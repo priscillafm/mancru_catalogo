@@ -566,7 +566,7 @@ export default function PDFPreviewModal({
           {step === 'saving' && (
             <div style={{ maxWidth: 480, margin: '0 auto', paddingTop: 16 }}>
               <p style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 20 }}>
-                Guardá este catálogo para poder volver a abrirlo, modificar precios y regenerar el PDF sin tener que seleccionar los productos de nuevo.
+                Se guarda como borrador: podés volver a abrirlo, cambiar precios y regenerar el PDF. Para que tus clientes lo vean, después usá «Compartir link» en Mis catálogos.
               </p>
               <label style={{ display: 'block', fontSize: 11, color: 'var(--text3)', marginBottom: 6, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
                 Nombre del catálogo
@@ -597,7 +597,7 @@ export default function PDFPreviewModal({
                   background: 'var(--accent)', border: 'none', color: 'var(--accent-text)',
                   fontWeight: 700, fontSize: 13, opacity: saving ? 0.7 : 1,
                 }}>
-                  {saving ? 'Guardando...' : catalogId ? 'Actualizar catálogo' : 'Guardar catálogo'}
+                  {saving ? 'Guardando...' : catalogId ? 'Actualizar borrador' : 'Guardar borrador'}
                 </button>
               </div>
             </div>
@@ -630,7 +630,7 @@ export default function PDFPreviewModal({
                 <button onClick={() => { setSaveName(catalogName); setStep('saving') }}
                   style={{ ...secondaryBtn, display: 'flex', alignItems: 'center', gap: 6 }}>
                   <Icon name="save" size={14} />
-                  {catalogId ? 'Actualizar' : 'Guardar'}
+                  {catalogId ? 'Actualizar borrador' : 'Guardar borrador'}
                 </button>
               )}
 

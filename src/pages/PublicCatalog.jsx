@@ -5,6 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { PotatoMark } from '@/components/PotatoLogo'
 import { DEMO_CATALOG_ID } from '@/utils/demoCatalog'
 import Icon from '@/components/Icon'
+import { plural } from '@/utils/format'
 
 export default function PublicCatalog() {
   const { id } = useParams()
@@ -183,7 +184,7 @@ export default function PublicCatalog() {
           {catalog.name}
         </h1>
         <p style={{ fontSize: 13, color: '#6E7A76', marginBottom: 28 }}>
-          {brandGroups.reduce((n, g) => n + g.products.length, 0)} productos
+          {plural(brandGroups.reduce((n, g) => n + g.products.length, 0), 'producto')}
         </p>
       </div>
 
