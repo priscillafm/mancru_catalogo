@@ -103,6 +103,9 @@ function detectChangedFields(current, incoming) {
     ['image_ref',   current.image_url,   incoming.image_ref],
   ]
   for (const [field, a, b] of compare) {
+    // Si el archivo no trae el dato (columna ausente o celda vacía) no se toca lo guardado.
+    if (b === undefined || b === null || b === '') continue
+    if (field === 'image_ref' && !/^https?:\/\//i.test(b)) continue
     // eslint-disable-next-line eqeqeq
     if (a != b) fields.push(field)
   }

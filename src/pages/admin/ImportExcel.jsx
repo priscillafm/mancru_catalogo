@@ -162,7 +162,7 @@ export default function ImportExcel() {
         const imageRaw = get(autoMap.image)
         const image = cleanUrl(imageRaw)
         if (imageRaw && !image) badImages++
-        bySku.set(key, { sku, name, stock: parseNumber(raw(autoMap.stock)) ?? 0, price: parseNumber(raw(autoMap.price)), brand: get(autoMap.brand) || null, image })
+        bySku.set(key, { sku, name, stock: found.stock ? (parseNumber(raw(autoMap.stock)) ?? 0) : null, price: parseNumber(raw(autoMap.price)), brand: get(autoMap.brand) || null, image })
       })
       const parsed = [...bySku.values()]
 
@@ -234,12 +234,13 @@ export default function ImportExcel() {
         const existingId = skuMap[row.sku.toUpperCase()]
 
         if (existingId) {
-          toUpdate.push({ id: existingId, name: row.name, stock: row.stock, active: true,
+          toUpdate.push({ id: existingId, name: row.name,
+            ...(row.stock !== null ? { stock: row.stock } : {}),
             ...(row.price !== null ? { price: row.price } : {}),
             ...(row.image ? { image_url: row.image } : {}),
             ...(brandId ? { brand_id: brandId } : {}) })
         } else {
-          toInsert.push({ company_id: companyId, sku: row.sku, name: row.name, stock: row.stock,
+          toInsert.push({ company_id: companyId, sku: row.sku, name: row.name, stock: row.stock ?? 0,
             brand_id: brandId ?? null, active: true,
             ...(row.price !== null ? { price: row.price } : {}),
             ...(row.image ? { image_url: row.image } : {}) })
@@ -405,7 +406,7 @@ export default function ImportExcel() {
                         <td style={{ padding: '8px 14px', borderBottom: '1px solid var(--border)' }}>{r.name}</td>
                         <td style={{ padding: '8px 14px', borderBottom: '1px solid var(--border)', color: r.brand ? 'var(--text)' : 'var(--text3)' }}>{r.brand ?? '—'}</td>
                         <td style={{ padding: '8px 14px', borderBottom: '1px solid var(--border)' }}>{r.price ?? '—'}</td>
-                        <td style={{ padding: '8px 14px', borderBottom: '1px solid var(--border)' }}>{r.stock}</td>
+                        <td style={{ padding: '8px 14px', borderBottom: '1px solid var(--border)' }}>{r.stock ?? '—'}</td>
                         <td style={{ padding: '8px 14px', borderBottom: '1px solid var(--border)', color: r.image ? '#22c55e' : 'var(--text3)' }}>{r.image ? 'Sí' : '—'}</td>
                       </tr>
                     ))}

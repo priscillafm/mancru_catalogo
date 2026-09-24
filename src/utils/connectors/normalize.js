@@ -35,7 +35,7 @@ export function normalizeRow(rawRow, fieldMapping) {
     stock:       mapped.stock       ? parseInt(mapped.stock, 10) : null,
     active:      mapped.active !== undefined
                    ? !['false','0','no','inactivo','inactive'].includes(mapped.active.toLowerCase())
-                   : true,
+                   : null,   // null = el archivo no trae la columna: no se pisa lo guardado
     color:       mapped.color ?? null,
     image_ref:   mapped.image_ref   ?? null,   // URL, filename, or null
   }

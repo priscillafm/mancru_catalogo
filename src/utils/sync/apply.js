@@ -20,9 +20,9 @@ export async function applyDiff(executionId, companyId, rows) {
     if (row.change_type === 'new') {
       inserts.push(buildProductRecord(row.new_data, companyId))
     } else if (row.change_type === 'updated') {
-      updates.push({ sku: row.sku, data: buildProductRecord(row.new_data, companyId) })
+      updates.push({ sku: row.old_data?.sku ?? row.sku, patch: buildPatch(row) })
     } else if (row.change_type === 'deleted') {
-      softDeletes.push(row.sku)
+      softDeletes.push(row.old_data?.sku ?? row.sku)
     }
   }
 
@@ -33,10 +33,11 @@ export async function applyDiff(executionId, companyId, rows) {
   }
 
   // Update modified products
-  for (const { sku, data } of updates) {
+  for (const { sku, patch } of updates) {
+    if (Object.keys(patch).length === 0) continue
     const { error } = await supabase
       .from('products')
-      .update({ ...data, updated_at: new Date().toISOString() })
+      .update({ ...patch, updated_at: new Date().toISOString() })
       .eq('company_id', companyId)
       .eq('sku', sku)
       .is('deleted_at', null)
@@ -66,6 +67,20 @@ export async function applyDiff(executionId, companyId, rows) {
     .eq('id', executionId)
 
   if (execError) throw new Error(`Execution update failed: ${execError.message}`)
+}
+
+// Solo los campos que realmente cambiaron: lo que el Excel no trae no se pisa.
+function buildPatch(row) {
+  const nd = row.new_data ?? {}
+  const patch = {}
+  for (const field of row.changed_fields ?? []) {
+    if (field === 'image_ref') {
+      if (/^https?:\/\//i.test(nd.image_ref ?? '')) { patch.image_url = nd.image_ref; patch.image_source = 'external' }
+    } else {
+      patch[field] = nd[field]
+    }
+  }
+  return patch
 }
 
 function buildProductRecord(row, companyId) {

@@ -12,7 +12,7 @@ const STEPS = { idle: 0, parsing: 1, review: 2, applying: 3, done: 4 }
 const CHANGE_COLORS = {
   new:       { bg: 'rgba(34,197,94,.12)',  text: '#22c55e', label: 'Nuevo' },
   updated:   { bg: 'rgba(59,130,246,.12)', text: '#3b82f6', label: 'Modificado' },
-  deleted:   { bg: 'rgba(239,68,68,.12)',  text: '#ef4444', label: 'Eliminado' },
+  deleted:   { bg: 'rgba(239,68,68,.12)',  text: '#ef4444', label: 'No está en el archivo' },
   no_change: { bg: 'rgba(107,107,115,.1)', text: 'var(--text3)', label: 'Sin cambios' },
   skipped:   { bg: 'rgba(245,166,35,.12)', text: 'var(--amber)', label: 'Omitido' },
   error:     { bg: 'rgba(239,68,68,.12)',  text: '#ef4444', label: 'Error' },
@@ -76,6 +76,8 @@ export default function Sync() {
       }
 
       const diff    = computeDiff(rows, existing ?? [], brandMap, catMap)
+      // Los productos que faltan en el Excel NO se eliminan salvo que el usuario los incluya a mano.
+      for (const r of diff) if (r.change_type === 'deleted') r.excluded = true
       const summary = summarizeDiff(diff)
 
       // Create execution record
@@ -121,6 +123,8 @@ export default function Sync() {
   }
 
   async function handleApply() {
+    const deleting = diffRows.filter(r => r.change_type === 'deleted' && !r.excluded).length
+    if (deleting > 0 && !window.confirm('Vas a eliminar ' + plural(deleting, 'producto') + ' que no ' + (deleting === 1 ? 'está' : 'están') + ' en tu Excel. Dejan de aparecer en tus catálogos. ¿Seguro que querés continuar?')) return
     setStep(STEPS.applying)
     setMessage('Aplicando cambios...')
     try {
@@ -145,7 +149,7 @@ export default function Sync() {
     <div style={{ padding: 28, overflowY: 'auto', flex: 1 }}>
       <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>Sincronizar stock y precios</h2>
       <p style={{ color: 'var(--text2)', fontSize: 13, marginBottom: 6 }}>
-        Usá esto para <strong>actualizar</strong> productos que ya cargaste (stock, precio, etc.). Subí tu Excel y el sistema compara cada fila con lo que ya está guardado antes de aplicar cambios — vos decidís qué aplicar.
+        Usá esto para <strong>actualizar</strong> productos que ya cargaste (stock, precio, etc.). Subí tu Excel y el sistema compara cada fila con lo que ya está guardado antes de aplicar cambios — vos decidís qué aplicar. Los datos que tu Excel no trae no se modifican, y los productos que no estén en el archivo <strong>no se eliminan</strong> salvo que los incluyas vos.
       </p>
       <p style={{ color: 'var(--text3)', fontSize: 12, marginBottom: 24 }}>
         ¿Todavía no cargaste ningún producto? Usá <strong>Importar</strong> para la carga inicial.
