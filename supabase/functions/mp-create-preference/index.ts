@@ -75,7 +75,7 @@ Deno.serve(async (req) => {
     const requestOrigin = req.headers.get('origin')
     const origin = requestOrigin && /^https:\/\//.test(requestOrigin)
       ? requestOrigin
-      : 'https://potato-catalogo.vercel.app'
+      : 'https://potatouy.com'
     const externalReference = `${company_id}:${plan_id}`
 
     const mpRes = await fetch('https://api.mercadopago.com/checkout/preferences', {

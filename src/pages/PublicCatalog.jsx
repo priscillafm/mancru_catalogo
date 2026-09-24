@@ -4,7 +4,6 @@ import { useQuery } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { PotatoMark } from '@/components/PotatoLogo'
 import { DEMO_CATALOG_ID } from '@/utils/demoCatalog'
-import { generateCatalogPDF } from '@/utils/pdf'
 import Icon from '@/components/Icon'
 
 export default function PublicCatalog() {
@@ -123,6 +122,7 @@ export default function PublicCatalog() {
           return { ...p, _price: amount, _currency: currency }
         }),
       }))
+      const { generateCatalogPDF } = await import('@/utils/pdf')
       await generateCatalogPDF(brandGroupsForPdf, company, null, 'landscape', {
         enabled: true, color1: '#0F4C5C', color2: '#E07A28', theme: 'dark', style: 'corners',
         description: 'Catálogo mayorista de bebidas y snacks. Precios en pesos uruguayos, vigentes al 14 de septiembre de 2026.',

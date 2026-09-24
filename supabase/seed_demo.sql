@@ -16,7 +16,7 @@ VALUES (
   'Distribuidora Demo',
   'distribuidora-demo',
   'free',
-  'potato-catalogo.vercel.app'
+  'potatouy.com'
 )
 ON CONFLICT (id) DO UPDATE SET
   name = EXCLUDED.name,

@@ -1,21 +1,21 @@
-import { useEffect } from 'react'
+import { useEffect, lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/auth.store'
 import LandingPage from '@/pages/Landing'
-import LoginPage from '@/pages/Login'
-import RegisterPage from '@/pages/Register'
-import OnboardingPage from '@/pages/Onboarding'
-import CatalogPage from '@/pages/Catalog'
-import AdminLayout from '@/pages/admin/AdminLayout'
-import ResetPasswordPage from '@/pages/ResetPassword'
-import ProfilePage from '@/pages/Profile'
-import CatalogsPage from '@/pages/Catalogs'
-import PublicCatalog from '@/pages/PublicCatalog'
-import PricingPage from '@/pages/Pricing'
-import CheckoutReturn from '@/pages/CheckoutReturn'
-import TermsPage from '@/pages/Terms'
-import PrivacyPage from '@/pages/Privacy'
-import ContactPage from '@/pages/Contact'
+const LoginPage = lazy(() => import('@/pages/Login'))
+const RegisterPage = lazy(() => import('@/pages/Register'))
+const OnboardingPage = lazy(() => import('@/pages/Onboarding'))
+const CatalogPage = lazy(() => import('@/pages/Catalog'))
+const AdminLayout = lazy(() => import('@/pages/admin/AdminLayout'))
+const ResetPasswordPage = lazy(() => import('@/pages/ResetPassword'))
+const ProfilePage = lazy(() => import('@/pages/Profile'))
+const CatalogsPage = lazy(() => import('@/pages/Catalogs'))
+const PublicCatalog = lazy(() => import('@/pages/PublicCatalog'))
+const PricingPage = lazy(() => import('@/pages/Pricing'))
+const CheckoutReturn = lazy(() => import('@/pages/CheckoutReturn'))
+const TermsPage = lazy(() => import('@/pages/Terms'))
+const PrivacyPage = lazy(() => import('@/pages/Privacy'))
+const ContactPage = lazy(() => import('@/pages/Contact'))
 
 function PrivateRoute({ children, requireAdmin = false }) {
   const { session, membership, loading } = useAuthStore()
@@ -40,6 +40,7 @@ export default function App() {
   useEffect(() => { init() }, [init])
 
   return (
+    <Suspense fallback={<Spinner />}>
     <Routes>
       <Route path="/"               element={<LandingPage />} />
       <Route path="/c/:id"          element={<PublicCatalog />} />
@@ -58,5 +59,6 @@ export default function App() {
       <Route path="/admin/*"        element={<PrivateRoute requireAdmin><AdminLayout /></PrivateRoute>} />
       <Route path="*"               element={<Navigate to="/" replace />} />
     </Routes>
+    </Suspense>
   )
 }
