@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase'
 import ExcelJS from 'exceljs'
 import { usePlanLimits } from '@/hooks/usePlanLimits'
 import Icon from '@/components/Icon'
-import { parseNumber, cellText } from '@/utils/excel'
+import { parseNumber, cellText, cleanUrl } from '@/utils/excel'
 import { plural } from '@/utils/format'
 
 /**
@@ -38,9 +38,10 @@ async function downloadTemplate() {
     { header: 'Stock', key: 'stock', width: 10 },
     { header: 'Precio', key: 'precio', width: 12 },
     { header: 'Marca', key: 'marca', width: 20 },
+    { header: 'imagen_url', key: 'imagen', width: 40 },
   ]
   ws.getRow(1).font = { bold: true }
-  ws.addRow({ sku: 'ABC-001', nombre: 'Producto de ejemplo 1', stock: 25, precio: 1500, marca: 'Mi Marca' })
+  ws.addRow({ sku: 'ABC-001', nombre: 'Producto de ejemplo 1', stock: 25, precio: 1500, marca: 'Mi Marca', imagen: 'https://tusitio.com/fotos/abc-001.jpg' })
   ws.addRow({ sku: 'ABC-002', nombre: 'Producto de ejemplo 2', stock: 8,  precio: 2200, marca: 'Mi Marca' })
   ws.addRow({ sku: 'XYZ-010', nombre: 'Producto sin marca (queda en "Sin marca")', stock: 40, precio: '', marca: '' })
   const buf = await wb.xlsx.writeBuffer()
@@ -124,8 +125,8 @@ export default function ImportExcel() {
       setHeaders(hdrs)
 
       // Auto-detect columns from headers
-      const autoMap = { sku: 1, name: 3, stock: 6, price: null, brand: null }
-      const found = { sku: false, name: false, stock: false, price: false, brand: false }
+      const autoMap = { sku: 1, name: 3, stock: 6, price: null, brand: null, image: null }
+      const found = { sku: false, name: false, stock: false, price: false, brand: false, image: false }
       const detect = (key, i) => { autoMap[key] = i; found[key] = true }
       hdrs.forEach((h, i) => {
         const l = h.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
@@ -134,12 +135,14 @@ export default function ImportExcel() {
         if (l.includes('stock') || l.includes('cant'))        detect('stock', i)
         if (l.includes('precio') || l.includes('price'))      detect('price', i)
         if (l.includes('marca') || l.includes('brand'))       detect('brand', i)
+        if (l.includes('imagen') || l.includes('image') || l.includes('foto')) detect('image', i)
       })
       setColMap(autoMap)
 
       const bySku = new Map()
       const skipped = []
       let duplicates = 0
+      let badImages = 0
       ws.eachRow((row, i) => {
         if (i === 1) return
         const get = (col) => col ? cellText(row.getCell(col)) : ''
@@ -156,7 +159,10 @@ export default function ImportExcel() {
         if (!name) { skipped.push({ row: i, reason: 'Falta el nombre', sku, name }); return }
         const key = sku.toUpperCase()
         if (bySku.has(key)) duplicates++
-        bySku.set(key, { sku, name, stock: parseNumber(raw(autoMap.stock)) ?? 0, price: parseNumber(raw(autoMap.price)), brand: get(autoMap.brand) || null })
+        const imageRaw = get(autoMap.image)
+        const image = cleanUrl(imageRaw)
+        if (imageRaw && !image) badImages++
+        bySku.set(key, { sku, name, stock: parseNumber(raw(autoMap.stock)) ?? 0, price: parseNumber(raw(autoMap.price)), brand: get(autoMap.brand) || null, image })
       })
       const parsed = [...bySku.values()]
 
@@ -171,7 +177,8 @@ export default function ImportExcel() {
       setSummary({
         total: parsed.length,
         byBrand: Object.entries(byBrand).sort((a, b) => b[1] - a[1]),
-        skipped, duplicates, mapping, found,
+        skipped, duplicates, mapping, found, badImages,
+        withImage: parsed.filter(p => p.image).length,
         sample: parsed.slice(0, 8),
       })
       setStep('preview')
@@ -229,11 +236,13 @@ export default function ImportExcel() {
         if (existingId) {
           toUpdate.push({ id: existingId, name: row.name, stock: row.stock, active: true,
             ...(row.price !== null ? { price: row.price } : {}),
+            ...(row.image ? { image_url: row.image } : {}),
             ...(brandId ? { brand_id: brandId } : {}) })
         } else {
           toInsert.push({ company_id: companyId, sku: row.sku, name: row.name, stock: row.stock,
             brand_id: brandId ?? null, active: true,
-            ...(row.price !== null ? { price: row.price } : {}) })
+            ...(row.price !== null ? { price: row.price } : {}),
+            ...(row.image ? { image_url: row.image } : {}) })
         }
       }
 
@@ -337,7 +346,7 @@ export default function ImportExcel() {
           </div>
 
           <div style={{ fontSize: 12, color: 'var(--text2)', marginBottom: 14, lineHeight: 1.8 }}>
-            {[['SKU', 'sku'], ['Nombre', 'name'], ['Stock', 'stock'], ['Precio', 'price'], ['Marca', 'brand']].map(([label, k]) => (
+            {[['SKU', 'sku'], ['Nombre', 'name'], ['Stock', 'stock'], ['Precio', 'price'], ['Marca', 'brand'], ['Imagen', 'image']].map(([label, k]) => (
               <span key={k} style={{ marginRight: 16, whiteSpace: 'nowrap' }}>
                 <strong>{label}</strong> → {summary.mapping[k] ? '«' + summary.mapping[k] + '»' : <span style={{ color: 'var(--text3)' }}>no detectada</span>}
               </span>
@@ -352,6 +361,11 @@ export default function ImportExcel() {
           {!summary.found.price && (
             <div style={{ padding: '8px 14px', background: 'var(--surface-h)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12, color: 'var(--text2)', marginBottom: 14 }}>
               No detectamos una columna de Precio: los productos se van a importar sin precio.
+            </div>
+          )}
+          {summary.found.image && (
+            <div style={{ padding: '8px 14px', background: 'var(--surface-h)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12, color: 'var(--text2)', marginBottom: 14 }}>
+              {summary.withImage} de {plural(summary.total, 'producto')} con foto vinculada{summary.badImages > 0 ? '; ' + plural(summary.badImages, 'URL de imagen no es válida', 'URLs de imagen no son válidas') + ' (deben empezar con http:// o https://) y se ignoran' : ''}.
             </div>
           )}
           {summary.duplicates > 0 && (
@@ -380,7 +394,7 @@ export default function ImportExcel() {
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                   <thead>
-                    <tr>{['SKU', 'Nombre', 'Marca', 'Precio', 'Stock'].map(h => (
+                    <tr>{['SKU', 'Nombre', 'Marca', 'Precio', 'Stock', 'Foto'].map(h => (
                       <th key={h} style={{ padding: '8px 14px', textAlign: 'left', fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.5px', borderBottom: '1px solid var(--border)' }}>{h}</th>
                     ))}</tr>
                   </thead>
@@ -392,6 +406,7 @@ export default function ImportExcel() {
                         <td style={{ padding: '8px 14px', borderBottom: '1px solid var(--border)', color: r.brand ? 'var(--text)' : 'var(--text3)' }}>{r.brand ?? '—'}</td>
                         <td style={{ padding: '8px 14px', borderBottom: '1px solid var(--border)' }}>{r.price ?? '—'}</td>
                         <td style={{ padding: '8px 14px', borderBottom: '1px solid var(--border)' }}>{r.stock}</td>
+                        <td style={{ padding: '8px 14px', borderBottom: '1px solid var(--border)', color: r.image ? '#22c55e' : 'var(--text3)' }}>{r.image ? 'Sí' : '—'}</td>
                       </tr>
                     ))}
                   </tbody>

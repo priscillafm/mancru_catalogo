@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/auth.store'
 import { usePlanLimits } from '@/hooks/usePlanLimits'
 import Icon from '@/components/Icon'
+import { plural } from '@/utils/format'
 
 export default function Dashboard() {
   const membership = useAuthStore(s => s.membership)
@@ -15,6 +16,7 @@ export default function Dashboard() {
   // Stats + top catalogs + recent activity
   const { data: stats } = useQuery({
     queryKey: ['admin-stats', companyId],
+    staleTime: 15_000,
     queryFn: async () => {
       const [products, brands, catalogs, sharedCatalogs] = await Promise.all([
         supabase.from('products').select('id', { count: 'exact', head: true }).eq('company_id', companyId).is('deleted_at', null),
@@ -35,6 +37,7 @@ export default function Dashboard() {
   // Top catalogs by views
   const { data: topCatalogs = [] } = useQuery({
     queryKey: ['top-catalogs', companyId],
+    staleTime: 15_000,
     queryFn: async () => {
       const { data } = await supabase
         .from('catalogs')
@@ -67,6 +70,7 @@ export default function Dashboard() {
   // Total views this month
   const { data: viewsThisMonth = 0 } = useQuery({
     queryKey: ['views-month', companyId],
+    staleTime: 15_000,
     queryFn: async () => {
       const start = new Date()
       start.setDate(1); start.setHours(0, 0, 0, 0)
@@ -87,6 +91,31 @@ export default function Dashboard() {
     enabled: !!companyId,
   })
 
+  // Indicador de preparación: qué falta para que el catálogo se vea bien y reciba pedidos
+  const { data: ready } = useQuery({
+    queryKey: ['readiness', companyId],
+    staleTime: 15_000,
+    queryFn: async () => {
+      const base = () => supabase.from('products').select('id', { count: 'exact', head: true }).eq('company_id', companyId).is('deleted_at', null)
+      const [total, withImage, withPrice] = await Promise.all([
+        base(), base().not('image_url', 'is', null), base().not('price', 'is', null),
+      ])
+      return { total: total.count ?? 0, withImage: withImage.count ?? 0, withPrice: withPrice.count ?? 0 }
+    },
+    enabled: !!companyId,
+  })
+
+  const companyName = membership?.companies?.name
+  const readinessItems = ready && stats ? [
+    { ok: !!companyName?.trim(), title: 'Nombre de tu empresa', detail: companyName || 'Sin configurar', to: '/admin/settings', cta: 'Editar' },
+    { ok: !!authUser?.whatsapp, title: 'WhatsApp para recibir pedidos', detail: authUser?.whatsapp ? '+' + authUser.whatsapp : 'Sin número: tus clientes solo podrán pedir por email', to: '/profile', cta: 'Configurar' },
+    { ok: ready.total > 0, title: 'Productos cargados', detail: ready.total > 0 ? plural(ready.total, 'producto') : 'Todavía no cargaste ninguno', to: '/admin/products', cta: 'Cargar' },
+    { ok: ready.total > 0 && ready.withImage === ready.total, title: 'Fotos de productos', detail: ready.withImage + ' de ' + ready.total + ' con foto', to: '/admin/products', cta: 'Agregar' },
+    { ok: ready.total > 0 && ready.withPrice === ready.total, title: 'Precios', detail: ready.withPrice + ' de ' + ready.total + ' con precio', to: '/admin/products', cta: 'Completar' },
+    { ok: stats.sharedCatalogs > 0, title: 'Link público activo', detail: stats.sharedCatalogs > 0 ? plural(stats.sharedCatalogs, 'catálogo compartido', 'catálogos compartidos') : 'Todavía no compartiste ningún catálogo', to: '/catalogs', cta: 'Compartir' },
+  ] : null
+  const readyCount = readinessItems ? readinessItems.filter(i => i.ok).length : 0
+
   const planColor = plan === 'enterprise' ? '#f59e0b' : plan === 'pro' ? '#6366f1' : 'var(--text3)'
   const productPct = limits.max_products ? Math.min(100, Math.round((usage.products / limits.max_products) * 100)) : 0
 
@@ -103,12 +132,42 @@ export default function Dashboard() {
         </p>
       </div>
 
+      {/* Preparación */}
+      {readinessItems && (
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: '16px 20px', marginBottom: 24 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: readyCount === readinessItems.length ? 0 : 12 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              {readyCount === readinessItems.length ? 'Tu catálogo está listo para recibir pedidos' : 'Preparación de tu catálogo'}
+            </span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: readyCount === readinessItems.length ? '#22c55e' : 'var(--text2)' }}>{readyCount} de {readinessItems.length}</span>
+          </div>
+          {readyCount !== readinessItems.length && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {readinessItems.map(item => (
+                <div key={item.title} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 0', borderTop: '1px solid var(--border)' }}>
+                  <span style={{ color: item.ok ? '#22c55e' : '#f97316', display: 'flex', flexShrink: 0 }}>
+                    <Icon name={item.ok ? 'check-circle' : 'alert'} size={16} />
+                  </span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{item.title}</div>
+                    <div style={{ fontSize: 12, color: 'var(--text3)' }}>{item.detail}</div>
+                  </div>
+                  {!item.ok && (
+                    <button onClick={() => navigate(item.to)} style={{ padding: '4px 12px', background: 'var(--surface-h)', border: '1px solid var(--border)', borderRadius: 7, color: 'var(--text2)', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>{item.cta}</button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Stat cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12, marginBottom: 24 }}>
         <StatCard label="Productos" value={stats?.products ?? '—'} sub={limits.max_products ? `de ${limits.max_products} disponibles` : 'sin límite'} icon="products" onClick={() => navigate('/admin/products')} />
         <StatCard label="Marcas" value={stats?.brands ?? '—'} icon="brands" onClick={() => navigate('/admin/brands')} />
         <StatCard label="Catálogos" value={stats?.catalogs ?? '—'} sub={`${stats?.sharedCatalogs ?? 0} activos`} icon="document" onClick={() => navigate('/catalogs')} />
-        <StatCard label="Vistas este mes" value={viewsThisMonth} icon="view" accent />
+        <StatCard label="Vistas este mes" value={viewsThisMonth} sub="1 por dispositivo cada 30 min" icon="view" accent />
       </div>
 
       {/* Plan usage */}

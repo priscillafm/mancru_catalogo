@@ -23,3 +23,9 @@ export function cellText(cell) {
   if (typeof v === 'object' && !(v instanceof Date)) return String(cell.text ?? '').trim()
   return String(v).trim()
 }
+
+// Devuelve la URL si es http(s) válida; si no, null.
+export function cleanUrl(v) {
+  const s = String(v ?? '').trim()
+  return /^https?:\/\/\S+$/i.test(s) ? s : null
+}

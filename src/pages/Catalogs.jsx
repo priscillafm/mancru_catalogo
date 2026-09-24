@@ -22,6 +22,7 @@ export default function CatalogsPage() {
 
   const { data: catalogs = [], isLoading } = useQuery({
     queryKey: ['catalogs', companyId],
+    staleTime: 15_000,
     queryFn: async () => {
       const { data } = await supabase
         .from('catalogs')

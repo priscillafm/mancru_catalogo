@@ -26,11 +26,17 @@ export default function PublicCatalog() {
         .is('deleted_at', null)
         .single()
       if (error || !data) throw new Error(error?.message ?? 'Catálogo no encontrado')
-      // Registrar visita
-      supabase.from('catalog_views').insert({
-        catalog_id: data.id,
-        user_agent: navigator.userAgent,
-      })
+      // Registrar visita: una por dispositivo cada 30 minutos, para no inflar el
+      // contador ni disparar una notificación por cada recarga de la página.
+      let shouldCount = true
+      try {
+        const key = 'pv:' + data.id
+        shouldCount = Date.now() - Number(localStorage.getItem(key) ?? 0) > 30 * 60 * 1000
+        if (shouldCount) localStorage.setItem(key, String(Date.now()))
+      } catch { /* sin localStorage: se cuenta igual */ }
+      if (shouldCount) {
+        supabase.from('catalog_views').insert({ catalog_id: data.id, user_agent: navigator.userAgent }).then(() => {})
+      }
       return data
     },
   })
