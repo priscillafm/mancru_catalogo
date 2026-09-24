@@ -19,6 +19,7 @@ Resumen de lo trabajado, decidido y aprendido. No contiene claves ni datos de cl
 - **Panel:** tarjeta de "Preparación de tu catálogo" (empresa, WhatsApp, productos, fotos, precios, link público); alta manual de productos y de categorías; campo de precio; rol "Vendedor" renombrado a "Colaborador".
 - **Importar Excel:** vista previa con mapeo de columnas, muestra de filas, filas omitidas descargables, SKU repetidos y columna de foto por URL (`imagen_url`). Encabezados con tilde reconocidos.
 - **Interfaz:** íconos SVG en lugar de emojis, textos en singular/plural, carga diferida de páginas (el paquete inicial bajó de 2,4 MB a 510 KB), metadatos para compartir.
+- **Superadministración** (`/admin/super`, migración 007): pestañas Resumen (números clave, embudo de activación y oportunidades de mejora detectadas solas), Empresas (uso agregado y cambio de plan) y Soporte (bandeja de las consultas del formulario con estados). Funciona con funciones SQL que solo aceptan al super_admin y devuelven cantidades y nombres de empresa, nunca mails, productos ni precios de clientes.
 - **Nombre del cliente original:** se sacó de scripts, seeds, documentación y comentarios.
 
 ## Incidente: Sincronizar borró productos (24 de septiembre)
