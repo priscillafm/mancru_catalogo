@@ -38,13 +38,13 @@ WHERE e.id = 'ID_DE_LA_SINCRONIZACION' AND d.execution_id = e.id AND d.change_ty
 
 ## Auditorías externas y decisiones (24 de septiembre)
 - Priscilla pegó dos auditorías de uso. Cada hallazgo se verificó contra el código: se corrigió lo real (WhatsApp faltante, precio que no se precargaba, importador mudo con filas inválidas, buscador ausente, eliminación de cuenta sin flujo, textos contradictorios) y se aclaró lo que no lo era (el contador de vistas sí funcionaba; el texto de invitación de usuarios sí existía).
-- Además se encontraron problemas que las auditorías no vieron: guardar un catálogo compartido lo volvía a borrador y cortaba el link; Sincronizar pisaba datos con las columnas ausentes; el encabezado  con tilde no se reconocía al importar.
+- Además se encontraron problemas que las auditorías no vieron: guardar un catálogo compartido lo volvía a borrador y cortaba el link; Sincronizar pisaba datos con las columnas ausentes; el encabezado `Código` con tilde no se reconocía al importar.
 - Decisiones de producto: el precio se muestra en dólares como referencia y se cobra en pesos; tipografía Inter (el catálogo público usa la fuente del sistema en Apple); rol "Colaborador" en vez de "Vendedor"; la eliminación de cuenta se pide por formulario y se procesa en 30 días.
-- Formulario de contacto conectado a Resend (mail de destino: el de Priscilla) y bandeja de soporte en . Login de Supabase probado: registro y recuperación de contraseña funcionan en .
-- Fotos: hoy por URL en el Excel () o de a una desde Productos; la carga masiva por SKU queda para cuando un cliente grande la pida.
+- Formulario de contacto conectado a Resend (mail de destino: el de Priscilla) y bandeja de soporte en `/admin/super`. Login de Supabase probado: registro y recuperación de contraseña funcionan en `potatoui.com`.
+- Fotos: hoy por URL en el Excel (columna `imagen_url`) o de a una desde Productos; la carga masiva por SKU queda para cuando un cliente grande la pida.
 
 ## Cómo seguir desde otra computadora
-Clonar el repositorio, crear el  con las dos variables públicas de Supabase y abrir Claude Code en la carpeta: lee  (reglas y método de trabajo) y este historial. La conversación textual no se guarda en el repositorio porque contiene claves; este archivo y  resumen lo importante sin datos sensibles.
+Clonar el repositorio, crear el archivo `.env` con las dos variables públicas de Supabase y abrir Claude Code en la carpeta: lee `CLAUDE.md` (reglas y método de trabajo) y este historial. La conversación textual no se guarda en el repositorio porque contiene claves; este archivo y `CLAUDE.md` resumen lo importante sin datos sensibles.
 
 ## Dónde mirar cada cosa
 - Visitas a la web y DNS: Cloudflare (Web Analytics, Domains).
@@ -53,7 +53,7 @@ Clonar el repositorio, crear el  con las dos variables públicas de Supabase y a
 - Resumen del negocio: ruta `/admin/super` dentro de la app (solo super administrador).
 
 ## Pendientes
-- Conectar Resend (API key y mail de destino) y probar el formulario.
+- Renovar la clave de Resend que se compartió en un chat y pasar los mails de Supabase Auth por Resend con el dominio.
 - Probar un pago real con otra persona y devolverlo; probar en iPhone y Android reales.
 - Dar de baja Vercel; pasar el repositorio a privado; renombrar el proyecto de Supabase.
 - Decidir el texto de "soporte prioritario" y del alcance del precio de lanzamiento.
