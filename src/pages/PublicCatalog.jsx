@@ -43,14 +43,14 @@ export default function PublicCatalog() {
 
   if (isLoading) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#0B2A31' }}>
-      <div style={{ color: '#E07A28', fontFamily: "'IBM Plex Sans', sans-serif", fontSize: 14 }}>Cargando catálogo...</div>
+      <div style={{ color: '#E07A28', fontFamily: "-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif", fontSize: 14 }}>Cargando catálogo...</div>
     </div>
   )
 
   if (error || !catalog) return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', background: '#0B2A31', gap: 12 }}>
       <div style={{ fontSize: 32, opacity: 0.3 }}>◻</div>
-      <div style={{ color: '#F7F5F0', fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 16 }}>Catálogo no disponible</div>
+      <div style={{ color: '#F7F5F0', fontFamily: "-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif", fontWeight: 600, fontSize: 16 }}>Catálogo no disponible</div>
       <div style={{ color: 'rgba(247,245,240,.55)', fontSize: 13 }}>Este link puede haber vencido o no estar activo.</div>
     </div>
   )
@@ -142,7 +142,7 @@ export default function PublicCatalog() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#FAF8F4', fontFamily: "'IBM Plex Sans', sans-serif", color: '#0E1A1E' }}>
+    <div style={{ minHeight: '100vh', background: '#FAF8F4', fontFamily: "-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif", color: '#0E1A1E' }}>
 
       {/* Header */}
       <div style={{ background: '#0B2A31', padding: '18px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -150,7 +150,7 @@ export default function PublicCatalog() {
           {company?.logo_url ? (
             <img src={company.logo_url} alt={company.name} style={{ height: 32, objectFit: 'contain' }} />
           ) : (
-            <div style={{ color: '#F7F5F0', fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 16 }}>{company?.name}</div>
+            <div style={{ color: '#F7F5F0', fontFamily: "-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif", fontWeight: 600, fontSize: 16 }}>{company?.name}</div>
           )}
         </div>
         <div style={{ color: 'rgba(247,245,240,.55)', fontSize: 12 }}>{company?.website}</div>
@@ -164,7 +164,7 @@ export default function PublicCatalog() {
           display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap',
         }}>
           <div style={{ maxWidth: 480 }}>
-            <div style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 14, color: '#0F4C5C', marginBottom: 3 }}>
+            <div style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif", fontWeight: 600, fontSize: 14, color: '#0F4C5C', marginBottom: 3 }}>
               Simulá el pedido de tu cliente
             </div>
             <div style={{ fontSize: 12.5, color: '#4A5551', lineHeight: 1.45 }}>
@@ -175,7 +175,7 @@ export default function PublicCatalog() {
             display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0,
             padding: '10px 18px', borderRadius: 999, border: 'none',
             background: '#8B7FE8', color: '#fff', fontSize: 13, fontWeight: 700,
-            fontFamily: "'IBM Plex Sans', sans-serif",
+            fontFamily: "-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif",
             cursor: generatingPdf ? 'not-allowed' : 'pointer', opacity: generatingPdf ? 0.7 : 1,
             boxShadow: '0 4px 14px rgba(139,127,232,0.4)',
           }}>
@@ -186,7 +186,7 @@ export default function PublicCatalog() {
 
       {/* Catalog title */}
       <div style={{ padding: '28px 24px 0' }}>
-        <h1 style={{ fontFamily: "'Outfit', sans-serif", fontSize: 24, fontWeight: 600, color: '#0E1A1E', letterSpacing: '-0.02em', marginBottom: 4 }}>
+        <h1 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif", fontSize: 24, fontWeight: 600, color: '#0E1A1E', letterSpacing: '-0.02em', marginBottom: 4 }}>
           {catalog.name}
         </h1>
         <p style={{ fontSize: 13, color: '#6E7A76', marginBottom: 28 }}>
@@ -211,7 +211,7 @@ export default function PublicCatalog() {
                 {brand.logo_url ? (
                   <img src={brand.logo_url} alt={brand.name} style={{ height: 24, objectFit: 'contain' }} />
                 ) : (
-                  <span style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 15, color: brand.text_color ?? '#fff' }}>{brand.name}</span>
+                  <span style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif", fontWeight: 600, fontSize: 15, color: brand.text_color ?? '#fff' }}>{brand.name}</span>
                 )}
               </div>
             </div>
@@ -243,7 +243,7 @@ export default function PublicCatalog() {
                       <div style={{
                         flex: '0 0 64px', width: 64, height: 64, borderRadius: 14,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontFamily: "'Outfit', sans-serif", fontSize: 24, fontWeight: 600,
+                        fontFamily: "-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif", fontSize: 24, fontWeight: 600,
                         background: `color-mix(in srgb, ${brand.color ?? '#6366f1'} 10%, white)`,
                         color: `color-mix(in srgb, ${brand.color ?? '#6366f1'} 70%, white)`,
                       }}>
@@ -252,7 +252,7 @@ export default function PublicCatalog() {
                     )}
                     <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                       <div>
-                        <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: 13.5, fontWeight: 600, lineHeight: 1.25, letterSpacing: '-0.01em', color: '#0E1A1E', marginBottom: 3 }}>
+                        <div style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif", fontSize: 13.5, fontWeight: 600, lineHeight: 1.25, letterSpacing: '-0.01em', color: '#0E1A1E', marginBottom: 3 }}>
                           {p.name}
                         </div>
                         {p.description && (
@@ -270,7 +270,7 @@ export default function PublicCatalog() {
                           {p.sku}
                         </span>
                         {priceAmount && (
-                          <div style={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600, fontSize: 15, color: '#0F4C5C', whiteSpace: 'nowrap' }}>
+                          <div style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif", fontWeight: 600, fontSize: 15, color: '#0F4C5C', whiteSpace: 'nowrap' }}>
                             {priceCurrency} {priceAmount}
                           </div>
                         )}

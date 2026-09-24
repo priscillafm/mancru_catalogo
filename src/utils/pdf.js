@@ -11,11 +11,10 @@ function proxyUrl(url) {
   return `${SUPABASE_URL}/functions/v1/img-proxy?url=${encodeURIComponent(url)}`
 }
 
-// Fuentes del spec de diseño: Outfit (títulos, 600) + IBM Plex Sans (texto, 400/600)
+// Inter: tipografía neutra y muy legible, parecida a la de Apple, que combina con cualquier marca.
 const FONT_FILES = [
-  { file: '/fonts/Outfit-SemiBold.ttf',       vfsName: 'Outfit-SemiBold.ttf',       family: 'Outfit',      style: 'bold'   },
-  { file: '/fonts/IBMPlexSans-Regular.ttf',   vfsName: 'IBMPlexSans-Regular.ttf',   family: 'IBMPlexSans', style: 'normal' },
-  { file: '/fonts/IBMPlexSans-SemiBold.ttf',  vfsName: 'IBMPlexSans-SemiBold.ttf',  family: 'IBMPlexSans', style: 'bold'   },
+  { file: '/fonts/Inter-Regular.ttf',   vfsName: 'Inter-Regular.ttf',   family: 'Inter', style: 'normal' },
+  { file: '/fonts/Inter-SemiBold.ttf',  vfsName: 'Inter-SemiBold.ttf',  family: 'Inter', style: 'bold'   },
 ]
 
 async function loadFontBase64(url) {
@@ -29,7 +28,7 @@ async function loadFontBase64(url) {
   return b64
 }
 
-// Registra Outfit + IBM Plex Sans en esta instancia de jsPDF (addFont es por-instancia).
+// Registra Inter en esta instancia de jsPDF (addFont es por-instancia).
 // Si falla (ej. fetch bloqueado), se sigue con helvetica como fallback silencioso.
 async function ensureFonts(doc) {
   try {
@@ -44,12 +43,11 @@ async function ensureFonts(doc) {
   }
 }
 
-// Títulos (portada, encabezado de marca) → Outfit 600. Todo lo demás → IBM Plex Sans.
+// Títulos (portada, encabezado de marca) → Inter semibold. Texto → Inter regular.
 function setFont(doc, style) {
   const bold = style === 'bold' || style === 'uibold' || style === 'mono' || style === 'bolditalic' || style === 'title'
   if (doc.__customFontsLoaded) {
-    if (style === 'title') { doc.setFont('Outfit', 'bold'); return }
-    doc.setFont('IBMPlexSans', bold ? 'bold' : 'normal')
+    doc.setFont('Inter', style === 'title' || bold ? 'bold' : 'normal')
     return
   }
   doc.setFont('helvetica', bold ? 'bold' : 'normal')
@@ -642,8 +640,11 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
   const FOOTER_LINE_Y = PH - PAD_BOTTOM - FOOTER_TEXT_H - FOOTER_GAP_T
   const CONTENT_TOP = HEADER_LINE_Y + GRID_PAD
   const CONTENT_BOT = FOOTER_LINE_Y - GRID_PAD
-  const COLS_PDF    = isLandscape ? 3 : 2
-  const ROWS_PDF    = isLandscape ? 3 : 4
+  const allProducts = brandGroups.flatMap(g => g.products)
+  const withDescription = allProducts.filter(p => String(p.description ?? '').trim()).length
+  const compact = allProducts.length > 0 && withDescription / allProducts.length < 0.5
+  const COLS_PDF    = compact ? (isLandscape ? 4 : 3) : (isLandscape ? 3 : 2)
+  const ROWS_PDF    = compact ? (isLandscape ? 2 : 3) : (isLandscape ? 3 : 4)
   const CELL_W = (PW - SIDE_MARGIN * 2 - GAP * (COLS_PDF - 1)) / COLS_PDF
   const CELL_H = (CONTENT_BOT - CONTENT_TOP - GAP * (ROWS_PDF - 1)) / ROWS_PDF
 
@@ -803,6 +804,12 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
       doc.setFillColor('#FFFFFF')
       doc.roundedRect(x, y, CELL_W, CELL_H, CARD_RADIUS, CARD_RADIUS, 'FD')
 
+      if (compact) {
+        await drawCompactCard(doc, p, x, y, CELL_W, CELL_H, brandColor)
+        slot++
+        continue
+      }
+
       // ── Cuadrado a la izquierda: foto real o inicial con color de marca ──
       const monoSize = Math.min(CELL_H - CARD_PAD * 2, px(96))
       const monoRadius = monoSize * (px(20) / px(96))
@@ -811,8 +818,7 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
 
       const b64 = await loadImageAsBase64(p.image_url)
       if (b64) {
-        try { doc.addImage(b64, 'JPEG', monoX, monoY, monoSize, monoSize, undefined, 'FAST') }
-        catch { drawMonogram(doc, monoX, monoY, monoSize, monoRadius, p.name, brandColor) }
+        if (!(await drawProductImage(doc, b64, monoX, monoY, monoSize))) drawMonogram(doc, monoX, monoY, monoSize, monoRadius, p.name, brandColor)
       } else {
         drawMonogram(doc, monoX, monoY, monoSize, monoRadius, p.name, brandColor)
       }
@@ -877,6 +883,86 @@ export async function generateCatalogPDF(brandGroups, company, onProgress, orien
   const date = new Date().toISOString().slice(0, 10)
   const name = brandGroups.length === 1 ? brandGroups[0].brand.name : companyName || 'Catalogo'
   doc.save(`Catalogo_${name.replace(/\s+/g, '_')}_${date}.pdf`)
+}
+
+// Dibuja la foto dentro de un cuadrado sin deformarla (la centra respetando su proporción).
+async function drawProductImage(doc, b64, x, y, size) {
+  const dims = await new Promise(res => {
+    const img = new Image()
+    img.onload = () => res({ w: img.naturalWidth, h: img.naturalHeight })
+    img.onerror = () => res(null)
+    img.src = b64
+  })
+  if (!dims || !dims.w || !dims.h) return false
+  const ratio = dims.w / dims.h
+  let w = size, h = size
+  if (ratio > 1) h = size / ratio
+  else if (ratio < 1) w = size * ratio
+  const fmt = /^data:image\/png/i.test(b64) ? 'PNG' : 'JPEG'
+  try {
+    doc.addImage(b64, fmt, x + (size - w) / 2, y + (size - h) / 2, w, h, undefined, 'FAST')
+    return true
+  } catch {
+    return false
+  }
+}
+
+// Tarjeta vertical: foto arriba, luego SKU, nombre (y descripción corta si hay) y precio abajo.
+async function drawCompactCard(doc, p, x, y, W, H, brandColor) {
+  const PAD = px(14)
+  const GAP = px(8)
+  const skuText = String(p.sku ?? '').trim()
+  const nameLineH = px(15 * 1.2)
+  const descLineH = px(12 * 1.3)
+  const skuH = px(5) * 2 + pxpt(11) * 0.3528
+  const priceH = px(21)
+  const textH = skuH + GAP + nameLineH * 2 + descLineH + GAP + priceH
+  const imgSize = Math.max(px(40), Math.min(W - PAD * 2, H - PAD * 2 - textH - GAP))
+  const imgX = x + (W - imgSize) / 2
+  const imgY = y + PAD
+
+  const b64 = await loadImageAsBase64(p.image_url)
+  const drawn = b64 ? await drawProductImage(doc, b64, imgX, imgY, imgSize) : false
+  if (!drawn) drawMonogram(doc, imgX, imgY, imgSize, imgSize * (px(20) / px(96)), p.name, brandColor)
+
+  const cx = x + W / 2
+  let cy = imgY + imgSize + GAP
+
+  if (skuText) {
+    doc.setFontSize(pxpt(11))
+    setFont(doc, 'bold')
+    const track = pxpt(11) * 0.06 * 0.3528
+    doc.setCharSpace(track)
+    const skuW = doc.getTextWidth(skuText) + track * skuText.length + px(11) * 2
+    doc.setFillColor('#F3F1EB')
+    doc.roundedRect(cx - skuW / 2, cy, skuW, skuH, skuH / 2, skuH / 2, 'F')
+    doc.setTextColor('#8A938E')
+    doc.text(skuText, cx, cy + skuH / 2 + px(11) * 0.32, { align: 'center' })
+    doc.setCharSpace(0)
+    cy += skuH + GAP
+  }
+
+  doc.setFontSize(pxpt(15))
+  setFont(doc, 'title')
+  doc.setTextColor('#0E1A1E')
+  const nameLines = doc.splitTextToSize(String(p.name ?? ''), W - PAD * 2).slice(0, 2)
+  doc.text(nameLines, cx, cy + nameLineH * 0.8, { align: 'center', lineHeightFactor: 1.2 })
+  cy += nameLineH * nameLines.length
+
+  if (String(p.description ?? '').trim()) {
+    doc.setFontSize(pxpt(12))
+    setFont(doc, 'ui')
+    doc.setTextColor('#6E7A76')
+    doc.text(fitText(doc, String(p.description).trim(), W - PAD * 2), cx, cy + descLineH * 0.8, { align: 'center' })
+  }
+
+  if (p._price) {
+    const curLabel = (p._currency ?? '$') === '$' ? '$' : p._currency
+    doc.setFontSize(pxpt(21))
+    setFont(doc, 'title')
+    doc.setTextColor('#0F4C5C')
+    doc.text(curLabel + ' ' + p._price, cx, y + H - PAD - px(2), { align: 'center' })
+  }
 }
 
 // Placeholder cuando el producto no tiene foto: un cuadrado con la
