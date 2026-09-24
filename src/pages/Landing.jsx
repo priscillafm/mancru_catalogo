@@ -180,7 +180,7 @@ export default function LandingPage() {
           <PricingCards
             plans={plans}
             renderCta={(p, accent) => (
-              <Link to="/register" style={{
+              <Link to={p.name === 'enterprise' ? '/contacto?plan=enterprise' : '/register'} style={{
                 display: 'block', padding: '10px', borderRadius: 9,
                 background: accent ? 'rgba(0,0,0,0.2)' : 'var(--accent)',
                 color: 'var(--accent-text)',
@@ -225,6 +225,8 @@ export default function LandingPage() {
         <Link to="/terms" style={{ color: 'var(--text3)' }}>Términos</Link>
         {' · '}
         <Link to="/privacy" style={{ color: 'var(--text3)' }}>Privacidad</Link>
+        {' · '}
+        <Link to="/contacto" style={{ color: 'var(--text3)' }}>Contacto</Link>
       </footer>
       </div>
     </div>

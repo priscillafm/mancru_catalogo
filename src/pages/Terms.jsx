@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import LegalPage from '@/components/LegalPage'
 
 export default function Terms() {
@@ -43,7 +44,7 @@ export default function Terms() {
       </p>
 
       <h2 style={h2}>6. Contacto</h2>
-      <p>Para consultas sobre estos términos, escribinos a través de los canales indicados en la app.</p>
+      <p>Para consultas sobre estos términos, escribinos desde la página de <Link to="/contacto" style={{ color: "var(--accent)" }}>contacto</Link>.</p>
     </LegalPage>
   )
 }

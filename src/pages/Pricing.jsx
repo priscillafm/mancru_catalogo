@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useAuthStore } from '@/store/auth.store'
 import { usePlans } from '@/hooks/usePlans'
 import PricingCards from '@/components/PricingCards'
@@ -76,9 +76,9 @@ export default function PricingPage() {
               const isCurrent = p.name === currentPlan
               if (p.name === 'enterprise') {
                 return (
-                  <a href="mailto:hola@potato.app?subject=Plan%20Enterprise" style={ctaStyle(accent)}>
+                  <Link to="/contacto?plan=enterprise" style={ctaStyle(accent)}>
                     Contactar
-                  </a>
+                  </Link>
                 )
               }
               if (isCurrent) {

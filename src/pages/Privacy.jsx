@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import LegalPage from '@/components/LegalPage'
 
 export default function Privacy() {
@@ -32,7 +33,7 @@ export default function Privacy() {
       <h2 style={h2}>4. Tus derechos</h2>
       <p>
         Podés acceder, corregir o eliminar tus datos en cualquier momento desde tu cuenta, o
-        solicitándolo por los canales de contacto de la app. Al eliminar tu cuenta, tus catálogos
+        solicitándolo desde la página de <Link to="/contacto" style={{ color: "var(--accent)" }}>contacto</Link>. Al eliminar tu cuenta, tus catálogos
         públicos dejan de estar disponibles.
       </p>
 

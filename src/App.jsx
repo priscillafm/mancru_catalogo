@@ -15,6 +15,7 @@ import PricingPage from '@/pages/Pricing'
 import CheckoutReturn from '@/pages/CheckoutReturn'
 import TermsPage from '@/pages/Terms'
 import PrivacyPage from '@/pages/Privacy'
+import ContactPage from '@/pages/Contact'
 
 function PrivateRoute({ children, requireAdmin = false }) {
   const { session, membership, loading } = useAuthStore()
@@ -53,6 +54,7 @@ export default function App() {
       <Route path="/checkout/retorno" element={<PrivateRoute><CheckoutReturn /></PrivateRoute>} />
       <Route path="/terms"          element={<TermsPage />} />
       <Route path="/privacy"        element={<PrivacyPage />} />
+      <Route path="/contacto"       element={<ContactPage />} />
       <Route path="/admin/*"        element={<PrivateRoute requireAdmin><AdminLayout /></PrivateRoute>} />
       <Route path="*"               element={<Navigate to="/" replace />} />
     </Routes>
