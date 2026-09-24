@@ -40,6 +40,9 @@ export default function Sync() {
     try {
       // Parse
       const rows = await ExcelConnector.parse(file, fieldMapping)
+      if (rows.length > 0 && rows.every(r => !r.sku)) {
+        throw new Error('No encontramos la columna de SKU. Usá el encabezado "SKU" o "Código" (podés bajar la plantilla desde Importar).')
+      }
       setMessage('Calculando diferencias...')
 
       // Load current DB state

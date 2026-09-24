@@ -59,10 +59,12 @@ export const ExcelConnector = {
     return {
       // Standard format
       'marca':              'brand',
+      'sku':                'sku',
       'código':             'sku',
       'codigo':             'sku',
       'nombre_producto':    'name',
       'nombre':             'name',
+      'producto':           'name',
       'categoría':          'category',
       'categoria':          'category',
       'descripción':        'description',
@@ -72,6 +74,8 @@ export const ExcelConnector = {
       'url_imagen':         'image_ref',
       'url':                'image_ref',
       'imagen':             'image_ref',
+      'imagen_url':         'image_ref',
+      'foto':               'image_ref',
       'activo':             'active',
       'precio':             'price',
       'stock':              'stock',
