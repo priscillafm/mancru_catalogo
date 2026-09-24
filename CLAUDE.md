@@ -10,6 +10,8 @@ SaaS para distribuidores/mayoristas de Latam: cargan productos (Excel o a mano),
 - Email de consultas: Edge Function `contact-form` guarda en `contact_messages` y envía con Resend si existen los secretos `RESEND_API_KEY` y `CONTACT_TO_EMAIL` (pendiente de cargar).
 - Migraciones en `supabase/migrations` (`npx supabase db push --yes`). Las funciones se despliegan a mano: `npx supabase functions deploy <nombre>` (`--no-verify-jwt` para `mp-webhook` y `contact-form`).
 
+Historial detallado de decisiones, incidentes y pendientes: `docs/HISTORIAL.md`.
+
 ## Entorno local
 - `.env` NO está en el repo. Necesita `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` (clave publishable). Nunca poner la clave `sb_secret_` en variables `VITE_` ni en Cloudflare.
 - `npm install`, `npm run dev` (puerto 5173), `npm run build`. Para el CLI de Supabase: `npx supabase login` y `npx supabase link --project-ref wmzqpblqorfuawubryvt`.
