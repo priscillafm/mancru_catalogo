@@ -36,6 +36,16 @@ WHERE e.id = 'ID_DE_LA_SINCRONIZACION' AND d.execution_id = e.id AND d.change_ty
   AND p.company_id = e.company_id AND upper(p.sku) = upper(d.sku);
 ```
 
+## Auditorías externas y decisiones (24 de septiembre)
+- Priscilla pegó dos auditorías de uso. Cada hallazgo se verificó contra el código: se corrigió lo real (WhatsApp faltante, precio que no se precargaba, importador mudo con filas inválidas, buscador ausente, eliminación de cuenta sin flujo, textos contradictorios) y se aclaró lo que no lo era (el contador de vistas sí funcionaba; el texto de invitación de usuarios sí existía).
+- Además se encontraron problemas que las auditorías no vieron: guardar un catálogo compartido lo volvía a borrador y cortaba el link; Sincronizar pisaba datos con las columnas ausentes; el encabezado  con tilde no se reconocía al importar.
+- Decisiones de producto: el precio se muestra en dólares como referencia y se cobra en pesos; tipografía Inter (el catálogo público usa la fuente del sistema en Apple); rol "Colaborador" en vez de "Vendedor"; la eliminación de cuenta se pide por formulario y se procesa en 30 días.
+- Formulario de contacto conectado a Resend (mail de destino: el de Priscilla) y bandeja de soporte en . Login de Supabase probado: registro y recuperación de contraseña funcionan en .
+- Fotos: hoy por URL en el Excel () o de a una desde Productos; la carga masiva por SKU queda para cuando un cliente grande la pida.
+
+## Cómo seguir desde otra computadora
+Clonar el repositorio, crear el  con las dos variables públicas de Supabase y abrir Claude Code en la carpeta: lee  (reglas y método de trabajo) y este historial. La conversación textual no se guarda en el repositorio porque contiene claves; este archivo y  resumen lo importante sin datos sensibles.
+
 ## Dónde mirar cada cosa
 - Visitas a la web y DNS: Cloudflare (Web Analytics, Domains).
 - Usuarios, tablas, fotos y logs de funciones: Supabase (Authentication, Table Editor, Storage, Edge Functions).
