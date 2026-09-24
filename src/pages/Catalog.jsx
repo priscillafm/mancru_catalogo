@@ -346,7 +346,7 @@ export default function CatalogPage() {
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
         } : undefined}
       >
-        {isMobile ? `Generar catálogo` : '↓ Generar PDF'}
+        {isMobile ? 'Preparar catálogo' : 'Preparar catálogo →'}
         <span className="pill-count">{totalSelected}</span>
       </button>
 

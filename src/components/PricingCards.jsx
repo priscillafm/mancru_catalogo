@@ -44,10 +44,10 @@ export default function PricingCards({ plans, renderCta }) {
               {p.display_name ?? p.name}
             </div>
             {price.strike != null && (
-              <div style={{ fontSize: 13, opacity: 0.6, textDecoration: 'line-through' }}>{price.strike}</div>
+              <div style={{ fontSize: 13, opacity: 0.6, textDecoration: 'line-through', whiteSpace: 'nowrap' }}>{price.strike}</div>
             )}
-            <div style={{ fontSize: 26, fontWeight: 700, marginBottom: 2 }}>{price.main}</div>
-            {price.note && <div style={{ fontSize: 11, opacity: 0.7, marginBottom: price.sub ? 6 : 10 }}>{price.note}</div>}
+            <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 2, whiteSpace: 'nowrap' }}>{price.main}</div>
+            {price.note && <div style={{ fontSize: 13, fontWeight: 600, opacity: 0.9, marginBottom: price.sub ? 6 : 10, whiteSpace: 'nowrap' }}>{price.note}</div>}
             {price.sub && (
               <div style={{ fontSize: 11, fontWeight: 600, marginBottom: 16, color: accent ? 'var(--accent-text)' : 'var(--accent)' }}>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><Icon name="rocket" size={12} /> {price.sub}</span>

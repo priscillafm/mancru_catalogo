@@ -201,7 +201,7 @@ export default function PublicCatalog() {
       )}
 
       {/* Catalog title */}
-      <div style={{ padding: '28px 24px 0' }}>
+      <div style={{ padding: '28px 24px 0', maxWidth: 1240, margin: '0 auto' }}>
         <h1 style={{ fontFamily: "-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif", fontSize: 24, fontWeight: 600, color: '#0E1A1E', letterSpacing: '-0.02em', marginBottom: 4 }}>
           {catalog.name}
         </h1>
@@ -244,7 +244,7 @@ export default function PublicCatalog() {
       )}
 
       {/* Brand groups */}
-      <div style={{ padding: '0 24px 48px' }}>
+      <div style={{ padding: '0 24px 48px', maxWidth: 1240, margin: '0 auto' }}>
         {filtering && visibleGroups.length === 0 && (
           <p style={{ fontSize: 14, color: '#6E7A76', padding: '24px 0' }}>No encontramos productos con esa búsqueda.</p>
         )}
@@ -271,7 +271,7 @@ export default function PublicCatalog() {
             {/* Products grid */}
             <div style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 300px), 1fr))',
               gap: 14,
             }}>
               {products.map(p => {
