@@ -32,9 +32,10 @@ export default function Privacy() {
 
       <h2 style={h2}>4. Tus derechos</h2>
       <p>
-        Podés acceder, corregir o eliminar tus datos en cualquier momento desde tu cuenta, o
-        solicitándolo desde la página de <Link to="/contacto" style={{ color: "var(--accent)" }}>contacto</Link>. Al eliminar tu cuenta, tus catálogos
-        públicos dejan de estar disponibles.
+        Podés ver y corregir los datos de tu perfil y de tu empresa desde tu cuenta. Para eliminar tu cuenta
+        y los datos asociados, pedilo desde tu perfil (sección «Datos y privacidad») o escribiéndonos desde la
+        página de <Link to="/contacto?asunto=eliminacion" style={{ color: "var(--accent)" }}>contacto</Link>; la procesamos dentro de los 30 días. Al eliminar
+        tu cuenta, tus catálogos públicos dejan de estar disponibles.
       </p>
 
       <h2 style={h2}>5. Uruguay — Ley N° 18.331</h2>

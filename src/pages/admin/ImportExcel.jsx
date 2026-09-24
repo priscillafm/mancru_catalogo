@@ -296,11 +296,14 @@ export default function ImportExcel() {
         Usá esto para la <strong>carga inicial</strong> de tu catálogo. Subí tu lista en formato .xlsx con la primera fila como encabezado.
       </p>
       <p style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 10 }}>
-        Columnas detectadas automáticamente: <strong>SKU</strong>, <strong>Nombre</strong>, <strong>Stock</strong>, <strong>Precio</strong> (opcional), <strong>Marca</strong> (opcional).
+        Columnas detectadas automáticamente por su encabezado: <strong>SKU</strong>, <strong>Nombre</strong>, <strong>Stock</strong>, <strong>Precio</strong> (opcional), <strong>Marca</strong> (opcional) e <strong>imagen_url</strong> (opcional).
       </p>
       <p style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 16 }}>
         ¿Ya tenés productos cargados y solo querés actualizar stock o precios? Usá{' '}
         <strong>Sincronizar</strong> en su lugar — compara tu Excel contra lo que ya está guardado antes de aplicar cambios.
+      </p>
+      <p style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 10, lineHeight: 1.6 }}>
+        <strong>Fotos:</strong> agregá una columna <code>imagen_url</code> con el link completo de cada foto (empieza con https://, por ejemplo https://tusitio.com/fotos/abc-001.jpg) y se vincula al SKU. También podés subirlas una por una desde Productos. Antes de importar vas a ver una muestra de las filas, cuántas fotos se vinculan y cuáles filas se omiten (podés descargar el detalle en CSV).
       </p>
       <button onClick={downloadTemplate} style={{
         display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px',

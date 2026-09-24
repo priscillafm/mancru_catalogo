@@ -20,6 +20,8 @@ Resumen de lo trabajado, decidido y aprendido. No contiene claves ni datos de cl
 - **Importar Excel:** vista previa con mapeo de columnas, muestra de filas, filas omitidas descargables, SKU repetidos y columna de foto por URL (`imagen_url`). Encabezados con tilde reconocidos.
 - **Interfaz:** íconos SVG en lugar de emojis, textos en singular/plural, carga diferida de páginas (el paquete inicial bajó de 2,4 MB a 510 KB), metadatos para compartir.
 - **Superadministración** (`/admin/super`, migración 007): pestañas Resumen (números clave, embudo de activación y oportunidades de mejora detectadas solas), Empresas (uso agregado y cambio de plan) y Soporte (bandeja de las consultas del formulario con estados). Funciona con funciones SQL que solo aceptan al super_admin y devuelven cantidades y nombres de empresa, nunca mails, productos ni precios de clientes.
+- **Catálogo público:** buscador por nombre o SKU (sin distinguir tildes) y filtro por categoría cuando hay 6 o más productos. Guardar cambios de un catálogo ya compartido ya no lo vuelve a borrador (antes cortaba el link público).
+- **Privacidad:** la eliminación de cuenta se solicita desde Perfil ("Datos y privacidad") o el formulario de contacto, y se procesa en 30 días; la política de privacidad lo describe así.
 - **Nombre del cliente original:** se sacó de scripts, seeds, documentación y comentarios.
 
 ## Incidente: Sincronizar borró productos (24 de septiembre)

@@ -266,6 +266,7 @@ export default function CatalogsPage() {
           initialPrices={openCatalog.snapshot_data?.prices ?? {}}
           catalogId={openCatalog.id}
           catalogName={openCatalog.name}
+          catalogStatus={openCatalog.status}
           onClose={() => setOpenCatalog(null)}
           onSaved={() => { qc.invalidateQueries(['catalogs', companyId]); setOpenCatalog(null) }}
         />

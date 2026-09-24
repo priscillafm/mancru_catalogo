@@ -14,6 +14,8 @@ export default function PublicCatalog() {
   const [clientName, setClientName] = useState('')
   const [clientRef, setClientRef]   = useState('')
   const [generatingPdf, setGeneratingPdf] = useState(false)
+  const [search, setSearch]       = useState('')
+  const [catFilter, setCatFilter] = useState('')
 
   const { data: catalog, isLoading, error } = useQuery({
     queryKey: ['public-catalog', id],
@@ -63,6 +65,20 @@ export default function PublicCatalog() {
   const vendorEmail    = snap.vendorEmail ?? null
 
   const allProducts = brandGroups.flatMap(g => g.products.map(p => ({ ...p, brand: g.brand })))
+
+  // Buscador y filtro por categoría (los pedidos ya elegidos se conservan al filtrar)
+  const categoryNames = [...new Set(allProducts.map(p => p.categories?.name).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'es'))
+  const norm = v => String(v ?? '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+  const query = norm(search.trim())
+  const matches = p =>
+    (!query || norm(p.name).includes(query) || norm(p.sku).includes(query)) &&
+    (!catFilter || p.categories?.name === catFilter)
+  const visibleGroups = brandGroups
+    .map(g => ({ ...g, products: g.products.filter(matches) }))
+    .filter(g => g.products.length > 0)
+  const filtering = !!query || !!catFilter
+  const visibleCount = visibleGroups.reduce((n, g) => n + g.products.length, 0)
+  const showSearch = allProducts.length >= 6
   const selectedItems = allProducts.filter(p => quantities[p.id] > 0)
   const totalSelected = selectedItems.reduce((n, p) => n + (quantities[p.id] || 0), 0)
 
@@ -194,9 +210,45 @@ export default function PublicCatalog() {
         </p>
       </div>
 
+      {/* Buscador y filtros */}
+      {showSearch && (
+        <div style={{ position: 'sticky', top: 0, zIndex: 5, background: '#FAF8F4', padding: '10px 24px 12px', borderBottom: '1px solid #EFEBE2', marginBottom: 20 }}>
+          <div style={{ position: 'relative' }}>
+            <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', color: '#7A857F', display: 'flex' }}><Icon name="search" size={16} /></span>
+            <input
+              type="search" value={search} onChange={e => setSearch(e.target.value)}
+              placeholder="Buscar por nombre o SKU"
+              aria-label="Buscar productos"
+              style={{ width: '100%', boxSizing: 'border-box', padding: '11px 14px 11px 40px', borderRadius: 12, border: '1px solid #E7E3DA', background: '#fff', fontSize: 14, color: '#0E1A1E', outline: 'none', fontFamily: "-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif" }}
+            />
+          </div>
+          {categoryNames.length > 1 && (
+            <div style={{ display: 'flex', gap: 8, marginTop: 10, overflowX: 'auto', paddingBottom: 2 }}>
+              {['', ...categoryNames].map(name => (
+                <button key={name || 'todas'} onClick={() => setCatFilter(name)} style={{
+                  flexShrink: 0, padding: '6px 14px', borderRadius: 999, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                  border: '1px solid ' + (catFilter === name ? '#0E1A1E' : '#E7E3DA'),
+                  background: catFilter === name ? '#0E1A1E' : '#fff',
+                  color: catFilter === name ? '#fff' : '#4A5551', fontFamily: "-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', system-ui, sans-serif",
+                }}>{name || 'Todas'}</button>
+              ))}
+            </div>
+          )}
+          {filtering && (
+            <div style={{ fontSize: 12, color: '#6E7A76', marginTop: 8 }}>
+              {visibleCount} de {plural(allProducts.length, 'producto')}
+              <button onClick={() => { setSearch(''); setCatFilter('') }} style={{ marginLeft: 10, background: 'none', border: 'none', color: '#0F4C5C', fontWeight: 600, cursor: 'pointer', fontSize: 12 }}>Limpiar</button>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Brand groups */}
       <div style={{ padding: '0 24px 48px' }}>
-        {brandGroups.map(({ brand, products }) => (
+        {filtering && visibleGroups.length === 0 && (
+          <p style={{ fontSize: 14, color: '#6E7A76', padding: '24px 0' }}>No encontramos productos con esa búsqueda.</p>
+        )}
+        {visibleGroups.map(({ brand, products }) => (
           <div key={brand.id} style={{ marginBottom: 36 }}>
             {/* Brand header */}
             <div style={{ marginBottom: 16 }}>

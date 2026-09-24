@@ -13,6 +13,7 @@ export default function PDFPreviewModal({
   initialPrices = {},
   catalogId     = null,   // null = new catalog
   catalogName   = '',
+  catalogStatus = null,   // 'draft' | 'shared' — para no cambiar el estado al guardar
   onSaved       = null,   // callback after saving
 }) {
   const membership = useAuthStore(s => s.membership)
@@ -174,9 +175,9 @@ export default function PDFPreviewModal({
         cid = data.id
       } else {
         // Update existing
+        // No se toca el estado: un catálogo compartido sigue compartido después de guardar cambios.
         const { error } = await supabase.from('catalogs').update({
           name:          saveName.trim(),
-          status:        'draft',
           snapshot_data: snapshotData,
           updated_at:    new Date().toISOString(),
         }).eq('id', cid)
@@ -566,7 +567,7 @@ export default function PDFPreviewModal({
           {step === 'saving' && (
             <div style={{ maxWidth: 480, margin: '0 auto', paddingTop: 16 }}>
               <p style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 20 }}>
-                Se guarda como borrador: podés volver a abrirlo, cambiar precios y regenerar el PDF. Para que tus clientes lo vean, después usá «Compartir link» en Mis catálogos.
+                {catalogStatus === 'shared' ? 'Este catálogo ya está compartido: al guardar, los cambios se ven enseguida en el link que ya enviaste. No hace falta volver a publicarlo.' : 'Se guarda como borrador: podés volver a abrirlo, cambiar precios y regenerar el PDF. Para que tus clientes lo vean, después usá «Compartir link» en Mis catálogos.'}
               </p>
               <label style={{ display: 'block', fontSize: 11, color: 'var(--text3)', marginBottom: 6, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
                 Nombre del catálogo
@@ -597,7 +598,7 @@ export default function PDFPreviewModal({
                   background: 'var(--accent)', border: 'none', color: 'var(--accent-text)',
                   fontWeight: 700, fontSize: 13, opacity: saving ? 0.7 : 1,
                 }}>
-                  {saving ? 'Guardando...' : catalogId ? 'Actualizar borrador' : 'Guardar borrador'}
+                  {saving ? 'Guardando...' : catalogId ? (catalogStatus === 'shared' ? 'Guardar cambios' : 'Actualizar borrador') : 'Guardar borrador'}
                 </button>
               </div>
             </div>
@@ -630,7 +631,7 @@ export default function PDFPreviewModal({
                 <button onClick={() => { setSaveName(catalogName); setStep('saving') }}
                   style={{ ...secondaryBtn, display: 'flex', alignItems: 'center', gap: 6 }}>
                   <Icon name="save" size={14} />
-                  {catalogId ? 'Actualizar borrador' : 'Guardar borrador'}
+                  {catalogId ? (catalogStatus === 'shared' ? 'Guardar cambios' : 'Actualizar borrador') : 'Guardar borrador'}
                 </button>
               )}
 

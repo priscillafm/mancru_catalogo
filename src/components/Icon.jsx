@@ -176,6 +176,12 @@ const paths = {
       <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
     </>
   ),
+  search: (
+    <>
+      <circle cx="11" cy="11" r="8"/>
+      <path d="m21 21-4.3-4.3"/>
+    </>
+  ),
   landscape: (
     <rect x="2" y="6" width="20" height="12" rx="2"/>
   ),

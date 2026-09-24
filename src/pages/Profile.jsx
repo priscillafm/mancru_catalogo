@@ -170,6 +170,20 @@ export default function ProfilePage() {
           </form>
         </div>
 
+        {/* Datos y privacidad */}
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, padding: '24px 28px', marginTop: 12, boxShadow: 'var(--shadow)' }}>
+          <h2 style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>Datos y privacidad</h2>
+          <p style={{ fontSize: 12, color: 'var(--text3)', lineHeight: 1.6, marginBottom: 14 }}>
+            Si querés eliminar tu cuenta y los datos asociados, envianos la solicitud y la procesamos dentro de los 30 días. Tus catálogos públicos dejan de estar disponibles.
+          </p>
+          <button onClick={() => navigate('/contacto?asunto=eliminacion')} style={{
+            padding: '9px 16px', background: 'transparent', border: '1px solid rgba(239,68,68,.4)',
+            borderRadius: 9, color: 'var(--danger)', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+          }}>
+            Solicitar eliminación de mi cuenta
+          </button>
+        </div>
+
         <button onClick={() => signOut()} style={{
           width: '100%', marginTop: 12, padding: '10px',
           background: 'transparent', border: '1px solid var(--border)',

@@ -131,7 +131,7 @@ export default function Users() {
         </span>
       </div>
       <p style={{ color: 'var(--text2)', fontSize: 13, marginBottom: 24 }}>
-        Invitá usuarios por email. Recibirán un link para ingresar a la plataforma.
+        Sumá personas a tu equipo: escribís su email, elegís una contraseña inicial y su rol, y después le pasás esos datos a la persona (no le llega ningún mail). Puede cambiar la contraseña desde su perfil.
       </p>
 
       {/* Invite form */}
@@ -147,9 +147,6 @@ export default function Users() {
             <Link to="/pricing" style={{ color: 'var(--accent)', textDecoration: 'none' }}>Actualizar plan →</Link>
           </p>
         )}
-        <p style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 14, lineHeight: 1.5 }}>
-          Creás el usuario con una contraseña inicial y se la pasás a la persona; después puede cambiarla desde su perfil.
-        </p>
         <fieldset disabled={!canAddUser} style={{ border: 'none', padding: 0, margin: 0, minWidth: 0 }}>
         <form onSubmit={e => { if (!canAddUser) { e.preventDefault(); return }; handleInvite(e) }} style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
           <div style={{ flex: 1, minWidth: 200 }}>

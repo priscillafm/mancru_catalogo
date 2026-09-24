@@ -7,7 +7,9 @@ import Icon from '@/components/Icon'
 export default function ContactPage() {
   const [params] = useSearchParams()
   const plan = params.get('plan') ?? ''
-  const [form, setForm] = useState({ name: '', email: '', company: '', message: '', website: '' })
+  const deletion = params.get('asunto') === 'eliminacion'
+  const [form, setForm] = useState({ name: '', email: '', company: '', website: '',
+    message: deletion ? 'Quiero solicitar la eliminación de mi cuenta y de los datos asociados. El email de mi cuenta es el que dejé arriba.' : '' })
   const [sending, setSending] = useState(false)
   const [sent, setSent] = useState(false)
   const [error, setError] = useState('')
@@ -45,9 +47,11 @@ export default function ContactPage() {
       <div style={{ maxWidth: 520, margin: '0 auto', padding: '48px 24px 80px' }}>
         <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 8 }}>Contacto</h1>
         <p style={{ fontSize: 14, color: 'var(--text2)', marginBottom: 28, lineHeight: 1.6 }}>
-          {plan === 'enterprise'
-            ? 'Contanos qué necesita tu empresa y armamos un plan a tu medida.'
-            : 'Escribinos tu consulta y te respondemos por email lo antes posible.'}
+          {deletion
+            ? 'Confirmá el email de tu cuenta y enviá la solicitud: la procesamos dentro de los 30 días.'
+            : plan === 'enterprise'
+              ? 'Contanos qué necesita tu empresa y armamos un plan a tu medida.'
+              : 'Escribinos tu consulta y te respondemos por email lo antes posible.'}
         </p>
 
         {sent ? (
@@ -72,8 +76,9 @@ export default function ContactPage() {
                 onBlur={e => e.target.style.borderColor = 'var(--border)'} />
             </div>
 
-            <input type="text" name="website" value={form.website} onChange={set('website')} tabIndex={-1} autoComplete="off" aria-hidden="true"
-              style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, opacity: 0 }} />
+            <div aria-hidden="true" inert style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, overflow: 'hidden' }}>
+              <input type="text" name="website" value={form.website} onChange={set('website')} tabIndex={-1} autoComplete="off" />
+            </div>
 
             {error && <p style={{ fontSize: 12, color: 'var(--danger)', marginBottom: 14 }}>{error}</p>}
 
