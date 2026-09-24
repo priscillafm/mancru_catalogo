@@ -6,13 +6,18 @@ const DISPLAY = {
   enterprise: { desc: 'Sin límites', features: ['Todo ilimitado', 'Integraciones', 'Onboarding dedicado', 'SLA garantizado'] },
 }
 
+// Referencia para mostrar el precio en dólares (más claro para toda Latinoamérica).
+// El cobro se hace en pesos uruguayos a través de Mercado Pago.
+const USD_RATE = 40
+const usd = uyu => 'US$ ' + Math.round(uyu / USD_RATE)
+
 function priceInfo(plan) {
-  if (plan.name === 'free') return { main: '$0', sub: null, strike: null }
-  if (plan.name === 'enterprise') return { main: 'A consultar', sub: null, strike: null }
+  if (plan.name === 'free') return { main: 'US$ 0', note: null, sub: null, strike: null }
+  if (plan.name === 'enterprise') return { main: 'A consultar', note: null, sub: null, strike: null }
   const promo = plan.promo_price_monthly_uyu
   const base  = plan.price_monthly_uyu
-  if (promo != null) return { main: `$${promo} UYU/mes`, sub: plan.promo_label ?? 'Precio de lanzamiento', strike: base }
-  return { main: base != null ? `$${base} UYU/mes` : 'Consultar', sub: null, strike: null }
+  if (promo != null) return { main: '≈ ' + usd(promo) + '/mes', note: 'Se cobra $' + promo + ' UYU/mes', sub: plan.promo_label ?? 'Precio de lanzamiento', strike: base != null ? '≈ ' + usd(base) + '/mes' : null }
+  return { main: base != null ? '≈ ' + usd(base) + '/mes' : 'Consultar', note: base != null ? 'Se cobra $' + base + ' UYU/mes' : null, sub: null, strike: null }
 }
 
 /**
@@ -39,9 +44,10 @@ export default function PricingCards({ plans, renderCta }) {
               {p.display_name ?? p.name}
             </div>
             {price.strike != null && (
-              <div style={{ fontSize: 13, opacity: 0.6, textDecoration: 'line-through' }}>${price.strike} UYU/mes</div>
+              <div style={{ fontSize: 13, opacity: 0.6, textDecoration: 'line-through' }}>{price.strike}</div>
             )}
-            <div style={{ fontSize: 26, fontWeight: 700, marginBottom: price.sub ? 2 : 4 }}>{price.main}</div>
+            <div style={{ fontSize: 26, fontWeight: 700, marginBottom: 2 }}>{price.main}</div>
+            {price.note && <div style={{ fontSize: 11, opacity: 0.7, marginBottom: price.sub ? 6 : 10 }}>{price.note}</div>}
             {price.sub && (
               <div style={{ fontSize: 11, fontWeight: 600, marginBottom: 16, color: accent ? 'var(--accent-text)' : 'var(--accent)' }}>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><Icon name="rocket" size={12} /> {price.sub}</span>
