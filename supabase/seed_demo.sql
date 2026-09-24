@@ -16,7 +16,7 @@ VALUES (
   'Distribuidora Demo',
   'distribuidora-demo',
   'free',
-  'potatouy.com'
+  'potatoui.com'
 )
 ON CONFLICT (id) DO UPDATE SET
   name = EXCLUDED.name,
