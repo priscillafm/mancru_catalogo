@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
 import { NavLink, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/auth.store'
+import { useTourStore } from '@/store/tour.store'
 import { PotatoMark } from '@/components/PotatoLogo'
+import AdminTour from '@/components/AdminTour'
 import {
   IconDashboard, IconBrands, IconProducts,
-  IconSync, IconImport, IconUsers, IconSettings,
+  IconSync, IconImport, IconUsers, IconSettings, IconHelp,
 } from '@/components/NavIcons'
 import Dashboard from './Dashboard'
 import Brands from './Brands'
@@ -14,6 +16,7 @@ import Users from './Users'
 import ImportExcel from './ImportExcel'
 import Settings from './Settings'
 import SuperAdmin from './SuperAdmin'
+import Guide from './Guide'
 
 const NAV = [
   { to: '',           label: 'Resumen',       Icon: IconDashboard, shapeFill: true },
@@ -23,6 +26,7 @@ const NAV = [
   { to: 'import',     label: 'Importar',      Icon: IconImport,    shapeFill: false },
   { to: 'users',      label: 'Usuarios',      Icon: IconUsers,     shapeFill: true },
   { to: 'settings',   label: 'Config',        Icon: IconSettings,  shapeFill: false },
+  { to: 'guide',      label: 'Guía',          Icon: IconHelp,      shapeFill: false },
 ]
 
 function useIsMobile() {
@@ -42,9 +46,15 @@ export default function AdminLayout() {
   const isMobile     = useIsMobile()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const navigate = useNavigate()
+  const startTourIfFirstVisit = useTourStore(s => s.startIfFirstVisit)
 
   // Close drawer on route change on mobile
   function handleNav() { if (isMobile) setDrawerOpen(false) }
+
+  // Recorrido guiado: solo en escritorio (el sidebar existe en el DOM todo el tiempo, a diferencia del drawer de celular)
+  useEffect(() => {
+    if (!isMobile) startTourIfFirstVisit()
+  }, [isMobile, startTourIfFirstVisit])
 
   if (isMobile) {
     return (
@@ -131,6 +141,7 @@ export default function AdminLayout() {
             <Route path="import"     element={<ImportExcel />} />
             <Route path="users"      element={<Users />} />
             <Route path="settings"   element={<Settings />} />
+            <Route path="guide"      element={<Guide />} />
             {isSuperAdmin && <Route path="super" element={<SuperAdmin />} />}
             <Route path="*"          element={<Navigate to="/admin" replace />} />
           </Routes>
@@ -166,6 +177,7 @@ export default function AdminLayout() {
             <NavLink key={to}
               to={to === '' ? '/admin' : `/admin/${to}`}
               end={to === ''}
+              data-tour={`nav-${to === '' ? 'resumen' : to}`}
               style={({ isActive }) => navLinkStyle(isActive)}
             >
               {({ isActive }) => (
@@ -202,10 +214,13 @@ export default function AdminLayout() {
           <Route path="import"     element={<ImportExcel />} />
           <Route path="users"      element={<Users />} />
           <Route path="settings"   element={<Settings />} />
+          <Route path="guide"      element={<Guide />} />
           {isSuperAdmin && <Route path="super" element={<SuperAdmin />} />}
           <Route path="*"          element={<Navigate to="/admin" replace />} />
         </Routes>
       </div>
+
+      <AdminTour />
     </div>
   )
 }
