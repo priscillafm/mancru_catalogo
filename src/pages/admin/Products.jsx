@@ -198,7 +198,7 @@ export default function Products() {
           width: 200, minWidth: 200, borderRight: '1px solid var(--border)',
           overflowY: 'auto', padding: '16px 0', background: 'var(--bg-bar)',
         }}>
-          <div style={{ padding: '0 14px 10px', fontSize: 10, fontWeight: 700, color: 'var(--text3)', letterSpacing: '.08em', textTransform: 'uppercase' }}>
+          <div style={{ padding: '0 14px 10px', fontSize: 11, fontWeight: 700, color: 'var(--text3)', letterSpacing: '.08em', textTransform: 'uppercase' }}>
             Marcas
           </div>
           <BrandBtn label="Todas" color="var(--accent)" active={brandId === 'all'} onClick={() => { setBrandId('all'); setPage(0) }} />
@@ -340,7 +340,7 @@ export default function Products() {
                       <tr key={`brand-${p.brand_id ?? 'none'}-${i}`}>
                         <td colSpan={7} style={{
                           padding: '8px 14px 4px',
-                          fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase',
+                          fontSize: 12, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase',
                           color: p.brands?.color ?? 'var(--text3)',
                           borderBottom: `2px solid ${p.brands?.color ?? 'var(--border)'}22`,
                           background: 'var(--bg-panel)',
@@ -358,19 +358,19 @@ export default function Products() {
                           : <span style={{ display:'inline-flex', width:38, height:38, background:'var(--surface-h)', borderRadius:4, alignItems:'center', justifyContent:'center', color:'var(--text3)' }}><Icon name="image" size={16} /></span>
                         }
                       </td>
-                      <td style={tdStyle}><code style={{ fontSize: 11, color: 'var(--accent)' }}>{p.sku}</code></td>
+                      <td style={tdStyle}><code style={{ fontSize: 12, color: 'var(--accent)' }}>{p.sku}</code></td>
                       <td style={{ ...tdStyle, maxWidth: 340 }}>
-                        <div style={{ fontSize: 12, lineHeight: 1.4, color: 'var(--text)' }}>{p.name}</div>
+                        <div style={{ fontSize: 13, lineHeight: 1.4, color: 'var(--text)' }}>{p.name}</div>
                       </td>
                       <td style={tdStyle}>
-                        <span style={{ fontSize: 11, color: 'var(--text3)' }}>{p.categories?.name ?? '—'}</span>
+                        <span style={{ fontSize: 12, color: 'var(--text3)' }}>{p.categories?.name ?? '—'}</span>
                       </td>
-                      <td style={{ ...tdStyle, textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
+                      <td style={{ ...tdStyle, textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 13 }}>
                         {p.stock ?? '—'}
                       </td>
                       <td style={tdStyle}>
                         <span style={{
-                          padding: '2px 8px', borderRadius: 8, fontSize: 11, fontWeight: 600,
+                          padding: '2px 8px', borderRadius: 8, fontSize: 12, fontWeight: 600,
                           background: p.active ? 'rgba(34,197,94,.15)' : 'rgba(239,68,68,.1)',
                           color: p.active ? '#22c55e' : '#ef4444',
                         }}>
@@ -394,7 +394,7 @@ export default function Products() {
           <div style={{ padding: isMobile ? '10px 14px' : '10px 18px', display: 'flex', gap: 8, alignItems: 'center', borderTop: '1px solid var(--border)', flexShrink: 0 }}>
             <button onClick={() => setPage(0)} disabled={page === 0} style={btnPage}>«</button>
             <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0} style={btnPage}>‹ Anterior</button>
-            <span style={{ fontSize: 12, color: 'var(--text3)', flex: 1, textAlign: 'center' }}>
+            <span style={{ fontSize: 13, color: 'var(--text3)', flex: 1, textAlign: 'center' }}>
               Página {page + 1} de {pages}
             </span>
             <button onClick={() => setPage(p => Math.min(pages - 1, p + 1))} disabled={page >= pages - 1} style={btnPage}>Siguiente ›</button>
@@ -417,9 +417,9 @@ export default function Products() {
       {/* ── Edit modal ── */}
       {editing && (
         <Modal onClose={closeEdit}>
-          <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>{editing.id ? 'Editar producto' : 'Nuevo producto'}</h3>
+          <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>{editing.id ? 'Editar producto' : 'Nuevo producto'}</h3>
           {editing.id ? (
-            <code style={{ fontSize: 11, color: 'var(--accent)' }}>{editing.sku}</code>
+            <code style={{ fontSize: 12, color: 'var(--accent)' }}>{editing.sku}</code>
           ) : (
             <>
               <label style={labelStyle}>SKU</label>
@@ -429,7 +429,7 @@ export default function Products() {
 
           {/* Imagen */}
           <label style={labelStyle}>Imagen</label>
-          <p style={{ fontSize: 11, color: 'var(--text3)', marginTop: 2 }}>Con foto, tu catálogo se ve mucho más profesional.</p>
+          <p style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>Con foto, tu catálogo se ve mucho más profesional.</p>
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 6 }}>
             <div style={{ width: 64, height: 64, borderRadius: 8, background: 'var(--bg-panel)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, overflow: 'hidden' }}>
               {editing.image_url
@@ -443,7 +443,7 @@ export default function Products() {
                 {imgUploading ? 'Subiendo...' : editing.image_url ? 'Cambiar imagen' : 'Subir imagen'}
               </button>
               {editing.image_url && (
-                <button type="button" onClick={() => setEditing(p => ({ ...p, image_url: null }))} style={{ ...btnSecondary, fontSize: 11, color: '#ef4444', borderColor: 'rgba(239,68,68,.3)' }}>
+                <button type="button" onClick={() => setEditing(p => ({ ...p, image_url: null }))} style={{ ...btnSecondary, fontSize: 12, color: '#ef4444', borderColor: 'rgba(239,68,68,.3)' }}>
                   Quitar
                 </button>
               )}
@@ -483,7 +483,7 @@ export default function Products() {
             </div>
           )}
           {createCategory.isError && (
-            <div style={{ marginTop: 6, fontSize: 12, color: '#ef4444' }}>Error: {createCategory.error?.message}</div>
+            <div style={{ marginTop: 6, fontSize: 13, color: '#ef4444' }}>Error: {createCategory.error?.message}</div>
           )}
 
           <label style={labelStyle}>Stock</label>
@@ -512,7 +512,7 @@ export default function Products() {
             </button>
           </div>
           {(updateProduct.isError || createProduct.isError) && (
-            <div style={{ marginTop: 8, fontSize: 12, color: '#ef4444' }}>Error: {(updateProduct.error ?? createProduct.error)?.message}</div>
+            <div style={{ marginTop: 8, fontSize: 13, color: '#ef4444' }}>Error: {(updateProduct.error ?? createProduct.error)?.message}</div>
           )}
         </Modal>
       )}
@@ -529,13 +529,13 @@ export default function Products() {
       {/* ── Confirm delete modal ── */}
       {confirmDel && (
         <Modal onClose={() => setConfirmDel(null)}>
-          <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>Eliminar producto</h3>
-          <p style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 4 }}>
+          <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>Eliminar producto</h3>
+          <p style={{ fontSize: 14, color: 'var(--text2)', marginBottom: 4 }}>
             ¿Seguro que querés eliminar este producto?
           </p>
           <div style={{ padding: '10px 12px', background: 'var(--bg-panel)', borderRadius: 8, marginBottom: 20 }}>
-            <code style={{ fontSize: 11, color: 'var(--accent)' }}>{confirmDel.sku}</code>
-            <div style={{ fontSize: 13, marginTop: 4 }}>{confirmDel.name}</div>
+            <code style={{ fontSize: 12, color: 'var(--accent)' }}>{confirmDel.sku}</code>
+            <div style={{ fontSize: 14, marginTop: 4 }}>{confirmDel.name}</div>
           </div>
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
             <button onClick={() => setConfirmDel(null)} style={btnSecondary}>Cancelar</button>
@@ -558,7 +558,7 @@ function BrandBtn({ label, color, active, onClick }) {
       display: 'flex', alignItems: 'center', gap: 8,
       width: '100%', padding: '8px 14px', background: active ? `${color}18` : 'transparent',
       border: 'none', borderLeft: `3px solid ${active ? color : 'transparent'}`,
-      color: active ? color : 'var(--text2)', fontSize: 12, cursor: 'pointer',
+      color: active ? color : 'var(--text2)', fontSize: 13, cursor: 'pointer',
       textAlign: 'left', transition: 'all .12s',
     }}>
       <span style={{ width: 8, height: 8, borderRadius: '50%', background: color, flexShrink: 0 }} />
@@ -593,16 +593,16 @@ function Modal({ children, onClose }) {
   )
 }
 
-const thStyle    = { padding: '9px 14px', textAlign: 'left', fontSize: 10, fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.5px', borderBottom: '1px solid var(--border)', background: 'var(--bg-panel)' }
-const tdStyle    = { padding: '9px 14px', borderBottom: '1px solid var(--border)', fontSize: 13, verticalAlign: 'middle' }
-const btnPage    = { padding: '5px 10px', background: 'var(--surface-h)', border: '1px solid var(--border)', color: 'var(--text2)', borderRadius: 6, fontSize: 12, cursor: 'pointer' }
-const btnIcon    = { padding: '4px 7px', background: 'var(--surface-h)', border: '1px solid var(--border)', borderRadius: 6, cursor: 'pointer', fontSize: 13 }
-const inputStyle = { flex: 1, maxWidth: 280, padding: '7px 11px', background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text)', fontSize: 13, outline: 'none' }
-const selectStyle= { padding: '7px 10px', background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text)', fontSize: 13, outline: 'none', cursor: 'pointer' }
-const inputFull  = { width: '100%', padding: '8px 10px', background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text)', fontSize: 13, outline: 'none', boxSizing: 'border-box', marginTop: 4 }
-const labelStyle = { fontSize: 11, fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.05em', marginTop: 14, display: 'block' }
-const btnPrimary = { padding: '8px 20px', background: 'var(--accent)', color: 'var(--accent-text)', border: 'none', borderRadius: 7, fontWeight: 700, fontSize: 13, cursor: 'pointer' }
-const btnSecondary = { padding: '8px 16px', background: 'var(--surface-h)', color: 'var(--text2)', border: '1px solid var(--border)', borderRadius: 7, fontSize: 13, cursor: 'pointer' }
+const thStyle    = { padding: '9px 14px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.5px', borderBottom: '1px solid var(--border)', background: 'var(--bg-panel)' }
+const tdStyle    = { padding: '9px 14px', borderBottom: '1px solid var(--border)', fontSize: 14, verticalAlign: 'middle' }
+const btnPage    = { padding: '5px 10px', background: 'var(--surface-h)', border: '1px solid var(--border)', color: 'var(--text2)', borderRadius: 6, fontSize: 13, cursor: 'pointer' }
+const btnIcon    = { padding: '4px 7px', background: 'var(--surface-h)', border: '1px solid var(--border)', borderRadius: 6, cursor: 'pointer', fontSize: 14 }
+const inputStyle = { flex: 1, maxWidth: 280, padding: '7px 11px', background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text)', fontSize: 14, outline: 'none' }
+const selectStyle= { padding: '7px 10px', background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text)', fontSize: 14, outline: 'none', cursor: 'pointer' }
+const inputFull  = { width: '100%', padding: '8px 10px', background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text)', fontSize: 14, outline: 'none', boxSizing: 'border-box', marginTop: 4 }
+const labelStyle = { fontSize: 12, fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.05em', marginTop: 14, display: 'block' }
+const btnPrimary = { padding: '8px 20px', background: 'var(--accent)', color: 'var(--accent-text)', border: 'none', borderRadius: 7, fontWeight: 700, fontSize: 14, cursor: 'pointer' }
+const btnSecondary = { padding: '8px 16px', background: 'var(--surface-h)', color: 'var(--text2)', border: '1px solid var(--border)', borderRadius: 7, fontSize: 14, cursor: 'pointer' }
 const fabStyle = {
   position: 'fixed', right: 18, bottom: 22, width: 52, height: 52, borderRadius: '50%',
   background: 'var(--accent)', color: 'var(--accent-text)', border: 'none',

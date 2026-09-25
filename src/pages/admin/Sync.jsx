@@ -150,11 +150,11 @@ export default function Sync() {
 
   return (
     <div style={{ padding: 28, overflowY: 'auto', flex: 1 }}>
-      <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>Sincronizar stock y precios</h2>
-      <p style={{ color: 'var(--text2)', fontSize: 13, marginBottom: 6 }}>
+      <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 6 }}>Sincronizar stock y precios</h2>
+      <p style={{ color: 'var(--text2)', fontSize: 14, marginBottom: 6 }}>
         Usá esto para <strong>actualizar</strong> productos que ya cargaste (stock, precio, etc.). Subí tu Excel y el sistema compara cada fila con lo que ya está guardado antes de aplicar cambios — vos decidís qué aplicar. Los datos que tu Excel no trae no se modifican, y los productos que no estén en el archivo <strong>no se eliminan</strong> salvo que los incluyas vos.
       </p>
-      <p style={{ color: 'var(--text3)', fontSize: 12, marginBottom: 24 }}>
+      <p style={{ color: 'var(--text3)', fontSize: 13, marginBottom: 24 }}>
         ¿Todavía no cargaste ningún producto? Usá <strong>Importar</strong> para la carga inicial.
       </p>
 
@@ -171,13 +171,13 @@ export default function Sync() {
         >
           <div style={{ marginBottom: 10, display: 'flex', justifyContent: 'center' }}><IconImport size={32} /></div>
           <div style={{ fontWeight: 600 }}>Arrastrá tu Excel aquí o hacé clic para seleccionar</div>
-          <div style={{ fontSize: 12, marginTop: 6 }}>Formatos: .xlsx, .xls</div>
+          <div style={{ fontSize: 13, marginTop: 6 }}>Formatos: .xlsx, .xls</div>
           <input ref={fileRef} type="file" accept=".xlsx,.xls" style={{ display: 'none' }} onChange={handleFile} />
         </div>
       )}
 
       {message && (
-        <div style={{ margin: '16px 0', color: 'var(--text2)', fontSize: 13 }}>{message}</div>
+        <div style={{ margin: '16px 0', color: 'var(--text2)', fontSize: 14 }}>{message}</div>
       )}
 
       {step === STEPS.review && summary && (
@@ -194,7 +194,7 @@ export default function Sync() {
                     padding: '10px 16px', borderRadius: 10, cursor: 'pointer',
                     border: `1px solid ${filter === type ? style.text : 'var(--border)'}`,
                     background: filter === type ? style.bg : 'var(--surface)',
-                    color: style.text, fontWeight: 600, fontSize: 13,
+                    color: style.text, fontWeight: 600, fontSize: 14,
                   }}>
                   {style.label}: {count}
                 </button>
@@ -203,7 +203,7 @@ export default function Sync() {
             <button onClick={() => setFilter('all')} style={{
               padding: '10px 16px', borderRadius: 10, cursor: 'pointer',
               border: '1px solid var(--border)', background: filter === 'all' ? 'var(--surface-h)' : 'var(--surface)',
-              color: 'var(--text)', fontSize: 13,
+              color: 'var(--text)', fontSize: 14,
             }}>
               Todos: {diffRows.length}
             </button>
@@ -216,7 +216,7 @@ export default function Sync() {
                 <tr>
                   {['SKU','Nombre','Tipo','Campos modificados','Excluir'].map(h => (
                     <th key={h} style={{
-                      padding: '10px 14px', textAlign: 'left', fontSize: 10,
+                      padding: '10px 14px', textAlign: 'left', fontSize: 11,
                       fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase',
                       letterSpacing: '.5px', borderBottom: '1px solid var(--border)',
                       background: 'var(--bg-panel)',
@@ -229,23 +229,23 @@ export default function Sync() {
                   const cs = CHANGE_COLORS[row.change_type] ?? CHANGE_COLORS.no_change
                   return (
                     <tr key={i} style={{ opacity: row.excluded ? 0.4 : 1 }}>
-                      <td style={td}><code style={{ fontSize: 11, color: 'var(--accent)' }}>{row.sku}</code></td>
+                      <td style={td}><code style={{ fontSize: 12, color: 'var(--accent)' }}>{row.sku}</code></td>
                       <td style={td}>{row.new_data?.name ?? row.old_data?.name ?? '—'}</td>
                       <td style={td}>
-                        <span style={{ padding: '2px 8px', borderRadius: 8, fontSize: 11, fontWeight: 600, background: cs.bg, color: cs.text }}>
+                        <span style={{ padding: '2px 8px', borderRadius: 8, fontSize: 12, fontWeight: 600, background: cs.bg, color: cs.text }}>
                           {cs.label}
                         </span>
                       </td>
                       <td style={td}>
                         {row.changed_fields?.length > 0
-                          ? <span style={{ fontSize: 11, color: 'var(--text2)' }}>{row.changed_fields.join(', ')}</span>
+                          ? <span style={{ fontSize: 12, color: 'var(--text2)' }}>{row.changed_fields.join(', ')}</span>
                           : <span style={{ color: 'var(--text3)' }}>—</span>
                         }
                       </td>
                       <td style={td}>
                         {['new','updated','deleted'].includes(row.change_type) && (
                           <button onClick={() => toggleExclude(row.sku)} style={{
-                            padding: '3px 10px', borderRadius: 5, fontSize: 11, cursor: 'pointer',
+                            padding: '3px 10px', borderRadius: 5, fontSize: 12, cursor: 'pointer',
                             border: '1px solid var(--border)', background: row.excluded ? 'var(--surface-h)' : 'transparent',
                             color: 'var(--text2)',
                           }}>
@@ -259,7 +259,7 @@ export default function Sync() {
               </tbody>
             </table>
             {visible.length > 200 && (
-              <div style={{ padding: '10px 14px', fontSize: 12, color: 'var(--text3)' }}>
+              <div style={{ padding: '10px 14px', fontSize: 13, color: 'var(--text3)' }}>
                 Mostrando 200 de {visible.length} filas.
               </div>
             )}
@@ -273,7 +273,7 @@ export default function Sync() {
             <button onClick={handleApply} disabled={actionable.length === 0}
               style={{
                 padding: '9px 24px', background: 'var(--accent)', color: 'var(--accent-text)',
-                border: 'none', borderRadius: 7, fontWeight: 700, cursor: 'pointer', fontSize: 14,
+                border: 'none', borderRadius: 7, fontWeight: 700, cursor: 'pointer', fontSize: 15,
                 opacity: actionable.length === 0 ? 0.5 : 1,
               }}>
               Aplicar {plural(actionable.length, 'cambio')}
@@ -285,8 +285,8 @@ export default function Sync() {
       {step === STEPS.done && (
         <div style={{ textAlign: 'center', padding: '40px 0' }}>
           <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'center', color: '#22c55e' }}><Icon name="check-circle" size={40} /></div>
-          <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>Sincronización completada</h3>
-          <p style={{ color: 'var(--text2)', marginBottom: 20, fontSize: 13 }}>{message}</p>
+          <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 8 }}>Sincronización completada</h3>
+          <p style={{ color: 'var(--text2)', marginBottom: 20, fontSize: 14 }}>{message}</p>
           <button onClick={() => { setStep(STEPS.idle); setDiffRows([]); setSummary(null); setMessage('') }}
             style={{ padding: '9px 20px', background: 'var(--accent)', color: 'var(--accent-text)', border: 'none', borderRadius: 7, fontWeight: 700, cursor: 'pointer' }}>
             Nueva sincronización
@@ -308,4 +308,4 @@ function buildNameMap(entities) {
   return map
 }
 
-const td = { padding: '10px 14px', borderBottom: '1px solid var(--border)', fontSize: 13, verticalAlign: 'middle' }
+const td = { padding: '10px 14px', borderBottom: '1px solid var(--border)', fontSize: 14, verticalAlign: 'middle' }

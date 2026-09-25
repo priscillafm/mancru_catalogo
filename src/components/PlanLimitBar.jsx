@@ -5,7 +5,7 @@
 export default function PlanLimitBar({ used, max, label, pct }) {
   if (max === null) {
     return (
-      <span style={{ fontSize: 12, color: 'var(--text3)' }}>
+      <span style={{ fontSize: 13, color: 'var(--text3)' }}>
         {used} {label}
       </span>
     )
@@ -15,7 +15,7 @@ export default function PlanLimitBar({ used, max, label, pct }) {
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-      <span style={{ fontSize: 12, color: pct >= 90 ? '#ef4444' : 'var(--text3)', whiteSpace: 'nowrap' }}>
+      <span style={{ fontSize: 13, color: pct >= 90 ? '#ef4444' : 'var(--text3)', whiteSpace: 'nowrap' }}>
         {used} / {max} {label}
       </span>
       <div style={{

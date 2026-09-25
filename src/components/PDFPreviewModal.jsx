@@ -221,19 +221,19 @@ export default function PDFPreviewModal({
           display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0
         }}>
           <div>
-            <h3 style={{ fontSize: 16, fontWeight: 700 }}>
+            <h3 style={{ fontSize: 17, fontWeight: 700 }}>
               {step === 'preview' ? 'Vista previa del catálogo'
                : step === 'pricing' ? 'Precios (opcional)'
                : 'Guardar catálogo'}
             </h3>
-            <p style={{ fontSize: 12, color: 'var(--text3)', marginTop: 3 }}>
+            <p style={{ fontSize: 13, color: 'var(--text3)', marginTop: 3 }}>
               {brandGroups.length} marca{brandGroups.length !== 1 ? 's' : ''} — {totalProducts} producto{totalProducts !== 1 ? 's' : ''}
             </p>
           </div>
           {step === 'preview' && (
             <div style={{ display: 'flex', gap: 6, marginLeft: 'auto', marginRight: 16, alignItems: 'center' }}>
               <select value={ivaMode} onChange={e => setIvaMode(e.target.value)} style={{
-                padding: '6px 10px', borderRadius: 7, fontSize: 12, cursor: 'pointer',
+                padding: '6px 10px', borderRadius: 7, fontSize: 13, cursor: 'pointer',
                 border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text2)',
               }}>
                 <option value="sin_iva">Precios sin IVA</option>
@@ -242,7 +242,7 @@ export default function PDFPreviewModal({
               </select>
               {['landscape','portrait'].map(o => (
                 <button key={o} onClick={() => setOrientation(o)} style={{
-                  padding: '6px 14px', borderRadius: 7, fontSize: 12, cursor: 'pointer',
+                  padding: '6px 14px', borderRadius: 7, fontSize: 13, cursor: 'pointer',
                   border: `1px solid ${orientation === o ? 'var(--accent)' : 'var(--border)'}`,
                   background: orientation === o ? 'var(--accent)' : 'var(--surface)',
                   color: orientation === o ? 'var(--accent-text)' : 'var(--text2)',
@@ -254,7 +254,7 @@ export default function PDFPreviewModal({
             </div>
           )}
           <button onClick={onClose}
-            style={{ background: 'none', border: 'none', color: 'var(--text3)', fontSize: 20, cursor: 'pointer', marginLeft: step !== 'preview' ? 'auto' : 0 }}>
+            style={{ background: 'none', border: 'none', color: 'var(--text3)', fontSize: 21, cursor: 'pointer', marginLeft: step !== 'preview' ? 'auto' : 0 }}>
             ✕
           </button>
         </div>
@@ -270,7 +270,7 @@ export default function PDFPreviewModal({
                 style={{
                   display: 'flex', alignItems: 'center', gap: 8, background: 'none',
                   border: '1px solid var(--border)', borderRadius: 9, padding: '8px 14px',
-                  color: 'var(--text2)', fontSize: 12, cursor: 'pointer', width: '100%',
+                  color: 'var(--text2)', fontSize: 13, cursor: 'pointer', width: '100%',
                   justifyContent: 'space-between',
                 }}
               >
@@ -282,10 +282,10 @@ export default function PDFPreviewModal({
                   }} />
                   <span style={{ fontWeight: 600 }}>Portada del catálogo</span>
                   {coverEnabled
-                    ? <span style={{ fontSize: 10, color: 'var(--success)', fontWeight: 600 }}>✓ Activa</span>
-                    : <span style={{ fontSize: 10, color: 'var(--text3)' }}>Desactivada</span>}
+                    ? <span style={{ fontSize: 11, color: 'var(--success)', fontWeight: 600 }}>✓ Activa</span>
+                    : <span style={{ fontSize: 11, color: 'var(--text3)' }}>Desactivada</span>}
                 </span>
-                <span style={{ fontSize: 10, color: 'var(--text3)' }}>{showCoverPanel ? '▲' : '▼'}</span>
+                <span style={{ fontSize: 11, color: 'var(--text3)' }}>{showCoverPanel ? '▲' : '▼'}</span>
               </button>
 
               {showCoverPanel && (
@@ -298,7 +298,7 @@ export default function PDFPreviewModal({
                   <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
                     <input type="checkbox" checked={coverEnabled} onChange={e => setCoverEnabled(e.target.checked)}
                       style={{ width: 16, height: 16, accentColor: 'var(--accent)', cursor: 'pointer' }} />
-                    <span style={{ fontSize: 13, fontWeight: 500 }}>Incluir portada en el PDF</span>
+                    <span style={{ fontSize: 14, fontWeight: 500 }}>Incluir portada en el PDF</span>
                   </label>
 
                   {coverEnabled && (
@@ -318,19 +318,19 @@ export default function PDFPreviewModal({
                       <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
                         <input type="checkbox" checked={showTagline} onChange={e => setShowTagline(e.target.checked)}
                           style={{ width: 16, height: 16, accentColor: 'var(--accent)', cursor: 'pointer' }} />
-                        <span style={{ fontSize: 13, fontWeight: 500 }}>Mostrar "Propuesta Comercial" en la portada</span>
+                        <span style={{ fontSize: 14, fontWeight: 500 }}>Mostrar "Propuesta Comercial" en la portada</span>
                       </label>
 
                       {/* ── Dark / Light toggle ── */}
                       <div>
-                        <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 7, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Tema de la portada</div>
+                        <div style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 7, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Tema de la portada</div>
                         <div style={{ display: 'flex', gap: 8 }}>
                           {[
                             { key: 'dark',  label: '● Oscura', bg: '#09090B', fg: '#fff' },
                             { key: 'light', label: '○ Clara',  bg: '#F8F8F8', fg: '#111' },
                           ].map(t => (
                             <button key={t.key} onClick={() => setCoverTheme(t.key)} style={{
-                              flex: 1, padding: '8px 0', borderRadius: 8, cursor: 'pointer', fontSize: 12, fontWeight: 600,
+                              flex: 1, padding: '8px 0', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 600,
                               background: t.bg, color: t.fg,
                               border: coverTheme === t.key ? `2px solid ${coverColor1}` : '2px solid var(--border)',
                               transition: 'border-color 0.15s',
@@ -343,7 +343,7 @@ export default function PDFPreviewModal({
 
                       {/* ── Style selector ── */}
                       <div>
-                        <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 7, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Estilo de difuminado</div>
+                        <div style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 7, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Estilo de difuminado</div>
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
                           {Object.entries(COVER_STYLES).map(([key, cfg]) => (
                             <button key={key} onClick={() => setCoverStyle(key)} style={{
@@ -356,7 +356,7 @@ export default function PDFPreviewModal({
                             >
                               <StyleThumb styleKey={key} blobs={cfg.blobs} color1={coverColor1} color2={coverColor2} theme={coverTheme} />
                               <div style={{
-                                fontSize: 10, fontWeight: 600, padding: '4px 0',
+                                fontSize: 11, fontWeight: 600, padding: '4px 0',
                                 background: 'var(--surface-h)', color: 'var(--text2)',
                               }}>{cfg.label}</div>
                             </button>
@@ -366,14 +366,14 @@ export default function PDFPreviewModal({
 
                       {/* ── Colors + presets ── */}
                       <div>
-                        <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 7, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Colores</div>
+                        <div style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 7, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Colores</div>
                         <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
-                          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--text2)', cursor: 'pointer' }}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text2)', cursor: 'pointer' }}>
                             <input type="color" value={coverColor1} onChange={e => setCoverColor1(e.target.value)}
                               style={{ width: 32, height: 32, borderRadius: 6, border: '1px solid var(--border)', cursor: 'pointer' }} />
                             Color 1
                           </label>
-                          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--text2)', cursor: 'pointer' }}>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--text2)', cursor: 'pointer' }}>
                             <input type="color" value={coverColor2} onChange={e => setCoverColor2(e.target.value)}
                               style={{ width: 32, height: 32, borderRadius: 6, border: '1px solid var(--border)', cursor: 'pointer' }} />
                             Color 2
@@ -430,10 +430,10 @@ export default function PDFPreviewModal({
                               {logoUploading ? 'Subiendo...' : 'Subir'}
                             </button>
                           </div>
-                          <p style={{ fontSize: 11, color: 'var(--text3)', marginTop: 5 }}>
+                          <p style={{ fontSize: 12, color: 'var(--text3)', marginTop: 5 }}>
                             Para que se vea mejor, subilo en <strong>PNG sin fondo</strong> (transparente).
                           </p>
-                          {logoUploadErr && <p style={{ fontSize: 11, color: 'var(--danger)', marginTop: 4 }}>{logoUploadErr}</p>}
+                          {logoUploadErr && <p style={{ fontSize: 12, color: 'var(--danger)', marginTop: 4 }}>{logoUploadErr}</p>}
                         </div>
                       </div>
 
@@ -476,10 +476,10 @@ export default function PDFPreviewModal({
                   paddingBottom: 10, borderBottom: `2px solid ${displayColor}`
                 }}>
                   <span style={{ width: 12, height: 12, borderRadius: '50%', background: displayColor, flexShrink: 0 }} />
-                  <span style={{ fontWeight: 700, fontSize: 14, color: displayColor }}>{brand.name}</span>
-                  <span style={{ fontSize: 12, color: 'var(--text3)' }}>{products.length} producto{products.length !== 1 ? 's' : ''}</span>
+                  <span style={{ fontWeight: 700, fontSize: 15, color: displayColor }}>{brand.name}</span>
+                  <span style={{ fontSize: 13, color: 'var(--text3)' }}>{products.length} producto{products.length !== 1 ? 's' : ''}</span>
                   {isUnbranded && (
-                    <label style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto', cursor: 'pointer', fontSize: 12, color: 'var(--text3)' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto', cursor: 'pointer', fontSize: 13, color: 'var(--text3)' }}>
                       Color
                       <input
                         type="color"
@@ -500,12 +500,12 @@ export default function PDFPreviewModal({
                         ? <img src={p.image_url} alt="" style={{ width: '100%', aspectRatio: '1', objectFit: 'contain', marginBottom: 8, borderRadius: 4 }} onError={e => { e.target.style.display = 'none' }} />
                         : <div style={{ width: '100%', aspectRatio: '1', background: '#f0f0f0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#aaa', marginBottom: 8, borderRadius: 4 }}><Icon name="image" size={24} /></div>
                       }
-                      <div style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 6, background: displayColor, color: '#fff', fontSize: 9, fontWeight: 700, marginBottom: 5, fontFamily: 'monospace' }}>
+                      <div style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 6, background: displayColor, color: '#fff', fontSize: 10, fontWeight: 700, marginBottom: 5, fontFamily: 'monospace' }}>
                         {p.sku}
                       </div>
-                      <div style={{ fontSize: 11, fontWeight: 600, lineHeight: 1.3 }}>{p.name}</div>
+                      <div style={{ fontSize: 12, fontWeight: 600, lineHeight: 1.3 }}>{p.name}</div>
                       {prices[p.id]?.amount && (
-                        <div style={{ marginTop: 4, fontSize: 11, color: '#333', fontWeight: 700 }}>
+                        <div style={{ marginTop: 4, fontSize: 12, color: '#333', fontWeight: 700 }}>
                           {prices[p.id].currency} {prices[p.id].amount}
                         </div>
                       )}
@@ -520,31 +520,31 @@ export default function PDFPreviewModal({
           {step === 'pricing' && (
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-                <span style={{ fontSize: 12, color: 'var(--text2)' }}>Moneda global:</span>
+                <span style={{ fontSize: 13, color: 'var(--text2)' }}>Moneda global:</span>
                 {['$', 'USD'].map(cur => (
                   <button key={cur} onClick={() => setAllCurrency(cur)} style={{
-                    padding: '5px 14px', borderRadius: 6, fontSize: 12, cursor: 'pointer', fontWeight: 600,
+                    padding: '5px 14px', borderRadius: 6, fontSize: 13, cursor: 'pointer', fontWeight: 600,
                     border: '1px solid var(--border)', background: 'var(--surface-h)', color: 'var(--text2)',
                   }}>
                     Todo {cur === '$' ? '$ UYU' : 'USD'}
                   </button>
                 ))}
-                <span style={{ fontSize: 11, color: 'var(--text3)', marginLeft: 4 }}>Dejá el precio en blanco para no imprimirlo. Cargamos el precio guardado de cada producto; si lo cambiás acá, vale solo para este catálogo.</span>
+                <span style={{ fontSize: 12, color: 'var(--text3)', marginLeft: 4 }}>Dejá el precio en blanco para no imprimirlo. Cargamos el precio guardado de cada producto; si lo cambiás acá, vale solo para este catálogo.</span>
               </div>
               {brandGroups.map(({ brand, products }) => (
                 <div key={brand.id} style={{ marginBottom: 24 }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: brand.color, letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 10, paddingBottom: 6, borderBottom: `1px solid ${brand.color}44` }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: brand.color, letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 10, paddingBottom: 6, borderBottom: `1px solid ${brand.color}44` }}>
                     {brand.name}
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                     {products.map(p => (
                       <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: 'var(--bg-panel)', borderRadius: 8 }}>
-                        <span style={{ flex: 1, fontSize: 12, color: 'var(--text)' }}>{p.name}</span>
-                        <span style={{ fontSize: 10, color: 'var(--text3)', fontFamily: 'var(--font-mono)' }}>{p.sku}</span>
+                        <span style={{ flex: 1, fontSize: 13, color: 'var(--text)' }}>{p.name}</span>
+                        <span style={{ fontSize: 11, color: 'var(--text3)', fontFamily: 'var(--font-mono)' }}>{p.sku}</span>
                         <select
                           value={prices[p.id]?.currency ?? '$'}
                           onChange={e => setPrice(p.id, 'currency', e.target.value)}
-                          style={{ padding: '5px 8px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text)', fontSize: 12, cursor: 'pointer', outline: 'none' }}>
+                          style={{ padding: '5px 8px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text)', fontSize: 13, cursor: 'pointer', outline: 'none' }}>
                           <option value="$">$ UYU</option>
                           <option value="USD">USD</option>
                         </select>
@@ -553,7 +553,7 @@ export default function PDFPreviewModal({
                           placeholder="Precio"
                           value={prices[p.id]?.amount ?? ''}
                           onChange={e => setPrice(p.id, 'amount', e.target.value)}
-                          style={{ width: 100, padding: '5px 8px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text)', fontSize: 12, outline: 'none', textAlign: 'right' }}
+                          style={{ width: 100, padding: '5px 8px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text)', fontSize: 13, outline: 'none', textAlign: 'right' }}
                         />
                       </div>
                     ))}
@@ -566,10 +566,10 @@ export default function PDFPreviewModal({
           {/* Save dialog */}
           {step === 'saving' && (
             <div style={{ maxWidth: 480, margin: '0 auto', paddingTop: 16 }}>
-              <p style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 20 }}>
+              <p style={{ fontSize: 14, color: 'var(--text2)', marginBottom: 20 }}>
                 {catalogStatus === 'shared' ? 'Este catálogo ya está compartido: al guardar, los cambios se ven enseguida en el link que ya enviaste. No hace falta volver a publicarlo.' : 'Se guarda como borrador: podés volver a abrirlo, cambiar precios y regenerar el PDF. Para que tus clientes lo vean, después usá «Compartir link» en Mis catálogos.'}
               </p>
-              <label style={{ display: 'block', fontSize: 11, color: 'var(--text3)', marginBottom: 6, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+              <label style={{ display: 'block', fontSize: 12, color: 'var(--text3)', marginBottom: 6, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
                 Nombre del catálogo
               </label>
               <input
@@ -580,23 +580,23 @@ export default function PDFPreviewModal({
                 style={{
                   width: '100%', padding: '10px 13px',
                   background: 'var(--bg-panel)', border: '1px solid var(--border)',
-                  borderRadius: 9, color: 'var(--text)', fontSize: 14, outline: 'none',
+                  borderRadius: 9, color: 'var(--text)', fontSize: 15, outline: 'none',
                   marginBottom: saveErr ? 8 : 0,
                 }}
               />
-              {saveErr && <p style={{ fontSize: 12, color: 'var(--danger)', marginTop: 6 }}>{saveErr}</p>}
+              {saveErr && <p style={{ fontSize: 13, color: 'var(--danger)', marginTop: 6 }}>{saveErr}</p>}
 
               <div style={{ display: 'flex', gap: 8, marginTop: 20 }}>
                 <button onClick={() => { setStep('preview'); setSaveErr('') }} style={{
                   flex: 1, padding: '10px', borderRadius: 9, cursor: 'pointer',
-                  background: 'var(--surface-h)', border: '1px solid var(--border)', color: 'var(--text2)', fontSize: 13,
+                  background: 'var(--surface-h)', border: '1px solid var(--border)', color: 'var(--text2)', fontSize: 14,
                 }}>
                   Cancelar
                 </button>
                 <button onClick={handleSave} disabled={saving} style={{
                   flex: 2, padding: '10px', borderRadius: 9, cursor: saving ? 'not-allowed' : 'pointer',
                   background: 'var(--accent)', border: 'none', color: 'var(--accent-text)',
-                  fontWeight: 700, fontSize: 13, opacity: saving ? 0.7 : 1,
+                  fontWeight: 700, fontSize: 14, opacity: saving ? 0.7 : 1,
                 }}>
                   {saving ? 'Guardando...' : catalogId ? (catalogStatus === 'shared' ? 'Guardar cambios' : 'Actualizar borrador') : 'Guardar borrador'}
                 </button>
@@ -611,7 +611,7 @@ export default function PDFPreviewModal({
             padding: '14px 20px', borderTop: '1px solid var(--border)',
             display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0
           }}>
-            <span style={{ fontSize: 12, color: 'var(--text3)' }}>{progress}</span>
+            <span style={{ fontSize: 13, color: 'var(--text3)' }}>{progress}</span>
             <div style={{ display: 'flex', gap: 8 }}>
               <button onClick={onClose} style={secondaryBtn}>Cerrar</button>
 
@@ -638,7 +638,7 @@ export default function PDFPreviewModal({
               <button onClick={handleDownload} disabled={generating} style={{
                 padding: '8px 22px', background: 'var(--accent)', color: 'var(--accent-text)',
                 border: 'none', borderRadius: 7, fontWeight: 700,
-                cursor: generating ? 'not-allowed' : 'pointer', fontSize: 13,
+                cursor: generating ? 'not-allowed' : 'pointer', fontSize: 14,
                 opacity: generating ? 0.7 : 1, transition: 'var(--transition)',
               }}
               onMouseEnter={e => { if (!generating) e.currentTarget.style.transform = 'translateY(-2px)' }}
@@ -657,20 +657,20 @@ export default function PDFPreviewModal({
 const secondaryBtn = {
   padding: '8px 16px', background: 'var(--surface-h)',
   border: '1px solid var(--border)', color: 'var(--text2)',
-  borderRadius: 7, cursor: 'pointer', fontSize: 13,
+  borderRadius: 7, cursor: 'pointer', fontSize: 14,
 }
 
 const labelStyle = {
-  display: 'block', fontSize: 11, color: 'var(--text3)', marginBottom: 5,
+  display: 'block', fontSize: 12, color: 'var(--text3)', marginBottom: 5,
   fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase',
 }
 const inputStyle = {
   width: '100%', padding: '8px 12px',
   background: 'var(--surface)', border: '1px solid var(--border)',
-  borderRadius: 8, color: 'var(--text)', fontSize: 12, outline: 'none',
+  borderRadius: 8, color: 'var(--text)', fontSize: 13, outline: 'none',
 }
 const presetBtn = {
-  padding: '3px 9px', fontSize: 11, fontWeight: 600,
+  padding: '3px 9px', fontSize: 12, fontWeight: 600,
   background: 'var(--surface-h)', border: '1px solid var(--border)',
   borderRadius: 6, color: 'var(--text2)', cursor: 'pointer',
 }

@@ -151,12 +151,12 @@ export default function AdminLayout() {
         <div style={{ padding: '16px 16px 14px', borderBottom: '1px solid var(--border)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
             <PotatoMark size={22} />
-            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.01em' }}>Potato</span>
+            <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.01em' }}>Potato</span>
           </div>
-          <div style={{ fontSize: 10, color: 'var(--text3)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 3 }}>
+          <div style={{ fontSize: 11, color: 'var(--text3)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 3 }}>
             Empresa
           </div>
-          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text2)' }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text2)' }}>
             {company?.name ?? '—'}
           </div>
         </div>
@@ -187,7 +187,7 @@ export default function AdminLayout() {
           </div>
         )}
         <div style={{ padding: '12px 16px', borderTop: '1px solid var(--border)' }}>
-          <NavLink to="/app" style={{ fontSize: 12, color: 'var(--text3)', textDecoration: 'none' }}>
+          <NavLink to="/app" style={{ fontSize: 13, color: 'var(--text3)', textDecoration: 'none' }}>
             ← Volver al catálogo
           </NavLink>
         </div>
@@ -215,7 +215,7 @@ const navLinkStyle = (isActive) => ({
   padding: '9px 10px', textDecoration: 'none', borderRadius: 8,
   color: isActive ? 'var(--accent)' : 'var(--text2)',
   background: isActive ? 'color-mix(in srgb, var(--accent) 10%, transparent)' : 'transparent',
-  fontSize: 13, fontWeight: isActive ? 600 : 400,
+  fontSize: 14, fontWeight: isActive ? 600 : 400,
   transition: 'all 0.15s',
 })
 

@@ -82,13 +82,13 @@ export default function Settings() {
 
   return (
     <div style={{ padding: 28, overflowY: 'auto', flex: 1, maxWidth: 560 }}>
-      <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>Configuración de empresa</h2>
-      <p style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 28 }}>
+      <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 6 }}>Configuración de empresa</h2>
+      <p style={{ fontSize: 14, color: 'var(--text3)', marginBottom: 28 }}>
         Estos datos aparecen en el encabezado del catálogo PDF.
       </p>
 
       {error && (
-        <div style={{ padding: '10px 14px', background: 'rgba(239,68,68,.1)', border: '1px solid rgba(239,68,68,.3)', borderRadius: 8, color: '#ef4444', fontSize: 13, marginBottom: 16 }}>
+        <div style={{ padding: '10px 14px', background: 'rgba(239,68,68,.1)', border: '1px solid rgba(239,68,68,.3)', borderRadius: 8, color: '#ef4444', fontSize: 14, marginBottom: 16 }}>
           {error}
         </div>
       )}
@@ -98,7 +98,7 @@ export default function Settings() {
         {/* Logo */}
         <div>
           <label style={labelStyle}>Logo de empresa</label>
-          <p style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 10 }}>
+          <p style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 10 }}>
             Se muestra en el centro del encabezado del PDF. SVG blanco recomendado.
             Cualquier forma sirve (cuadrado o rectangular) — se adapta solo, sin deformarse.
           </p>
@@ -111,7 +111,7 @@ export default function Settings() {
             }}>
               {form.logo_url
                 ? <img src={form.logo_url} alt="logo" style={{ maxWidth: 110, maxHeight: 40, objectFit: 'contain' }} />
-                : <span style={{ fontSize: 11, color: '#555' }}>Sin logo</span>
+                : <span style={{ fontSize: 12, color: '#555' }}>Sin logo</span>
               }
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -119,7 +119,7 @@ export default function Settings() {
                 {uploading ? 'Subiendo...' : form.logo_url ? 'Cambiar logo' : 'Subir logo'}
               </button>
               {form.logo_url && (
-                <button onClick={() => setForm(f => ({ ...f, logo_url: '' }))} style={{ ...btnSecondary, color: '#ef4444', borderColor: 'rgba(239,68,68,.3)', fontSize: 11 }}>
+                <button onClick={() => setForm(f => ({ ...f, logo_url: '' }))} style={{ ...btnSecondary, color: '#ef4444', borderColor: 'rgba(239,68,68,.3)', fontSize: 12 }}>
                   Quitar logo
                 </button>
               )}
@@ -141,7 +141,7 @@ export default function Settings() {
           <label style={labelStyle}>Sitio web</label>
           <input value={form.website} onChange={e => setForm(f => ({ ...f, website: e.target.value }))}
             style={inputStyle} placeholder="www.tuempresa.com" />
-          <p style={{ fontSize: 11, color: 'var(--text3)', marginTop: 4 }}>
+          <p style={{ fontSize: 12, color: 'var(--text3)', marginTop: 4 }}>
             Aparece en la esquina derecha del encabezado PDF.
           </p>
         </div>
@@ -154,7 +154,7 @@ export default function Settings() {
   )
 }
 
-const labelStyle   = { display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--text2)', marginBottom: 6 }
-const inputStyle   = { width: '100%', padding: '9px 12px', background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: 7, color: 'var(--text)', fontSize: 13, outline: 'none', boxSizing: 'border-box' }
-const btnPrimary   = { padding: '10px 22px', background: 'var(--accent)', color: 'var(--accent-text)', border: 'none', borderRadius: 7, fontWeight: 700, fontSize: 13, cursor: 'pointer', alignSelf: 'flex-start' }
-const btnSecondary = { padding: '7px 14px', background: 'var(--surface-h)', color: 'var(--text2)', border: '1px solid var(--border)', borderRadius: 7, fontSize: 12, cursor: 'pointer' }
+const labelStyle   = { display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text2)', marginBottom: 6 }
+const inputStyle   = { width: '100%', padding: '9px 12px', background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: 7, color: 'var(--text)', fontSize: 14, outline: 'none', boxSizing: 'border-box' }
+const btnPrimary   = { padding: '10px 22px', background: 'var(--accent)', color: 'var(--accent-text)', border: 'none', borderRadius: 7, fontWeight: 700, fontSize: 14, cursor: 'pointer', alignSelf: 'flex-start' }
+const btnSecondary = { padding: '7px 14px', background: 'var(--surface-h)', color: 'var(--text2)', border: '1px solid var(--border)', borderRadius: 7, fontSize: 13, cursor: 'pointer' }

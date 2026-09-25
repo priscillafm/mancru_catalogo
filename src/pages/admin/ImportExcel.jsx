@@ -291,30 +291,30 @@ export default function ImportExcel() {
 
   return (
     <div style={{ padding: 28, overflowY: 'auto', flex: 1 }}>
-      <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 6 }}>Importar productos desde Excel</h2>
-      <p style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 6 }}>
+      <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 6 }}>Importar productos desde Excel</h2>
+      <p style={{ fontSize: 14, color: 'var(--text2)', marginBottom: 6 }}>
         Usá esto para la <strong>carga inicial</strong> de tu catálogo. Subí tu lista en formato .xlsx con la primera fila como encabezado.
       </p>
-      <p style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 10 }}>
+      <p style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 10 }}>
         Columnas detectadas automáticamente por su encabezado: <strong>SKU</strong>, <strong>Nombre</strong>, <strong>Stock</strong>, <strong>Precio</strong> (opcional), <strong>Marca</strong> (opcional) e <strong>imagen_url</strong> (opcional).
       </p>
-      <p style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 16 }}>
+      <p style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 16 }}>
         ¿Ya tenés productos cargados y solo querés actualizar stock o precios? Usá{' '}
         <strong>Sincronizar</strong> en su lugar — compara tu Excel contra lo que ya está guardado antes de aplicar cambios.
       </p>
-      <p style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 10, lineHeight: 1.6 }}>
+      <p style={{ fontSize: 13, color: 'var(--text3)', marginBottom: 10, lineHeight: 1.6 }}>
         <strong>Fotos:</strong> agregá una columna <code>imagen_url</code> con el link completo de cada foto (empieza con https://, por ejemplo https://tusitio.com/fotos/abc-001.jpg) y se vincula al SKU. También podés subirlas una por una desde Productos. Antes de importar vas a ver una muestra de las filas, cuántas fotos se vinculan y cuáles filas se omiten (podés descargar el detalle en CSV).
       </p>
       <button onClick={downloadTemplate} style={{
         display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px',
         background: 'var(--surface-h)', border: '1px solid var(--border)', borderRadius: 8,
-        color: 'var(--text2)', fontSize: 12, fontWeight: 600, cursor: 'pointer', marginBottom: 24,
+        color: 'var(--text2)', fontSize: 13, fontWeight: 600, cursor: 'pointer', marginBottom: 24,
       }}>
         ↓ Descargar plantilla de ejemplo (.xlsx)
       </button>
 
       {error && (
-        <div style={{ padding: '10px 14px', background: 'rgba(239,68,68,.1)', border: '1px solid rgba(239,68,68,.3)', borderRadius: 8, color: '#ef4444', fontSize: 13, marginBottom: 16 }}>
+        <div style={{ padding: '10px 14px', background: 'rgba(239,68,68,.1)', border: '1px solid rgba(239,68,68,.3)', borderRadius: 8, color: '#ef4444', fontSize: 14, marginBottom: 16 }}>
           {error}
         </div>
       )}
@@ -328,15 +328,15 @@ export default function ImportExcel() {
           onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border)'}
         >
           <div style={{ color: 'var(--text3)', marginBottom: 12, display: 'flex', justifyContent: 'center' }}><Icon name="import" size={36} /></div>
-          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>Seleccioná tu archivo Excel</div>
-          <div style={{ fontSize: 12, color: 'var(--text3)' }}>Formatos: .xlsx · .xls</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)', marginBottom: 6 }}>Seleccioná tu archivo Excel</div>
+          <div style={{ fontSize: 13, color: 'var(--text3)' }}>Formatos: .xlsx · .xls</div>
           <input ref={fileRef} type="file" accept=".xlsx,.xls" style={{ display: 'none' }} onChange={handleFile} />
         </div>
       )}
 
       {step === 'parsing' && (
         <div style={{ textAlign: 'center', padding: 48, color: 'var(--text2)' }}>
-          <div style={{ fontSize: 28, marginBottom: 12 }}>⏳</div>
+          <div style={{ fontSize: 29, marginBottom: 12 }}>⏳</div>
           Leyendo archivo...
         </div>
       )}
@@ -349,7 +349,7 @@ export default function ImportExcel() {
             <Stat label="Sin marca" value={summary.byBrand.find(([b]) => b === '(sin marca)')?.[1] ?? 0} color="#f97316" />
           </div>
 
-          <div style={{ fontSize: 12, color: 'var(--text2)', marginBottom: 14, lineHeight: 1.8 }}>
+          <div style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 14, lineHeight: 1.8 }}>
             {[['SKU', 'sku'], ['Nombre', 'name'], ['Stock', 'stock'], ['Precio', 'price'], ['Marca', 'brand'], ['Imagen', 'image']].map(([label, k]) => (
               <span key={k} style={{ marginRight: 16, whiteSpace: 'nowrap' }}>
                 <strong>{label}</strong> → {summary.mapping[k] ? '«' + summary.mapping[k] + '»' : <span style={{ color: 'var(--text3)' }}>no detectada</span>}
@@ -358,48 +358,48 @@ export default function ImportExcel() {
           </div>
 
           {(!summary.found.sku || !summary.found.name) && (
-            <div style={{ padding: '10px 14px', background: 'rgba(239,68,68,.1)', border: '1px solid rgba(239,68,68,.3)', borderRadius: 8, fontSize: 13, color: '#ef4444', marginBottom: 14 }}>
+            <div style={{ padding: '10px 14px', background: 'rgba(239,68,68,.1)', border: '1px solid rgba(239,68,68,.3)', borderRadius: 8, fontSize: 14, color: '#ef4444', marginBottom: 14 }}>
               No encontramos por encabezado la columna de {!summary.found.sku ? 'SKU' : 'Nombre'}, así que usamos una posición por defecto. Revisá la muestra de abajo antes de importar; si está mal, corregí los encabezados del Excel (SKU, Nombre) o descargá la plantilla.
             </div>
           )}
           {!summary.found.price && (
-            <div style={{ padding: '8px 14px', background: 'var(--surface-h)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12, color: 'var(--text2)', marginBottom: 14 }}>
+            <div style={{ padding: '8px 14px', background: 'var(--surface-h)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 13, color: 'var(--text2)', marginBottom: 14 }}>
               No detectamos una columna de Precio: los productos se van a importar sin precio.
             </div>
           )}
           {summary.found.image && (
-            <div style={{ padding: '8px 14px', background: 'var(--surface-h)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12, color: 'var(--text2)', marginBottom: 14 }}>
+            <div style={{ padding: '8px 14px', background: 'var(--surface-h)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 13, color: 'var(--text2)', marginBottom: 14 }}>
               {summary.withImage} de {plural(summary.total, 'producto')} con foto vinculada{summary.badImages > 0 ? '; ' + plural(summary.badImages, 'URL de imagen no es válida', 'URLs de imagen no son válidas') + ' (deben empezar con http:// o https://) y se ignoran' : ''}.
             </div>
           )}
           {summary.duplicates > 0 && (
-            <div style={{ padding: '8px 14px', background: 'rgba(249,115,22,.1)', border: '1px solid rgba(249,115,22,.3)', borderRadius: 8, fontSize: 12, color: '#f97316', marginBottom: 14 }}>
+            <div style={{ padding: '8px 14px', background: 'rgba(249,115,22,.1)', border: '1px solid rgba(249,115,22,.3)', borderRadius: 8, fontSize: 13, color: '#f97316', marginBottom: 14 }}>
               {plural(summary.duplicates, 'fila repite', 'filas repiten')} un SKU que ya estaba en el archivo; se usa la última.
             </div>
           )}
           {summary.skipped.length > 0 && (
-            <div style={{ padding: '8px 14px', background: 'rgba(249,115,22,.1)', border: '1px solid rgba(249,115,22,.3)', borderRadius: 8, fontSize: 12, color: '#f97316', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+            <div style={{ padding: '8px 14px', background: 'rgba(249,115,22,.1)', border: '1px solid rgba(249,115,22,.3)', borderRadius: 8, fontSize: 13, color: '#f97316', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
               <span>{plural(summary.skipped.length, 'fila se omite', 'filas se omiten')} por datos incompletos (por ejemplo, fila {summary.skipped[0].row}: {summary.skipped[0].reason.toLowerCase()}).</span>
-              <button onClick={() => downloadSkipped(summary.skipped)} style={{ ...btnSecondary, padding: '4px 10px', fontSize: 11 }}>Descargar detalle (.csv)</button>
+              <button onClick={() => downloadSkipped(summary.skipped)} style={{ ...btnSecondary, padding: '4px 10px', fontSize: 12 }}>Descargar detalle (.csv)</button>
             </div>
           )}
 
           {summary.total === 0 && (
-            <div style={{ padding: '10px 14px', background: 'rgba(239,68,68,.1)', border: '1px solid rgba(239,68,68,.3)', borderRadius: 8, fontSize: 13, color: '#ef4444', marginBottom: 14 }}>
+            <div style={{ padding: '10px 14px', background: 'rgba(239,68,68,.1)', border: '1px solid rgba(239,68,68,.3)', borderRadius: 8, fontSize: 14, color: '#ef4444', marginBottom: 14 }}>
               No encontramos productos válidos en el archivo. Cada fila necesita al menos SKU y nombre.
             </div>
           )}
 
           {summary.sample.length > 0 && (
             <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden', marginBottom: 20 }}>
-              <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', fontSize: 12, fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.05em' }}>
+              <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', fontSize: 13, fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.05em' }}>
                 Muestra ({summary.sample.length} de {summary.total})
               </div>
               <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                   <thead>
                     <tr>{['SKU', 'Nombre', 'Marca', 'Precio', 'Stock', 'Foto'].map(h => (
-                      <th key={h} style={{ padding: '8px 14px', textAlign: 'left', fontSize: 10, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.5px', borderBottom: '1px solid var(--border)' }}>{h}</th>
+                      <th key={h} style={{ padding: '8px 14px', textAlign: 'left', fontSize: 11, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.5px', borderBottom: '1px solid var(--border)' }}>{h}</th>
                     ))}</tr>
                   </thead>
                   <tbody>
@@ -420,13 +420,13 @@ export default function ImportExcel() {
           )}
 
           {limits.max_products !== null && newCount > remaining && (
-            <div style={{ padding: '10px 14px', background: 'rgba(249,115,22,.1)', border: '1px solid rgba(249,115,22,.3)', borderRadius: 8, fontSize: 13, color: '#f97316', marginBottom: 16 }}>
+            <div style={{ padding: '10px 14px', background: 'rgba(249,115,22,.1)', border: '1px solid rgba(249,115,22,.3)', borderRadius: 8, fontSize: 14, color: '#f97316', marginBottom: 16 }}>
               <span style={{ display: 'inline-flex', verticalAlign: 'middle', marginRight: 6 }}><Icon name="alert" size={14} /></span>Tu plan permite {plural(limits.max_products, 'producto')} y ya tenés {usage.products}: si son todos nuevos, solo se importarán {remaining} de los {newCount}.
             </div>
           )}
 
           <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden', marginBottom: 20 }}>
-            <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', fontSize: 12, fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.05em' }}>
+            <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', fontSize: 13, fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.05em' }}>
               Resumen por marca
             </div>
             <div style={{ maxHeight: 300, overflowY: 'auto' }}>
@@ -436,10 +436,10 @@ export default function ImportExcel() {
                   padding: '9px 16px', borderBottom: '1px solid var(--border)',
                   opacity: brand === '(sin marca)' ? 0.5 : 1,
                 }}>
-                  <span style={{ fontSize: 13 }}>
+                  <span style={{ fontSize: 14 }}>
                     {brand === '(sin marca)' ? 'Sin marca' : brand}
                   </span>
-                  <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text2)' }}>{count}</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text2)' }}>{count}</span>
                 </div>
               ))}
             </div>
@@ -458,7 +458,7 @@ export default function ImportExcel() {
         <div>
           <div style={{
             background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12,
-            padding: 16, fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--text2)',
+            padding: 16, fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--text2)',
             maxHeight: 400, overflowY: 'auto', lineHeight: 1.8,
           }}>
             {log.map((l, i) => <div key={i}>{l}</div>)}
@@ -478,11 +478,11 @@ export default function ImportExcel() {
 function Stat({ label, value, color }) {
   return (
     <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 10, padding: '12px 16px', minWidth: 100 }}>
-      <div style={{ fontSize: 11, color: 'var(--text3)', marginBottom: 4, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.05em' }}>{label}</div>
-      <div style={{ fontSize: 24, fontWeight: 800, color }}>{value}</div>
+      <div style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 4, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '.05em' }}>{label}</div>
+      <div style={{ fontSize: 25, fontWeight: 800, color }}>{value}</div>
     </div>
   )
 }
 
-const btnPrimary   = { padding: '9px 22px', background: 'var(--accent)', color: 'var(--accent-text)', border: 'none', borderRadius: 7, fontWeight: 700, cursor: 'pointer', fontSize: 13 }
-const btnSecondary = { padding: '9px 16px', background: 'var(--surface-h)', color: 'var(--text2)', border: '1px solid var(--border)', borderRadius: 7, fontSize: 13, cursor: 'pointer' }
+const btnPrimary   = { padding: '9px 22px', background: 'var(--accent)', color: 'var(--accent-text)', border: 'none', borderRadius: 7, fontWeight: 700, cursor: 'pointer', fontSize: 14 }
+const btnSecondary = { padding: '9px 16px', background: 'var(--surface-h)', color: 'var(--text2)', border: '1px solid var(--border)', borderRadius: 7, fontSize: 14, cursor: 'pointer' }

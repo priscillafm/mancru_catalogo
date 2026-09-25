@@ -151,7 +151,7 @@ export default function CatalogPage() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
               <PotatoMark size={20} />
-              <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.01em' }}>Potato</span>
+              <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.01em' }}>Potato</span>
             </div>
             <button
               onClick={toggleTheme}
@@ -160,7 +160,7 @@ export default function CatalogPage() {
                 display: 'flex', alignItems: 'center', gap: 5,
                 padding: '4px 9px', borderRadius: 20,
                 background: 'var(--surface-h)', border: '1px solid var(--border)',
-                color: 'var(--text3)', fontSize: 11, cursor: 'pointer',
+                color: 'var(--text3)', fontSize: 12, cursor: 'pointer',
                 letterSpacing: '0.02em', fontWeight: 500,
               }}
             >
@@ -168,10 +168,10 @@ export default function CatalogPage() {
             </button>
           </div>
           {/* Company + page title */}
-          <div style={{ fontSize: 10, color: 'var(--text3)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 3 }}>
+          <div style={{ fontSize: 11, color: 'var(--text3)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 3 }}>
             {membership?.companies?.name ?? '—'}
           </div>
-          <h1 style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.3px' }}>Catálogos</h1>
+          <h1 style={{ fontSize: 16, fontWeight: 700, letterSpacing: '-0.3px' }}>Catálogos</h1>
         </div>
 
         {/* Brand list */}
@@ -193,10 +193,10 @@ export default function CatalogPage() {
                   boxShadow: isActive ? `0 0 8px ${brand.color}88` : 'none',
                   transition: 'box-shadow 0.2s',
                 }} />
-                <span style={{ fontSize: 13, fontWeight: isActive ? 600 : 400, flex: 1 }}>{brand.name}</span>
+                <span style={{ fontSize: 14, fontWeight: isActive ? 600 : 400, flex: 1 }}>{brand.name}</span>
                 {count > 0 && (
                   <span style={{
-                    fontSize: 10, fontWeight: 700, padding: '1px 7px', borderRadius: 999,
+                    fontSize: 11, fontWeight: 700, padding: '1px 7px', borderRadius: 999,
                     background: brand.color, color: '#000', flexShrink: 0,
                     animation: 'popIn 0.2s ease',
                   }}>{count}</span>
@@ -248,7 +248,7 @@ export default function CatalogPage() {
 
             {activeBrand && (
               <span style={{
-                fontSize: isMobile ? 15 : 14, fontWeight: 700, color: activeBrand.color,
+                fontSize: isMobile ? 15 : 15, fontWeight: 700, color: activeBrand.color,
                 letterSpacing: '-0.3px', flexShrink: 0,
               }}>
                 {activeBrand.name}
@@ -256,7 +256,7 @@ export default function CatalogPage() {
             )}
 
             <div style={{ position: 'relative', flex: 1 }}>
-              <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text3)', fontSize: 13 }}>⌕</span>
+              <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text3)', fontSize: 14 }}>⌕</span>
               <input
                 type="text" placeholder="Buscar..."
                 value={search} onChange={e => setSearch(e.target.value)}
@@ -264,7 +264,7 @@ export default function CatalogPage() {
                 style={{
                   width: '100%', padding: isMobile ? '9px 12px 9px 30px' : '7px 12px 7px 28px',
                   background: 'var(--surface)', border: '1px solid var(--border)',
-                  borderRadius: 8, color: 'var(--text)', fontSize: 14, outline: 'none',
+                  borderRadius: 8, color: 'var(--text)', fontSize: 15, outline: 'none',
                   boxSizing: 'border-box',
                 }}
               />
@@ -275,7 +275,7 @@ export default function CatalogPage() {
                 style={{
                   padding: '7px 10px', background: 'var(--surface)',
                   border: '1px solid var(--border)', borderRadius: 8,
-                  color: 'var(--text)', fontSize: 13, outline: 'none', cursor: 'pointer',
+                  color: 'var(--text)', fontSize: 14, outline: 'none', cursor: 'pointer',
                 }}>
                 <option value="">Todas las categorías</option>
                 {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -459,7 +459,7 @@ function CatalogInstructions({ isMobile }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: isMobile ? 'flex-start' : 'center', height: '100%', minHeight: 240, padding: isMobile ? '24px 4px 0' : '0 48px' }}>
       <div style={{ maxWidth: 480, width: '100%' }}>
-        <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: isMobile ? 16 : 20 }}>
+        <p style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: isMobile ? 16 : 20 }}>
           {isMobile ? 'Tocá una marca para empezar' : 'Cómo armar tu catálogo'}
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -469,11 +469,11 @@ function CatalogInstructions({ isMobile }) {
                 width: 26, height: 26, borderRadius: '50%', flexShrink: 0,
                 background: 'var(--accent)', color: 'var(--accent-text)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 11, fontWeight: 700,
+                fontSize: 12, fontWeight: 700,
               }}>{s.n}</div>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)', marginBottom: 2 }}>{s.title}</div>
-                <div style={{ fontSize: 12, color: 'var(--text3)', lineHeight: 1.5 }}>{s.desc}</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)', marginBottom: 2 }}>{s.title}</div>
+                <div style={{ fontSize: 13, color: 'var(--text3)', lineHeight: 1.5 }}>{s.desc}</div>
               </div>
             </div>
           ))}
@@ -489,7 +489,7 @@ function EmptyState({ icon, message, sub }) {
       <div style={{ textAlign: 'center', color: 'var(--text3)' }}>
         <div style={{ fontSize: 32, marginBottom: 12, opacity: 0.3, fontWeight: 200 }}>{icon}</div>
         <p style={{ fontWeight: 600, color: 'var(--text2)', margin: 0 }}>{message}</p>
-        {sub && <p style={{ fontSize: 12, marginTop: 4, margin: '4px 0 0' }}>{sub}</p>}
+        {sub && <p style={{ fontSize: 13, marginTop: 4, margin: '4px 0 0' }}>{sub}</p>}
       </div>
     </div>
   )
@@ -498,13 +498,13 @@ function EmptyState({ icon, message, sub }) {
 const sideBtn = {
   padding: '6px 12px', background: 'var(--surface)',
   border: '1px solid var(--border)', color: 'var(--text2)',
-  borderRadius: 7, fontSize: 11, cursor: 'pointer',
+  borderRadius: 7, fontSize: 12, cursor: 'pointer',
   transition: 'all 0.15s',
 }
 
 const toolBtn = {
   padding: '7px 12px', background: 'var(--surface)',
   border: '1px solid var(--border)', color: 'var(--text2)',
-  borderRadius: 8, fontSize: 12, cursor: 'pointer', flexShrink: 0,
+  borderRadius: 8, fontSize: 13, cursor: 'pointer', flexShrink: 0,
   transition: 'all 0.15s',
 }

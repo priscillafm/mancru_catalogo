@@ -48,8 +48,8 @@ export default function SuperAdmin() {
   return (
     <div style={{ padding: 28, overflowY: 'auto', flex: 1 }}>
       <div style={{ marginBottom: 20 }}>
-        <h2 style={{ fontSize: 18, fontWeight: 700 }}>Superadministración</h2>
-        <p style={{ fontSize: 13, color: 'var(--text3)', marginTop: 3 }}>
+        <h2 style={{ fontSize: 19, fontWeight: 700 }}>Superadministración</h2>
+        <p style={{ fontSize: 14, color: 'var(--text3)', marginTop: 3 }}>
           Cómo se usa Potato en general. Solo ves cantidades y nombres de empresa: no los mails, productos ni precios de tus clientes.
         </p>
       </div>
@@ -58,20 +58,20 @@ export default function SuperAdmin() {
         {TABS.map(t => (
           <button key={t.key} onClick={() => setTab(t.key)} style={{
             padding: '9px 16px', background: 'none', border: 'none', cursor: 'pointer',
-            fontSize: 13, fontWeight: 600, color: tab === t.key ? 'var(--text)' : 'var(--text3)',
+            fontSize: 14, fontWeight: 600, color: tab === t.key ? 'var(--text)' : 'var(--text3)',
             borderBottom: `2px solid ${tab === t.key ? 'var(--accent)' : 'transparent'}`, marginBottom: -1,
             display: 'flex', alignItems: 'center', gap: 6,
           }}>
             {t.label}
             {t.key === 'soporte' && newSupport > 0 && (
-              <span style={{ background: 'var(--danger)', color: '#fff', borderRadius: 999, fontSize: 10, fontWeight: 700, padding: '1px 7px' }}>{newSupport}</span>
+              <span style={{ background: 'var(--danger)', color: '#fff', borderRadius: 999, fontSize: 11, fontWeight: 700, padding: '1px 7px' }}>{newSupport}</span>
             )}
           </button>
         ))}
       </div>
 
       {error && (
-        <div style={{ padding: '10px 14px', background: 'rgba(239,68,68,.1)', border: '1px solid rgba(239,68,68,.3)', borderRadius: 8, color: '#ef4444', fontSize: 13, marginBottom: 16 }}>
+        <div style={{ padding: '10px 14px', background: 'rgba(239,68,68,.1)', border: '1px solid rgba(239,68,68,.3)', borderRadius: 8, color: '#ef4444', fontSize: 14, marginBottom: 16 }}>
           No pudimos cargar los datos: {error.message}
         </div>
       )}
@@ -136,9 +136,9 @@ function Overview({ companies, support }) {
           { label: 'Consultas sin responder', value: unanswered, alert: unanswered > 0 },
         ].map(s => (
           <div key={s.label} style={{ background: 'var(--surface)', border: '1px solid ' + (s.alert ? 'var(--danger)' : 'var(--border)'), borderRadius: 12, padding: '14px 16px' }}>
-            <div style={{ fontSize: 11, color: 'var(--text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>{s.label}</div>
-            <div style={{ fontSize: 26, fontWeight: 700 }}>{s.value}</div>
-            {s.sub && <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 2 }}>{s.sub}</div>}
+            <div style={{ fontSize: 12, color: 'var(--text3)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>{s.label}</div>
+            <div style={{ fontSize: 27, fontWeight: 700 }}>{s.value}</div>
+            {s.sub && <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>{s.sub}</div>}
           </div>
         ))}
       </div>
@@ -147,7 +147,7 @@ function Overview({ companies, support }) {
       <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: '16px 18px', marginBottom: 24 }}>
         {funnel.map(step => (
           <div key={step.label} style={{ marginBottom: 10 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 4 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 4 }}>
               <span style={{ color: 'var(--text2)' }}>{step.label}</span>
               <span style={{ fontWeight: 700 }}>{step.n}</span>
             </div>
@@ -160,15 +160,15 @@ function Overview({ companies, support }) {
 
       <h3 style={sectionTitle}>Oportunidades de mejora</h3>
       {insights.length === 0 ? (
-        <p style={{ fontSize: 13, color: 'var(--text3)' }}>Por ahora no hay nada para señalar. Cuando se registren más empresas, acá vas a ver dónde se traba la gente.</p>
+        <p style={{ fontSize: 14, color: 'var(--text3)' }}>Por ahora no hay nada para señalar. Cuando se registren más empresas, acá vas a ver dónde se traba la gente.</p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {insights.map(i => (
             <div key={i.text} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: '12px 16px', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
               <span style={{ color: '#f97316', display: 'flex', marginTop: 2 }}><Icon name="alert" size={16} /></span>
               <div>
-                <div style={{ fontSize: 13, fontWeight: 600 }}>{plural(i.list.length, 'empresa')}: {i.text}</div>
-                <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 3 }}>{names(i.list)}. {i.hint}</div>
+                <div style={{ fontSize: 14, fontWeight: 600 }}>{plural(i.list.length, 'empresa')}: {i.text}</div>
+                <div style={{ fontSize: 13, color: 'var(--text3)', marginTop: 3 }}>{names(i.list)}. {i.hint}</div>
               </div>
             </div>
           ))}
@@ -202,7 +202,7 @@ function Companies({ companies, onChanged }) {
   return (
     <>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-        <p style={{ fontSize: 13, color: 'var(--text3)' }}>{plural(companies.length, 'empresa')} en Potato</p>
+        <p style={{ fontSize: 14, color: 'var(--text3)' }}>{plural(companies.length, 'empresa')} en Potato</p>
         <button onClick={() => setShowNew(true)} style={primaryBtn}>+ Nueva empresa</button>
       </div>
 
@@ -212,21 +212,21 @@ function Companies({ companies, onChanged }) {
           return (
             <div key={c.company_id} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
               <div style={{ flex: 1, minWidth: 240 }}>
-                <div style={{ fontWeight: 700, fontSize: 14 }}>{c.company_name}</div>
-                <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 4, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                <div style={{ fontWeight: 700, fontSize: 15 }}>{c.company_name}</div>
+                <div style={{ fontSize: 13, color: 'var(--text3)', marginTop: 4, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                   <span>{plural(c.users_count, 'usuario')}</span>
                   <span>{plural(c.products_count, 'producto')} ({c.products_with_image} con foto, {c.products_with_price} con precio)</span>
                   <span>{plural(c.catalogs_count, 'catálogo')} ({c.shared_catalogs} compartidos)</span>
                   <span>{plural(c.views_30d, 'visita')} · {plural(c.orders_30d, 'pedido')} (30 días)</span>
                 </div>
-                <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 4, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+                <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 4, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
                   <span style={{ color: c.has_whatsapp ? '#22c55e' : '#f97316' }}>{c.has_whatsapp ? 'WhatsApp configurado' : 'Sin WhatsApp'}</span>
                   <span>Alta: {fmtDate(c.created_at)}</span>
                   <span>Última actividad: {fmtDate(c.last_activity)}</span>
                 </div>
               </div>
               <select value={c.plan ?? 'free'} onChange={e => changePlan(c.company_id, e.target.value)} style={{
-                padding: '5px 10px', borderRadius: 7, fontSize: 12, fontWeight: 700,
+                padding: '5px 10px', borderRadius: 7, fontSize: 13, fontWeight: 700,
                 border: '1px solid ' + plan.color + '44', background: plan.color + '11', color: plan.color, cursor: 'pointer', outline: 'none',
               }}>
                 {Object.entries(PLANS).map(([key, p]) => <option key={key} value={key}>{p.label}</option>)}
@@ -240,7 +240,7 @@ function Companies({ companies, onChanged }) {
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           onClick={e => { if (e.target === e.currentTarget) setShowNew(false) }}>
           <div style={{ background: 'var(--surface)', borderRadius: 16, padding: 28, width: '100%', maxWidth: 400, border: '1px solid var(--border)' }}>
-            <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 20 }}>Nueva empresa</h3>
+            <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 20 }}>Nueva empresa</h3>
             <label style={labelStyle}>Nombre de la empresa</label>
             <input autoFocus value={newName} onChange={e => setNewName(e.target.value)} placeholder="Ej: Distribuidora García" style={inputStyle} />
             <label style={{ ...labelStyle, marginTop: 14 }}>Plan</label>
@@ -277,7 +277,7 @@ function Support({ support, onChanged }) {
       <div style={{ display: 'flex', gap: 6, marginBottom: 16, flexWrap: 'wrap' }}>
         {[['new', 'Nuevas'], ['answered', 'Respondidas'], ['archived', 'Archivadas'], ['all', 'Todas']].map(([key, label]) => (
           <button key={key} onClick={() => setFilter(key)} style={{
-            padding: '6px 14px', borderRadius: 999, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+            padding: '6px 14px', borderRadius: 999, fontSize: 13, fontWeight: 600, cursor: 'pointer',
             border: '1px solid ' + (filter === key ? 'var(--accent)' : 'var(--border)'),
             background: filter === key ? 'var(--accent)' : 'var(--surface)',
             color: filter === key ? 'var(--accent-text)' : 'var(--text2)',
@@ -288,19 +288,19 @@ function Support({ support, onChanged }) {
       </div>
 
       {visible.length === 0 ? (
-        <p style={{ fontSize: 13, color: 'var(--text3)' }}>No hay consultas en esta lista. Las que llegan por el formulario de contacto aparecen acá y también te llegan por mail.</p>
+        <p style={{ fontSize: 14, color: 'var(--text3)' }}>No hay consultas en esta lista. Las que llegan por el formulario de contacto aparecen acá y también te llegan por mail.</p>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {visible.map(m => (
             <div key={m.id} style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: '14px 18px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 6 }}>
                 <div>
-                  <span style={{ fontWeight: 700, fontSize: 14 }}>{m.name}</span>
-                  <span style={{ fontSize: 12, color: 'var(--text3)', marginLeft: 8 }}>{m.email}{m.company ? ' · ' + m.company : ''}{m.plan ? ' · interés: ' + m.plan : ''}</span>
+                  <span style={{ fontWeight: 700, fontSize: 15 }}>{m.name}</span>
+                  <span style={{ fontSize: 13, color: 'var(--text3)', marginLeft: 8 }}>{m.email}{m.company ? ' · ' + m.company : ''}{m.plan ? ' · interés: ' + m.plan : ''}</span>
                 </div>
-                <div style={{ fontSize: 11, color: 'var(--text3)' }}>{STATUS_LABEL[m.status]} · {fmtDate(m.created_at)}</div>
+                <div style={{ fontSize: 12, color: 'var(--text3)' }}>{STATUS_LABEL[m.status]} · {fmtDate(m.created_at)}</div>
               </div>
-              <p style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.6, whiteSpace: 'pre-wrap', marginBottom: 12 }}>{m.message}</p>
+              <p style={{ fontSize: 14, color: 'var(--text2)', lineHeight: 1.6, whiteSpace: 'pre-wrap', marginBottom: 12 }}>{m.message}</p>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 <a href={'mailto:' + m.email + '?subject=' + encodeURIComponent('Re: tu consulta en Potato')} style={{ ...secondaryBtn, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                   <Icon name="mail" size={13} /> Responder por email
@@ -317,21 +317,21 @@ function Support({ support, onChanged }) {
   )
 }
 
-const sectionTitle = { fontSize: 13, fontWeight: 700, marginBottom: 10 }
+const sectionTitle = { fontSize: 14, fontWeight: 700, marginBottom: 10 }
 const labelStyle = {
-  display: 'block', fontSize: 11, color: 'var(--text3)', marginBottom: 6,
+  display: 'block', fontSize: 12, color: 'var(--text3)', marginBottom: 6,
   fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase',
 }
 const inputStyle = {
   width: '100%', padding: '10px 13px', background: 'var(--bg-panel)',
   border: '1px solid var(--border)', borderRadius: 9,
-  color: 'var(--text)', fontSize: 14, outline: 'none', boxSizing: 'border-box',
+  color: 'var(--text)', fontSize: 15, outline: 'none', boxSizing: 'border-box',
 }
 const primaryBtn = {
   padding: '9px 18px', background: 'var(--accent)', color: 'var(--accent-text)',
-  border: 'none', borderRadius: 9, fontWeight: 700, fontSize: 13, cursor: 'pointer',
+  border: 'none', borderRadius: 9, fontWeight: 700, fontSize: 14, cursor: 'pointer',
 }
 const secondaryBtn = {
   padding: '7px 14px', background: 'var(--surface-h)', color: 'var(--text2)',
-  border: '1px solid var(--border)', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer',
+  border: '1px solid var(--border)', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer',
 }

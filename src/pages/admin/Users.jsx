@@ -125,12 +125,12 @@ export default function Users() {
   return (
     <div style={{ padding: 28, overflowY: 'auto', flex: 1 }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
-        <h2 style={{ fontSize: 18, fontWeight: 700 }}>Usuarios</h2>
-        <span style={{ fontSize: 12, color: 'var(--text3)' }}>
+        <h2 style={{ fontSize: 19, fontWeight: 700 }}>Usuarios</h2>
+        <span style={{ fontSize: 13, color: 'var(--text3)' }}>
           {usage.users}/{limits.max_users === null ? '∞' : limits.max_users} usuario{limits.max_users === 1 ? '' : 's'}
         </span>
       </div>
-      <p style={{ color: 'var(--text2)', fontSize: 13, marginBottom: 24 }}>
+      <p style={{ color: 'var(--text2)', fontSize: 14, marginBottom: 24 }}>
         Sumá personas a tu equipo: escribís su email, elegís una contraseña inicial y su rol, y después le pasás esos datos a la persona (no le llega ningún mail). Puede cambiar la contraseña desde su perfil.
       </p>
 
@@ -140,9 +140,9 @@ export default function Users() {
         borderRadius: 12, padding: 20, marginBottom: 28,
         opacity: canAddUser ? 1 : 0.6,
       }}>
-        <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 4 }}>Crear usuario</h3>
+        <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>Crear usuario</h3>
         {!canAddUser && (
-          <p style={{ fontSize: 12, color: '#f97316', marginBottom: 12 }}>
+          <p style={{ fontSize: 13, color: '#f97316', marginBottom: 12 }}>
             <span style={{ display: 'inline-flex', verticalAlign: 'middle', marginRight: 6 }}><Icon name="alert" size={14} /></span>Alcanzaste el límite de {limits.max_users} usuario{limits.max_users !== 1 ? 's' : ''} de tu plan.{' '}
             <Link to="/pricing" style={{ color: 'var(--accent)', textDecoration: 'none' }}>Actualizar plan →</Link>
           </p>
@@ -150,7 +150,7 @@ export default function Users() {
         <fieldset disabled={!canAddUser} style={{ border: 'none', padding: 0, margin: 0, minWidth: 0 }}>
         <form onSubmit={e => { if (!canAddUser) { e.preventDefault(); return }; handleInvite(e) }} style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end' }}>
           <div style={{ flex: 1, minWidth: 200 }}>
-            <label style={{ fontSize: 11, color: 'var(--text3)', display: 'block', marginBottom: 5 }}>EMAIL</label>
+            <label style={{ fontSize: 12, color: 'var(--text3)', display: 'block', marginBottom: 5 }}>EMAIL</label>
             <input
               type="email" value={newEmail}
               onChange={e => setNewEmail(e.target.value)}
@@ -160,7 +160,7 @@ export default function Users() {
             />
           </div>
           <div style={{ flex: 1, minWidth: 160 }}>
-            <label style={{ fontSize: 11, color: 'var(--text3)', display: 'block', marginBottom: 5 }}>CONTRASEÑA</label>
+            <label style={{ fontSize: 12, color: 'var(--text3)', display: 'block', marginBottom: 5 }}>CONTRASEÑA</label>
             <input
               type="text" value={newPass}
               onChange={e => setNewPass(e.target.value)}
@@ -170,12 +170,12 @@ export default function Users() {
             />
           </div>
           <div>
-            <label style={{ fontSize: 11, color: 'var(--text3)', display: 'block', marginBottom: 5 }}>ROL</label>
+            <label style={{ fontSize: 12, color: 'var(--text3)', display: 'block', marginBottom: 5 }}>ROL</label>
             <select value={newRole} onChange={e => setNewRole(e.target.value)}
               style={{
                 padding: '9px 12px', background: 'var(--bg)',
                 border: '1px solid var(--border)', borderRadius: 7,
-                color: 'var(--text)', fontSize: 13, outline: 'none', cursor: 'pointer',
+                color: 'var(--text)', fontSize: 14, outline: 'none', cursor: 'pointer',
               }}>
               <option value="vendor">Colaborador</option>
               <option value="company_admin">Administrador</option>
@@ -184,14 +184,14 @@ export default function Users() {
           <button type="submit" disabled={inviting} style={{
             padding: '9px 22px', background: 'var(--accent)', color: 'var(--accent-text)',
             border: 'none', borderRadius: 7, fontWeight: 700, cursor: inviting ? 'not-allowed' : 'pointer',
-            fontSize: 13, opacity: inviting ? 0.7 : 1,
+            fontSize: 14, opacity: inviting ? 0.7 : 1,
           }}>
             {inviting ? 'Creando...' : 'Crear usuario'}
           </button>
         </form>
         </fieldset>
         {inviteMsg && (
-          <p style={{ marginTop: 12, fontSize: 13, color: inviteMsg.startsWith('✓') ? '#22c55e' : '#ef4444' }}>
+          <p style={{ marginTop: 12, fontSize: 14, color: inviteMsg.startsWith('✓') ? '#22c55e' : '#ef4444' }}>
             {inviteMsg}
           </p>
         )}
@@ -215,14 +215,14 @@ export default function Users() {
             ) : members.map(m => (
               <tr key={m.id} style={{ opacity: m.active ? 1 : 0.5 }}>
                 <td style={tdStyle}><strong>{m.users?.name ?? '—'}</strong></td>
-                <td style={tdStyle}><span style={{ color: 'var(--text2)', fontSize: 12 }}>{m.users?.email ?? '—'}</span></td>
+                <td style={tdStyle}><span style={{ color: 'var(--text2)', fontSize: 13 }}>{m.users?.email ?? '—'}</span></td>
                 <td style={tdStyle}>
                   <select value={m.role} onChange={e => changeRole(m.id, e.target.value)}
                     style={{
                       padding: '3px 8px', background: `${ROLE_COLORS[m.role]}22`,
                       border: `1px solid ${ROLE_COLORS[m.role]}44`,
                       borderRadius: 6, color: ROLE_COLORS[m.role],
-                      fontSize: 11, fontWeight: 600, cursor: 'pointer', outline: 'none',
+                      fontSize: 12, fontWeight: 600, cursor: 'pointer', outline: 'none',
                     }}>
                     {Object.entries(ROLE_LABELS).filter(([k]) => k !== 'super_admin').map(([k, v]) => (
                       <option key={k} value={k}>{v}</option>
@@ -230,25 +230,25 @@ export default function Users() {
                   </select>
                 </td>
                 <td style={tdStyle}>
-                  <span style={{ fontSize: 12, color: m.active ? '#22c55e' : '#ef4444' }}>
+                  <span style={{ fontSize: 13, color: m.active ? '#22c55e' : '#ef4444' }}>
                     {m.active ? 'Activo' : 'Inactivo'}
                   </span>
                 </td>
                 <td style={tdStyle}>
-                  <span style={{ fontSize: 12, color: 'var(--text3)' }}>
+                  <span style={{ fontSize: 13, color: 'var(--text3)' }}>
                     {new Date(m.joined_at).toLocaleDateString('es-AR')}
                   </span>
                 </td>
                 <td style={tdStyle}>
                   <div style={{ display: 'flex', gap: 6 }}>
                     <button onClick={() => toggleActive(m.id, m.active)} style={{
-                      padding: '3px 10px', borderRadius: 6, fontSize: 11, cursor: 'pointer',
+                      padding: '3px 10px', borderRadius: 6, fontSize: 12, cursor: 'pointer',
                       border: '1px solid var(--border)', background: 'transparent', color: 'var(--text2)',
                     }}>
                       {m.active ? 'Desactivar' : 'Activar'}
                     </button>
                     <button onClick={() => deleteUser(m.users?.id, m.id)} style={{
-                      padding: '3px 10px', borderRadius: 6, fontSize: 11, cursor: 'pointer',
+                      padding: '3px 10px', borderRadius: 6, fontSize: 12, cursor: 'pointer',
                       border: '1px solid #ef444444', background: 'transparent', color: '#ef4444',
                     }}>
                       Eliminar
@@ -267,16 +267,16 @@ export default function Users() {
 const fieldStyle = {
   width: '100%', padding: '9px 12px',
   background: 'var(--bg)', border: '1px solid var(--border)',
-  borderRadius: 7, color: 'var(--text)', fontSize: 13, outline: 'none',
+  borderRadius: 7, color: 'var(--text)', fontSize: 14, outline: 'none',
   boxSizing: 'border-box',
 }
 
 const thStyle = {
-  padding: '10px 14px', textAlign: 'left', fontSize: 10, fontWeight: 600,
+  padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 600,
   color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.5px',
   borderBottom: '1px solid var(--border)', background: 'var(--bg-panel)',
 }
 const tdStyle = {
   padding: '10px 14px', borderBottom: '1px solid var(--border)',
-  fontSize: 13, verticalAlign: 'middle',
+  fontSize: 14, verticalAlign: 'middle',
 }

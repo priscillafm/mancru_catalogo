@@ -72,12 +72,12 @@ export default function Brands() {
 
   return (
     <div style={{ padding: 28, overflowY: 'auto', flex: 1 }}>
-      <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 20 }}>Marcas</h2>
+      <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 20 }}>Marcas</h2>
 
       <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', borderBottom: '1px solid var(--border)' }}>
           <input placeholder="Buscar..." value={search} onChange={e => setSearch(e.target.value)}
-            style={{ flex: 1, maxWidth: 260, padding: '7px 11px', background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text)', fontSize: 13, outline: 'none' }} />
+            style={{ flex: 1, maxWidth: 260, padding: '7px 11px', background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text)', fontSize: 14, outline: 'none' }} />
           <button onClick={() => setModal({ name: '', color: '#6366f1', textColor: '#ffffff' })} style={btnPrimary}>
             + Nueva marca
           </button>
@@ -95,7 +95,7 @@ export default function Brands() {
               <tr key={b.id} style={{ ':hover': { background: 'var(--surface-h)' } }}>
                 <td style={tdStyle}>
                   <span style={{ display: 'inline-block', width: 16, height: 16, borderRadius: 4, background: b.color, border: '1px solid rgba(255,255,255,.1)', verticalAlign: 'middle', marginRight: 8 }} />
-                  <span style={{ fontSize: 11, color: 'var(--text3)', fontFamily: 'monospace' }}>{b.color}</span>
+                  <span style={{ fontSize: 12, color: 'var(--text3)', fontFamily: 'monospace' }}>{b.color}</span>
                 </td>
                 <td style={tdStyle}><strong>{b.name}</strong></td>
                 <td style={tdStyle}>
@@ -124,7 +124,7 @@ export default function Brands() {
             <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
               {modal.logoUrl
                 ? <img src={modal.logoUrl} alt="logo" style={{ height: 36, maxWidth: 80, objectFit: 'contain', background: modal.color, borderRadius: 6, padding: 4 }} />
-                : <div style={{ width: 52, height: 36, background: 'var(--bg-panel)', borderRadius: 6, border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}><Icon name="image" size={18} /></div>
+                : <div style={{ width: 52, height: 36, background: 'var(--bg-panel)', borderRadius: 6, border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 19 }}><Icon name="image" size={18} /></div>
               }
               <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading}
                 style={{ ...btnSm, padding: '6px 14px' }}>
@@ -137,7 +137,7 @@ export default function Brands() {
                 </button>
               )}
             </div>
-            <p style={{ fontSize: 11, color: 'var(--text3)', marginTop: 6 }}>
+            <p style={{ fontSize: 12, color: 'var(--text3)', marginTop: 6 }}>
               Cualquier forma sirve (cuadrado, rectangular horizontal o vertical) — se adapta solo, sin deformarse.
               Recomendado: PNG con fondo transparente, al menos 200px de ancho.
             </p>
@@ -159,8 +159,8 @@ function Modal({ title, onClose, children }) {
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.8)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
       <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, width: '100%', maxWidth: 460 }}>
         <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <h3 style={{ fontSize: 16, fontWeight: 700 }}>{title}</h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text3)', fontSize: 20, cursor: 'pointer' }}>✕</button>
+          <h3 style={{ fontSize: 17, fontWeight: 700 }}>{title}</h3>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text3)', fontSize: 21, cursor: 'pointer' }}>✕</button>
         </div>
         <div style={{ padding: 20 }}>{children}</div>
       </div>
@@ -171,14 +171,14 @@ function Modal({ title, onClose, children }) {
 function Field({ label, children }) {
   return (
     <div style={{ marginBottom: 14 }}>
-      <label style={{ display: 'block', fontSize: 12, color: 'var(--text2)', marginBottom: 5 }}>{label}</label>
+      <label style={{ display: 'block', fontSize: 13, color: 'var(--text2)', marginBottom: 5 }}>{label}</label>
       {children}
     </div>
   )
 }
 
-const thStyle = { padding: '10px 14px', textAlign: 'left', fontSize: 10, fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.5px', borderBottom: '1px solid var(--border)', background: 'var(--bg-panel)' }
-const tdStyle = { padding: '10px 14px', borderBottom: '1px solid var(--border)', fontSize: 13, verticalAlign: 'middle' }
-const btnPrimary = { padding: '7px 16px', background: 'var(--accent)', color: 'var(--accent-text)', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer' }
-const btnSm = { padding: '4px 10px', borderRadius: 5, fontSize: 11, cursor: 'pointer', border: '1px solid var(--border)', background: 'var(--surface-h)', color: 'var(--text2)' }
-const inputStyle = { width: '100%', padding: '8px 12px', background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: 7, color: 'var(--text)', fontSize: 13, outline: 'none' }
+const thStyle = { padding: '10px 14px', textAlign: 'left', fontSize: 11, fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.5px', borderBottom: '1px solid var(--border)', background: 'var(--bg-panel)' }
+const tdStyle = { padding: '10px 14px', borderBottom: '1px solid var(--border)', fontSize: 14, verticalAlign: 'middle' }
+const btnPrimary = { padding: '7px 16px', background: 'var(--accent)', color: 'var(--accent-text)', border: 'none', borderRadius: 6, fontSize: 13, fontWeight: 700, cursor: 'pointer' }
+const btnSm = { padding: '4px 10px', borderRadius: 5, fontSize: 12, cursor: 'pointer', border: '1px solid var(--border)', background: 'var(--surface-h)', color: 'var(--text2)' }
+const inputStyle = { width: '100%', padding: '8px 12px', background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: 7, color: 'var(--text)', fontSize: 14, outline: 'none' }
