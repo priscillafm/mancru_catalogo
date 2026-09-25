@@ -11,6 +11,8 @@ SaaS para distribuidores/mayoristas de Latam: cargan productos (Excel o a mano),
 - Superadmin: `/admin/super` (solo `super_admin`) con Resumen, Empresas y Soporte, alimentado por funciones SQL (`admin_companies`, `admin_support_list`, `admin_support_set_status`, migración 007) que devuelven solo agregados y nombres de empresa.
 - Guía: `/admin/guide` explica cada sección con capturas reales (`public/guide/*.png`). Recorrido guiado (`AdminTour.jsx` + `store/tour.store.js`) se muestra solo la primera vez en escritorio (guarda un flag en `localStorage`), y se repite desde el botón en la Guía.
 - Migraciones en `supabase/migrations` (`npx supabase db push --dry-run` primero, luego `--yes`). Las funciones se despliegan a mano: `npx supabase functions deploy <nombre>` (`--no-verify-jwt` para `mp-webhook` y `contact-form`).
+- Copia de seguridad: `npm run backup` guarda las tablas en JSON en `backups/<fecha>/` (lee la clave de servicio del `.env` local, no la imprime; la carpeta está en `.gitignore` porque tiene datos de clientes). El plan gratis de Supabase no hace backups automáticos y `supabase db dump` no sirve sin Docker. Hacerla antes de operaciones riesgosas y guardar una copia privada fuera de la compu.
+- La cuenta superadmin es la empresa "Potato" (más de mil productos importados de un cliente): no borrarla. "Distribuidora Demo" es la empresa del catálogo de ejemplo: tampoco.
 
 ## Entorno local
 - `.env` NO está en el repo. Necesita `VITE_SUPABASE_URL` y `VITE_SUPABASE_ANON_KEY` (clave publishable). Nunca poner la clave `sb_secret_` en variables `VITE_` ni en Cloudflare.

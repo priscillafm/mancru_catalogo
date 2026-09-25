@@ -28,3 +28,6 @@ supabase/.temp
 *.njsproj
 *.sln
 *.sw?
+
+# Copias de seguridad con datos de clientes
+backups/
