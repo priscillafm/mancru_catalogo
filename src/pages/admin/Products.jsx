@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/auth.store'
@@ -9,7 +9,18 @@ import PlanLimitBar from '@/components/PlanLimitBar'
 
 const PAGE_SIZE = 50
 
+function useIsMobile() {
+  const [mobile, setMobile] = useState(() => window.innerWidth < 768)
+  useEffect(() => {
+    const fn = () => setMobile(window.innerWidth < 768)
+    window.addEventListener('resize', fn)
+    return () => window.removeEventListener('resize', fn)
+  }, [])
+  return mobile
+}
+
 export default function Products() {
+  const isMobile     = useIsMobile()
   const companyId   = useAuthStore(s => s.membership?.company_id)
   const qc          = useQueryClient()
   const { canAddProducts, usage, limits, pctProducts } = usePlanLimits()
@@ -161,130 +172,226 @@ export default function Products() {
     setEditing(null); setNewCategoryName(null)
   }
 
-  return (
-    <div style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
+  function openNew() {
+    setEditing({ id: null, sku: '', name: '', brand_id: null, category_id: null, stock: null, price: null, active: true, image_url: null })
+  }
 
-      {/* ── Sidebar: brand filter ── */}
-      <div style={{
-        width: 200, minWidth: 200, borderRight: '1px solid var(--border)',
-        overflowY: 'auto', padding: '16px 0', background: 'var(--bg-bar)',
-      }}>
-        <div style={{ padding: '0 14px 10px', fontSize: 10, fontWeight: 700, color: 'var(--text3)', letterSpacing: '.08em', textTransform: 'uppercase' }}>
-          Marcas
+  return (
+    <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: '100%', overflow: 'hidden' }}>
+
+      {/* ── Brand filter: sidebar on desktop, horizontal chip strip on mobile ── */}
+      {isMobile ? (
+        <div style={{
+          display: 'flex', gap: 8, overflowX: 'auto', WebkitOverflowScrolling: 'touch',
+          padding: '10px 14px', borderBottom: '1px solid var(--border)',
+          background: 'var(--bg-bar)', flexShrink: 0,
+        }}>
+          <BrandChip label="Todas" color="var(--accent)" active={brandId === 'all'} onClick={() => { setBrandId('all'); setPage(0) }} />
+          {brands.map(b => (
+            <BrandChip key={b.id} label={b.name} color={b.color} active={brandId === b.id}
+              onClick={() => { setBrandId(b.id); setPage(0) }} />
+          ))}
+          <BrandChip label="Sin marca" color="var(--text3)" active={brandId === 'none'} onClick={() => { setBrandId('none'); setPage(0) }} />
         </div>
-        <BrandBtn label="Todas" color="var(--accent)" active={brandId === 'all'} onClick={() => { setBrandId('all'); setPage(0) }} />
-        {brands.map(b => (
-          <BrandBtn key={b.id} label={b.name} color={b.color} active={brandId === b.id}
-            onClick={() => { setBrandId(b.id); setPage(0) }} />
-        ))}
-        <BrandBtn label="Sin marca" color="var(--text3)" active={brandId === 'none'} onClick={() => { setBrandId('none'); setPage(0) }} />
-      </div>
+      ) : (
+        <div style={{
+          width: 200, minWidth: 200, borderRight: '1px solid var(--border)',
+          overflowY: 'auto', padding: '16px 0', background: 'var(--bg-bar)',
+        }}>
+          <div style={{ padding: '0 14px 10px', fontSize: 10, fontWeight: 700, color: 'var(--text3)', letterSpacing: '.08em', textTransform: 'uppercase' }}>
+            Marcas
+          </div>
+          <BrandBtn label="Todas" color="var(--accent)" active={brandId === 'all'} onClick={() => { setBrandId('all'); setPage(0) }} />
+          {brands.map(b => (
+            <BrandBtn key={b.id} label={b.name} color={b.color} active={brandId === b.id}
+              onClick={() => { setBrandId(b.id); setPage(0) }} />
+          ))}
+          <BrandBtn label="Sin marca" color="var(--text3)" active={brandId === 'none'} onClick={() => { setBrandId('none'); setPage(0) }} />
+        </div>
+      )}
 
       {/* ── Main content ── */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
 
         {/* Header / filters */}
-        <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', display: 'flex', gap: 10, alignItems: 'center', flexShrink: 0, background: 'var(--surface)' }}>
-          <input
-            placeholder="Buscar producto..."
-            value={search}
-            onChange={e => { setSearch(e.target.value); setPage(0) }}
-            style={inputStyle}
-          />
-          <select value={categoryId} onChange={e => { setCategoryId(e.target.value); setPage(0) }} style={selectStyle}>
-            <option value="all">Todas las categorías</option>
-            {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
-          {(search || brandId !== 'all' || categoryId !== 'all') && (
-            <button onClick={resetFilters} style={{ ...btnSecondary, whiteSpace: 'nowrap' }}>✕ Limpiar</button>
-          )}
-          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 12 }}>
+        {isMobile ? (
+          <div style={{ padding: '12px 14px', borderBottom: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0, background: 'var(--surface)' }}>
+            <input
+              placeholder="Buscar producto..."
+              value={search}
+              onChange={e => { setSearch(e.target.value); setPage(0) }}
+              style={{ ...inputStyle, width: '100%', maxWidth: 'none', boxSizing: 'border-box' }}
+            />
+            <div style={{ display: 'flex', gap: 8 }}>
+              <select value={categoryId} onChange={e => { setCategoryId(e.target.value); setPage(0) }} style={{ ...selectStyle, flex: 1, minWidth: 0 }}>
+                <option value="all">Todas las categorías</option>
+                {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+              {(search || brandId !== 'all' || categoryId !== 'all') && (
+                <button onClick={resetFilters} style={{ ...btnSecondary, whiteSpace: 'nowrap', flexShrink: 0 }}>✕</button>
+              )}
+            </div>
             <PlanLimitBar used={usage.products} max={limits.max_products} label="productos" pct={pctProducts} />
-            <button
-              onClick={() => setEditing({ id: null, sku: '', name: '', brand_id: null, category_id: null, stock: null, price: null, active: true, image_url: null })}
-              disabled={!canAddProducts}
-              title={canAddProducts ? '' : 'Llegaste al límite de productos de tu plan'}
-              style={{ ...btnPrimary, whiteSpace: 'nowrap', opacity: canAddProducts ? 1 : 0.5, cursor: canAddProducts ? 'pointer' : 'not-allowed' }}>
-              + Agregar producto
-            </button>
           </div>
-        </div>
+        ) : (
+          <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', display: 'flex', gap: 10, alignItems: 'center', flexShrink: 0, background: 'var(--surface)' }}>
+            <input
+              placeholder="Buscar producto..."
+              value={search}
+              onChange={e => { setSearch(e.target.value); setPage(0) }}
+              style={inputStyle}
+            />
+            <select value={categoryId} onChange={e => { setCategoryId(e.target.value); setPage(0) }} style={selectStyle}>
+              <option value="all">Todas las categorías</option>
+              {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+            {(search || brandId !== 'all' || categoryId !== 'all') && (
+              <button onClick={resetFilters} style={{ ...btnSecondary, whiteSpace: 'nowrap' }}>✕ Limpiar</button>
+            )}
+            <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 12 }}>
+              <PlanLimitBar used={usage.products} max={limits.max_products} label="productos" pct={pctProducts} />
+              <button
+                onClick={openNew}
+                disabled={!canAddProducts}
+                title={canAddProducts ? '' : 'Llegaste al límite de productos de tu plan'}
+                style={{ ...btnPrimary, whiteSpace: 'nowrap', opacity: canAddProducts ? 1 : 0.5, cursor: canAddProducts ? 'pointer' : 'not-allowed' }}>
+                + Agregar producto
+              </button>
+            </div>
+          </div>
+        )}
 
-        {/* Table */}
-        <div style={{ flex: 1, overflowY: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead style={{ position: 'sticky', top: 0, zIndex: 2 }}>
-              <tr>
-                {['Img', 'SKU', 'Nombre', 'Categoría', 'Stock', 'Estado', ''].map(h => (
-                  <th key={h} style={thStyle}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                <tr><td colSpan={7} style={{ padding: 32, textAlign: 'center', color: 'var(--text3)' }}>Cargando...</td></tr>
-              ) : rows.length === 0 ? (
-                <tr><td colSpan={7} style={{ padding: 32, textAlign: 'center', color: 'var(--text3)' }}>Sin resultados</td></tr>
-              ) : rows.map((p, i) => {
-                const prevBrand = i > 0 ? (rows[i-1].brands?.name ?? null) : undefined
-                const curBrand  = p.brands?.name ?? null
-                const showBrandRow = curBrand !== prevBrand
-                return [
-                  showBrandRow && (
-                    <tr key={`brand-${p.brand_id ?? 'none'}-${i}`}>
-                      <td colSpan={7} style={{
-                        padding: '8px 14px 4px',
-                        fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase',
-                        color: p.brands?.color ?? 'var(--text3)',
-                        borderBottom: `2px solid ${p.brands?.color ?? 'var(--border)'}22`,
-                        background: 'var(--bg-panel)',
-                      }}>
-                        {curBrand ?? 'Sin marca'}
-                      </td>
-                    </tr>
-                  ),
-                  <tr key={p.id} style={{ transition: 'background .1s' }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-h)'}
-                    onMouseLeave={e => e.currentTarget.style.background = ''}>
-                    <td style={tdStyle}>
+        {/* List: table on desktop, cards on mobile */}
+        {isMobile ? (
+          <div style={{ flex: 1, overflowY: 'auto', padding: '10px 14px 88px' }}>
+            {isLoading ? (
+              <div style={{ padding: 32, textAlign: 'center', color: 'var(--text3)' }}>Cargando...</div>
+            ) : rows.length === 0 ? (
+              <div style={{ padding: 32, textAlign: 'center', color: 'var(--text3)' }}>Sin resultados</div>
+            ) : rows.map((p, i) => {
+              const prevBrand = i > 0 ? (rows[i-1].brands?.name ?? null) : undefined
+              const curBrand  = p.brands?.name ?? null
+              const showBrandRow = curBrand !== prevBrand
+              return (
+                <div key={p.id}>
+                  {showBrandRow && (
+                    <div style={{
+                      padding: '10px 2px 6px',
+                      fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase',
+                      color: p.brands?.color ?? 'var(--text3)',
+                    }}>
+                      {curBrand ?? 'Sin marca'}
+                    </div>
+                  )}
+                  <div style={{ border: '1px solid var(--border)', borderRadius: 10, padding: 10, marginBottom: 8, background: 'var(--surface)' }}>
+                    <div style={{ display: 'flex', gap: 10 }}>
                       {p.image_url
-                        ? <img src={p.image_url} alt="" style={{ width: 38, height: 38, objectFit: 'contain', borderRadius: 4, background: 'var(--bg-panel)' }} onError={e => e.target.style.display='none'} />
-                        : <span style={{ display:'inline-flex', width:38, height:38, background:'var(--surface-h)', borderRadius:4, alignItems:'center', justifyContent:'center', color:'var(--text3)' }}><Icon name="image" size={16} /></span>
+                        ? <img src={p.image_url} alt="" style={{ width: 44, height: 44, objectFit: 'contain', borderRadius: 6, background: 'var(--bg-panel)', flexShrink: 0 }} onError={e => e.target.style.display='none'} />
+                        : <span style={{ display:'flex', width:44, height:44, background:'var(--surface-h)', borderRadius:6, alignItems:'center', justifyContent:'center', color:'var(--text3)', flexShrink: 0 }}><Icon name="image" size={18} /></span>
                       }
-                    </td>
-                    <td style={tdStyle}><code style={{ fontSize: 11, color: 'var(--accent)' }}>{p.sku}</code></td>
-                    <td style={{ ...tdStyle, maxWidth: 340 }}>
-                      <div style={{ fontSize: 12, lineHeight: 1.4, color: 'var(--text)' }}>{p.name}</div>
-                    </td>
-                    <td style={tdStyle}>
-                      <span style={{ fontSize: 11, color: 'var(--text3)' }}>{p.categories?.name ?? '—'}</span>
-                    </td>
-                    <td style={{ ...tdStyle, textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
-                      {p.stock ?? '—'}
-                    </td>
-                    <td style={tdStyle}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 13, lineHeight: 1.35, color: 'var(--text)', fontWeight: 600 }}>{p.name}</div>
+                        <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginTop: 2, flexWrap: 'wrap' }}>
+                          <code style={{ fontSize: 11, color: 'var(--accent)' }}>{p.sku}</code>
+                          {p.categories?.name && <span style={{ fontSize: 11, color: 'var(--text3)' }}>· {p.categories.name}</span>}
+                        </div>
+                      </div>
                       <span style={{
-                        padding: '2px 8px', borderRadius: 8, fontSize: 11, fontWeight: 600,
+                        padding: '2px 8px', borderRadius: 8, fontSize: 11, fontWeight: 600, height: 'fit-content', flexShrink: 0,
                         background: p.active ? 'rgba(34,197,94,.15)' : 'rgba(239,68,68,.1)',
                         color: p.active ? '#22c55e' : '#ef4444',
                       }}>
                         {p.active ? 'Activo' : 'Inactivo'}
                       </span>
-                    </td>
-                    <td style={{ ...tdStyle, whiteSpace: 'nowrap' }}>
-                      <button onClick={() => setEditing({ ...p })} style={btnIcon} title="Editar">Editar</button>
-                      <button onClick={() => setConfirmDel(p)} style={{ ...btnIcon, marginLeft: 4, color: '#ef4444', borderColor: 'rgba(239,68,68,.3)' }} title="Eliminar">Eliminar</button>
-                    </td>
-                  </tr>
-                ]
-              })}
-            </tbody>
-          </table>
-        </div>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
+                      <span style={{ fontSize: 12, color: 'var(--text3)', fontFamily: 'var(--font-mono)' }}>Stock: {p.stock ?? '—'}</span>
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        <button onClick={() => setEditing({ ...p })} style={btnIcon} title="Editar">Editar</button>
+                        <button onClick={() => setConfirmDel(p)} style={{ ...btnIcon, color: '#ef4444', borderColor: 'rgba(239,68,68,.3)' }} title="Eliminar">Eliminar</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        ) : (
+          <div style={{ flex: 1, overflowY: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead style={{ position: 'sticky', top: 0, zIndex: 2 }}>
+                <tr>
+                  {['Img', 'SKU', 'Nombre', 'Categoría', 'Stock', 'Estado', ''].map(h => (
+                    <th key={h} style={thStyle}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {isLoading ? (
+                  <tr><td colSpan={7} style={{ padding: 32, textAlign: 'center', color: 'var(--text3)' }}>Cargando...</td></tr>
+                ) : rows.length === 0 ? (
+                  <tr><td colSpan={7} style={{ padding: 32, textAlign: 'center', color: 'var(--text3)' }}>Sin resultados</td></tr>
+                ) : rows.map((p, i) => {
+                  const prevBrand = i > 0 ? (rows[i-1].brands?.name ?? null) : undefined
+                  const curBrand  = p.brands?.name ?? null
+                  const showBrandRow = curBrand !== prevBrand
+                  return [
+                    showBrandRow && (
+                      <tr key={`brand-${p.brand_id ?? 'none'}-${i}`}>
+                        <td colSpan={7} style={{
+                          padding: '8px 14px 4px',
+                          fontSize: 11, fontWeight: 700, letterSpacing: '.06em', textTransform: 'uppercase',
+                          color: p.brands?.color ?? 'var(--text3)',
+                          borderBottom: `2px solid ${p.brands?.color ?? 'var(--border)'}22`,
+                          background: 'var(--bg-panel)',
+                        }}>
+                          {curBrand ?? 'Sin marca'}
+                        </td>
+                      </tr>
+                    ),
+                    <tr key={p.id} style={{ transition: 'background .1s' }}
+                      onMouseEnter={e => e.currentTarget.style.background = 'var(--surface-h)'}
+                      onMouseLeave={e => e.currentTarget.style.background = ''}>
+                      <td style={tdStyle}>
+                        {p.image_url
+                          ? <img src={p.image_url} alt="" style={{ width: 38, height: 38, objectFit: 'contain', borderRadius: 4, background: 'var(--bg-panel)' }} onError={e => e.target.style.display='none'} />
+                          : <span style={{ display:'inline-flex', width:38, height:38, background:'var(--surface-h)', borderRadius:4, alignItems:'center', justifyContent:'center', color:'var(--text3)' }}><Icon name="image" size={16} /></span>
+                        }
+                      </td>
+                      <td style={tdStyle}><code style={{ fontSize: 11, color: 'var(--accent)' }}>{p.sku}</code></td>
+                      <td style={{ ...tdStyle, maxWidth: 340 }}>
+                        <div style={{ fontSize: 12, lineHeight: 1.4, color: 'var(--text)' }}>{p.name}</div>
+                      </td>
+                      <td style={tdStyle}>
+                        <span style={{ fontSize: 11, color: 'var(--text3)' }}>{p.categories?.name ?? '—'}</span>
+                      </td>
+                      <td style={{ ...tdStyle, textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 12 }}>
+                        {p.stock ?? '—'}
+                      </td>
+                      <td style={tdStyle}>
+                        <span style={{
+                          padding: '2px 8px', borderRadius: 8, fontSize: 11, fontWeight: 600,
+                          background: p.active ? 'rgba(34,197,94,.15)' : 'rgba(239,68,68,.1)',
+                          color: p.active ? '#22c55e' : '#ef4444',
+                        }}>
+                          {p.active ? 'Activo' : 'Inactivo'}
+                        </span>
+                      </td>
+                      <td style={{ ...tdStyle, whiteSpace: 'nowrap' }}>
+                        <button onClick={() => setEditing({ ...p })} style={btnIcon} title="Editar">Editar</button>
+                        <button onClick={() => setConfirmDel(p)} style={{ ...btnIcon, marginLeft: 4, color: '#ef4444', borderColor: 'rgba(239,68,68,.3)' }} title="Eliminar">Eliminar</button>
+                      </td>
+                    </tr>
+                  ]
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
 
         {/* Pagination */}
         {pages > 1 && (
-          <div style={{ padding: '10px 18px', display: 'flex', gap: 8, alignItems: 'center', borderTop: '1px solid var(--border)', flexShrink: 0 }}>
+          <div style={{ padding: isMobile ? '10px 14px' : '10px 18px', display: 'flex', gap: 8, alignItems: 'center', borderTop: '1px solid var(--border)', flexShrink: 0 }}>
             <button onClick={() => setPage(0)} disabled={page === 0} style={btnPage}>«</button>
             <button onClick={() => setPage(p => Math.max(0, p - 1))} disabled={page === 0} style={btnPage}>‹ Anterior</button>
             <span style={{ fontSize: 12, color: 'var(--text3)', flex: 1, textAlign: 'center' }}>
@@ -295,6 +402,17 @@ export default function Products() {
           </div>
         )}
       </div>
+
+      {/* ── Add product FAB (mobile only) ── */}
+      {isMobile && (
+        <button
+          onClick={openNew}
+          disabled={!canAddProducts}
+          title={canAddProducts ? 'Agregar producto' : 'Llegaste al límite de productos de tu plan'}
+          style={{ ...fabStyle, opacity: canAddProducts ? 1 : 0.5, cursor: canAddProducts ? 'pointer' : 'not-allowed' }}>
+          +
+        </button>
+      )}
 
       {/* ── Edit modal ── */}
       {editing && (
@@ -449,11 +567,26 @@ function BrandBtn({ label, color, active, onClick }) {
   )
 }
 
+function BrandChip({ label, color, active, onClick }) {
+  return (
+    <button onClick={onClick} style={{
+      display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0,
+      padding: '7px 12px', borderRadius: 20, whiteSpace: 'nowrap',
+      background: active ? `${color}18` : 'var(--surface-h)',
+      border: `1px solid ${active ? color : 'var(--border)'}`,
+      color: active ? color : 'var(--text2)', fontSize: 12, cursor: 'pointer',
+    }}>
+      <span style={{ width: 7, height: 7, borderRadius: '50%', background: color, flexShrink: 0 }} />
+      {label}
+    </button>
+  )
+}
+
 function Modal({ children, onClose }) {
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.7)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
       onClick={e => e.target === e.currentTarget && onClose()}>
-      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 24, width: '100%', maxWidth: 480, display: 'flex', flexDirection: 'column', gap: 0 }}>
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, padding: 24, width: '100%', maxWidth: 480, maxHeight: '100%', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 0, boxSizing: 'border-box' }}>
         {children}
       </div>
     </div>
@@ -470,3 +603,9 @@ const inputFull  = { width: '100%', padding: '8px 10px', background: 'var(--bg-p
 const labelStyle = { fontSize: 11, fontWeight: 600, color: 'var(--text3)', textTransform: 'uppercase', letterSpacing: '.05em', marginTop: 14, display: 'block' }
 const btnPrimary = { padding: '8px 20px', background: 'var(--accent)', color: 'var(--accent-text)', border: 'none', borderRadius: 7, fontWeight: 700, fontSize: 13, cursor: 'pointer' }
 const btnSecondary = { padding: '8px 16px', background: 'var(--surface-h)', color: 'var(--text2)', border: '1px solid var(--border)', borderRadius: 7, fontSize: 13, cursor: 'pointer' }
+const fabStyle = {
+  position: 'fixed', right: 18, bottom: 22, width: 52, height: 52, borderRadius: '50%',
+  background: 'var(--accent)', color: 'var(--accent-text)', border: 'none',
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+  fontSize: 26, fontWeight: 700, lineHeight: 1, boxShadow: '0 4px 14px rgba(0,0,0,.35)', zIndex: 30,
+}
