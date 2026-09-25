@@ -9,6 +9,7 @@ SaaS para distribuidores/mayoristas de Latam: cargan productos (Excel o a mano),
 - Cobro: Mercado Pago Checkout Pro en pesos uruguayos, credenciales de producción y webhook cargados. La web muestra el precio en USD como referencia (`USD_RATE = 40` en `PricingCards.jsx`).
 - Email: `contact-form` guarda en `contact_messages` y envía con Resend (secretos `RESEND_API_KEY` y `CONTACT_TO_EMAIL` ya cargados en Supabase; el remitente es el de prueba de Resend). Los mails de Supabase Auth salen por el servicio compartido de Supabase (pendiente pasarlos a Resend con el dominio).
 - Superadmin: `/admin/super` (solo `super_admin`) con Resumen, Empresas y Soporte, alimentado por funciones SQL (`admin_companies`, `admin_support_list`, `admin_support_set_status`, migración 007) que devuelven solo agregados y nombres de empresa.
+- Guía: `/admin/guide` explica cada sección con capturas reales (`public/guide/*.png`). Recorrido guiado (`AdminTour.jsx` + `store/tour.store.js`) se muestra solo la primera vez en escritorio (guarda un flag en `localStorage`), y se repite desde el botón en la Guía.
 - Migraciones en `supabase/migrations` (`npx supabase db push --dry-run` primero, luego `--yes`). Las funciones se despliegan a mano: `npx supabase functions deploy <nombre>` (`--no-verify-jwt` para `mp-webhook` y `contact-form`).
 
 ## Entorno local
@@ -38,6 +39,8 @@ SaaS para distribuidores/mayoristas de Latam: cargan productos (Excel o a mano),
 - Verificar producción: `curl -sI https://potatoui.com`, comprobar que el bundle contiene la URL de Supabase y no `sb_secret_`, y que `/contacto` y `/c/<id>` responden 200.
 - El navegador embebido no abre mercadopago.com y las capturas fallan si la ventana está oculta (`tabs_select`). Crear cuentas o pagar no se hace desde acá.
 - En Git Bash de Windows, scripts largos con comillas por heredoc se pueden truncar: escribir el script con Write y ejecutarlo. Las respuestas gigantes del navegador quedan en un archivo JSON que se puede leer con node.
+- Captura de pantalla real de una página (para la Guía en `public/guide/`, no para el PDF): inyectar `modern-screenshot` desde `cdn.jsdelivr.net` en la consola del navegador embebido (`domToPng(document.body)`), no `html2canvas` — no soporta `color-mix()`, que la interfaz usa para el estado activo del menú. El data-URI grande se guarda igual que el del PDF (archivo + decode).
+- Repo movido de `github.com/priscillafm/mancru_catalogo` a `github.com/priscillafm/potato` (24 de septiembre). El remoto viejo redirige solo, conviene `git remote set-url origin` a la nueva URL.
 
 ## Cosas que ya mordieron
 - Sincronizar (`src/utils/sync`): los productos que faltan en el Excel quedan excluidos y solo se eliminan si el usuario los incluye y confirma; un dato vacío nunca pisa lo guardado; reconoce `SKU`.
@@ -45,6 +48,7 @@ SaaS para distribuidores/mayoristas de Latam: cargan productos (Excel o a mano),
 - Guardar cambios de un catálogo compartido no cambia su estado.
 - El rol interno `vendor` se muestra como "Colaborador".
 - El PDF usa tarjetas verticales cuando menos de la mitad de los productos tiene descripción.
+- Una página nueva de nivel superior (fuera de `AdminLayout`, como `/catalogs` o el armador de catálogo) no hereda el layout responsive de Admin: necesita su propio `useIsMobile()` desde el día uno. Así se rompió "Compartir link" en celular — `/catalogs` tenía una barra lateral fija de 248px y el modal de PDF desbordaba, el botón de descargar quedaba literalmente afuera de la pantalla.
 
 ## Pendientes conocidos
 - Probar un pago real con otra persona y devolverlo; probar en iPhone y Android reales.

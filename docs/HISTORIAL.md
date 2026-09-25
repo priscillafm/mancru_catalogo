@@ -43,6 +43,14 @@ WHERE e.id = 'ID_DE_LA_SINCRONIZACION' AND d.execution_id = e.id AND d.change_ty
 - Formulario de contacto conectado a Resend (mail de destino: el de Priscilla) y bandeja de soporte en `/admin/super`. Login de Supabase probado: registro y recuperación de contraseña funcionan en `potatoui.com`.
 - Fotos: hoy por URL en el Excel (columna `imagen_url`) o de a una desde Productos; la carga masiva por SKU queda para cuando un cliente grande la pida.
 
+## Panel usable en celular + guía de uso (24 de septiembre, continuación)
+- **Texto chico en escritorio:** Priscilla reportó que el texto se veía chico en toda la app (no en celular). Causa: casi todo el panel de admin usa tamaños de fuente fijos en píxeles por componente, no relativos, así que no alcanzaba con subir el tamaño base. Se subió ~1px cada tamaño de fuente en todo el panel de admin, el armador de catálogo y el modal de PDF (no se tocó la vista de tarjetas de Productos en celular ni la mini-preview de portada del PDF, que tiene que quedar a escala real), y el tamaño base de la página sube de 14px a 15px en pantallas de escritorio.
+- **"Compartir no funciona" en celular:** el bug real estaba en `/catalogs` (Mis catálogos), una página fuera del layout de Admin que nunca se adaptó a celular — barra lateral fija de 248px y el modal de "Preparar catálogo" desbordaba (el botón "Descargar PDF" quedaba afuera de la pantalla, sin forma de tocarlo). Se corrigió esa página y el modal; probado de punta a punta en una vista de 375px: guardar catálogo, compartir, copiar link y abrir el link público, todo funcionando.
+- **Repaso completo del panel en celular:** Marcas, Sincronizar, Importar, Usuarios, Config y Superadmin — padding y encabezados se acomodan a pantallas angostas; las tablas con columnas que no entraban (Usuarios, el detalle de cambios de Sincronizar) ahora scrollean horizontal en lugar de recortar botones.
+- **Guía de uso** (`/admin/guide`): nueva sección en el menú de Admin que explica cada parte de la app con una captura real de la propia app (no un mockup) en cada paso — capturada inyectando la librería `modern-screenshot` en el navegador y guardando el PNG real en `public/guide/`.
+- **Recorrido guiado:** al entrar a Admin por primera vez en escritorio aparecen globitos que van señalando cada opción del menú. No se repite solo (se guarda en `localStorage`); se puede volver a ver desde el botón en la Guía. En celular no se muestra automático (el menú vive en un drawer que hay que abrir a mano) pero la página de Guía sí está disponible.
+- **Repo:** GitHub renombró `mancru_catalogo` a `potato` (`github.com/priscillafm/potato`); el remoto viejo sigue redirigiendo pero conviene actualizar la URL localmente.
+
 ## Cómo seguir desde otra computadora
 Clonar el repositorio, crear el archivo `.env` con las dos variables públicas de Supabase y abrir Claude Code en la carpeta: lee `CLAUDE.md` (reglas y método de trabajo) y este historial. La conversación textual no se guarda en el repositorio porque contiene claves; este archivo y `CLAUDE.md` resumen lo importante sin datos sensibles.
 
@@ -55,6 +63,7 @@ Clonar el repositorio, crear el archivo `.env` con las dos variables públicas d
 ## Pendientes
 - Renovar la clave de Resend que se compartió en un chat y pasar los mails de Supabase Auth por Resend con el dominio.
 - Probar un pago real con otra persona y devolverlo; probar en iPhone y Android reales.
-- Dar de baja Vercel; pasar el repositorio a privado; renombrar el proyecto de Supabase.
+- Dar de baja Vercel; pasar el repositorio a privado; renombrar el proyecto de Supabase; actualizar el remoto local a `github.com/priscillafm/potato`.
 - Decidir el texto de "soporte prioritario" y del alcance del precio de lanzamiento.
+- Borrar (o dejar) las cuentas de prueba QA creadas durante el trabajo (`qa-claude-test-0916@potato-test.dev`, `qa-mobile-0924@potato-test.dev`), cada una con una empresa y datos de ejemplo.
 - Ideas para después: vista previa del mensaje de WhatsApp, fotos por ZIP nombradas por SKU, cobro en dólares con otro proveedor, redirección de `www` al dominio principal.
