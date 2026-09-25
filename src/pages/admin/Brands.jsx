@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/auth.store'
@@ -8,7 +8,18 @@ function slugify(str) {
   return str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 }
 
+function useIsMobile() {
+  const [mobile, setMobile] = useState(() => window.innerWidth < 768)
+  useEffect(() => {
+    const fn = () => setMobile(window.innerWidth < 768)
+    window.addEventListener('resize', fn)
+    return () => window.removeEventListener('resize', fn)
+  }, [])
+  return mobile
+}
+
 export default function Brands() {
+  const isMobile     = useIsMobile()
   const companyId   = useAuthStore(s => s.membership?.company_id)
   const qc          = useQueryClient()
   const [modal, setModal]     = useState(null)
@@ -71,14 +82,14 @@ export default function Brands() {
   const filtered = brands.filter(b => b.name.toLowerCase().includes(search.toLowerCase()))
 
   return (
-    <div style={{ padding: 28, overflowY: 'auto', flex: 1 }}>
+    <div style={{ padding: isMobile ? 16 : 28, overflowY: 'auto', flex: 1 }}>
       <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 20 }}>Marcas</h2>
 
       <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 16px', borderBottom: '1px solid var(--border)' }}>
+        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'stretch' : 'center', gap: 10, padding: '14px 16px', borderBottom: '1px solid var(--border)' }}>
           <input placeholder="Buscar..." value={search} onChange={e => setSearch(e.target.value)}
-            style={{ flex: 1, maxWidth: 260, padding: '7px 11px', background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text)', fontSize: 14, outline: 'none' }} />
-          <button onClick={() => setModal({ name: '', color: '#6366f1', textColor: '#ffffff' })} style={btnPrimary}>
+            style={{ flex: 1, maxWidth: isMobile ? 'none' : 260, padding: '7px 11px', background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text)', fontSize: 14, outline: 'none', boxSizing: 'border-box' }} />
+          <button onClick={() => setModal({ name: '', color: '#6366f1', textColor: '#ffffff' })} style={{ ...btnPrimary, whiteSpace: 'nowrap' }}>
             + Nueva marca
           </button>
         </div>
@@ -157,12 +168,12 @@ export default function Brands() {
 function Modal({ title, onClose, children }) {
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.8)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
-      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, width: '100%', maxWidth: 460 }}>
-        <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, width: '100%', maxWidth: 460, maxHeight: '100%', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ padding: '18px 20px 14px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <h3 style={{ fontSize: 17, fontWeight: 700 }}>{title}</h3>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text3)', fontSize: 21, cursor: 'pointer' }}>✕</button>
         </div>
-        <div style={{ padding: 20 }}>{children}</div>
+        <div style={{ padding: 20, overflowY: 'auto' }}>{children}</div>
       </div>
     </div>
   )

@@ -235,10 +235,10 @@ export default function CatalogPage() {
         }}>
           {/* Row 1 */}
           <div style={{
-            padding: isMobile ? '10px 12px' : '0 20px',
+            paddingLeft: isMobile ? 12 : 20, paddingRight: isMobile ? 12 : 20,
+            paddingTop: isMobile ? 10 : 8, paddingBottom: isMobile ? 8 : 8,
             minHeight: isMobile ? 'auto' : 58,
             display: 'flex', alignItems: 'center', gap: 8,
-            paddingTop: isMobile ? 10 : 8, paddingBottom: isMobile ? 8 : 8,
           }}>
             {isMobile && (
               <button onClick={() => setSidebarOpen(true)} style={{ ...toolBtn, padding: '8px 10px', flexShrink: 0 }}>

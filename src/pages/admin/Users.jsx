@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
@@ -9,7 +9,18 @@ import Icon from '@/components/Icon'
 const ROLE_LABELS = { super_admin: 'Super Admin', company_admin: 'Administrador', vendor: 'Colaborador' }
 const ROLE_COLORS = { super_admin: '#ef4444', company_admin: '#3b82f6', vendor: '#22c55e' }
 
+function useIsMobile() {
+  const [mobile, setMobile] = useState(() => window.innerWidth < 768)
+  useEffect(() => {
+    const fn = () => setMobile(window.innerWidth < 768)
+    window.addEventListener('resize', fn)
+    return () => window.removeEventListener('resize', fn)
+  }, [])
+  return mobile
+}
+
 export default function Users() {
+  const isMobile   = useIsMobile()
   const companyId = useAuthStore(s => s.membership?.company_id)
   const qc = useQueryClient()
   const { canAddUser, usage, limits } = usePlanLimits()
@@ -123,8 +134,8 @@ export default function Users() {
   }
 
   return (
-    <div style={{ padding: 28, overflowY: 'auto', flex: 1 }}>
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 6 }}>
+    <div style={{ padding: isMobile ? 16 : 28, overflowY: 'auto', flex: 1 }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', marginBottom: 6 }}>
         <h2 style={{ fontSize: 19, fontWeight: 700 }}>Usuarios</h2>
         <span style={{ fontSize: 13, color: 'var(--text3)' }}>
           {usage.users}/{limits.max_users === null ? '∞' : limits.max_users} usuario{limits.max_users === 1 ? '' : 's'}
@@ -199,7 +210,8 @@ export default function Users() {
 
       {/* Members table */}
       <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', minWidth: 640, borderCollapse: 'collapse' }}>
           <thead>
             <tr>
               {['Nombre','Email','Rol','Estado','Ingresó','Acciones'].map(h => (
@@ -259,6 +271,7 @@ export default function Users() {
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   )

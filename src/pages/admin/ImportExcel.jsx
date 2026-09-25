@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useAuthStore } from '@/store/auth.store'
 import { supabase } from '@/lib/supabase'
 import ExcelJS from 'exceljs'
@@ -6,6 +6,16 @@ import { usePlanLimits } from '@/hooks/usePlanLimits'
 import Icon from '@/components/Icon'
 import { parseNumber, cellText, cleanUrl } from '@/utils/excel'
 import { plural } from '@/utils/format'
+
+function useIsMobile() {
+  const [mobile, setMobile] = useState(() => window.innerWidth < 768)
+  useEffect(() => {
+    const fn = () => setMobile(window.innerWidth < 768)
+    window.addEventListener('resize', fn)
+    return () => window.removeEventListener('resize', fn)
+  }, [])
+  return mobile
+}
 
 /**
  * Importación genérica desde Excel.
@@ -89,6 +99,7 @@ function parseRow(row) {
 }
 
 export default function ImportExcel() {
+  const isMobile   = useIsMobile()
   const companyId = useAuthStore(s => s.membership?.company_id)
   const fileRef   = useRef()
   const { canAddProducts, usage, limits } = usePlanLimits()
@@ -290,7 +301,7 @@ export default function ImportExcel() {
   const remaining = limits.max_products !== null ? Math.max(0, limits.max_products - usage.products) : Infinity
 
   return (
-    <div style={{ padding: 28, overflowY: 'auto', flex: 1 }}>
+    <div style={{ padding: isMobile ? 16 : 28, overflowY: 'auto', flex: 1 }}>
       <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 6 }}>Importar productos desde Excel</h2>
       <p style={{ fontSize: 14, color: 'var(--text2)', marginBottom: 6 }}>
         Usá esto para la <strong>carga inicial</strong> de tu catálogo. Subí tu lista en formato .xlsx con la primera fila como encabezado.

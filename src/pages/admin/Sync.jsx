@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useAuthStore } from '@/store/auth.store'
 import { supabase } from '@/lib/supabase'
 import { ExcelConnector } from '@/utils/connectors/excel.connector'
@@ -18,7 +18,18 @@ const CHANGE_COLORS = {
   error:     { bg: 'rgba(239,68,68,.12)',  text: '#ef4444', label: 'Error' },
 }
 
+function useIsMobile() {
+  const [mobile, setMobile] = useState(() => window.innerWidth < 768)
+  useEffect(() => {
+    const fn = () => setMobile(window.innerWidth < 768)
+    window.addEventListener('resize', fn)
+    return () => window.removeEventListener('resize', fn)
+  }, [])
+  return mobile
+}
+
 export default function Sync() {
+  const isMobile   = useIsMobile()
   const { membership } = useAuthStore()
   const companyId = membership?.company_id
 
@@ -149,7 +160,7 @@ export default function Sync() {
   const actionable = diffRows.filter(r => ['new','updated','deleted'].includes(r.change_type) && !r.excluded)
 
   return (
-    <div style={{ padding: 28, overflowY: 'auto', flex: 1 }}>
+    <div style={{ padding: isMobile ? 16 : 28, overflowY: 'auto', flex: 1 }}>
       <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 6 }}>Sincronizar stock y precios</h2>
       <p style={{ color: 'var(--text2)', fontSize: 14, marginBottom: 6 }}>
         Usá esto para <strong>actualizar</strong> productos que ya cargaste (stock, precio, etc.). Subí tu Excel y el sistema compara cada fila con lo que ya está guardado antes de aplicar cambios — vos decidís qué aplicar. Los datos que tu Excel no trae no se modifican, y los productos que no estén en el archivo <strong>no se eliminan</strong> salvo que los incluyas vos.
@@ -211,7 +222,8 @@ export default function Sync() {
 
           {/* Diff table */}
           <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden', marginBottom: 20 }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', minWidth: 560, borderCollapse: 'collapse' }}>
               <thead>
                 <tr>
                   {['SKU','Nombre','Tipo','Campos modificados','Excluir'].map(h => (
@@ -258,6 +270,7 @@ export default function Sync() {
                 })}
               </tbody>
             </table>
+            </div>
             {visible.length > 200 && (
               <div style={{ padding: '10px 14px', fontSize: 13, color: 'var(--text3)' }}>
                 Mostrando 200 de {visible.length} filas.

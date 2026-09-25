@@ -1,9 +1,19 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { generateCatalogPDF } from '@/utils/pdf'
 import { COVER_STYLES } from '@/utils/coverStyles'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/auth.store'
 import Icon from '@/components/Icon'
+
+function useIsMobile() {
+  const [mobile, setMobile] = useState(() => window.innerWidth < 768)
+  useEffect(() => {
+    const fn = () => setMobile(window.innerWidth < 768)
+    window.addEventListener('resize', fn)
+    return () => window.removeEventListener('resize', fn)
+  }, [])
+  return mobile
+}
 
 export default function PDFPreviewModal({
   brandGroups,
@@ -18,6 +28,7 @@ export default function PDFPreviewModal({
 }) {
   const membership = useAuthStore(s => s.membership)
   const authUser   = useAuthStore(s => s.user)
+  const isMobile   = useIsMobile()
 
   const [generating, setGenerating] = useState(false)
   const [progress, setProgress]     = useState('')
@@ -208,33 +219,47 @@ export default function PDFPreviewModal({
   return (
     <div className="modal-overlay-in" style={{
       position: 'fixed', inset: 0, background: 'rgba(0,0,0,.85)',
-      zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20
+      zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: isMobile ? 0 : 20
     }}>
       <div className="modal-pop-in" style={{
-        background: 'var(--surface)', border: '1px solid var(--border)',
-        borderRadius: 14, width: '100%', maxWidth: 960,
-        maxHeight: '90vh', display: 'flex', flexDirection: 'column'
+        background: 'var(--surface)', border: isMobile ? 'none' : '1px solid var(--border)',
+        borderRadius: isMobile ? 0 : 14, width: '100%', maxWidth: 960,
+        height: isMobile ? '100%' : undefined, maxHeight: isMobile ? '100%' : '90vh',
+        display: 'flex', flexDirection: 'column', overflow: 'hidden'
       }}>
         {/* Header */}
         <div style={{
-          padding: '18px 20px 14px', borderBottom: '1px solid var(--border)',
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0
+          padding: isMobile ? '14px 16px 12px' : '18px 20px 14px', borderBottom: '1px solid var(--border)',
+          display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? 10 : 0,
+          alignItems: isMobile ? 'stretch' : 'center', justifyContent: 'space-between', flexShrink: 0
         }}>
-          <div>
-            <h3 style={{ fontSize: 17, fontWeight: 700 }}>
-              {step === 'preview' ? 'Vista previa del catálogo'
-               : step === 'pricing' ? 'Precios (opcional)'
-               : 'Guardar catálogo'}
-            </h3>
-            <p style={{ fontSize: 13, color: 'var(--text3)', marginTop: 3 }}>
-              {brandGroups.length} marca{brandGroups.length !== 1 ? 's' : ''} — {totalProducts} producto{totalProducts !== 1 ? 's' : ''}
-            </p>
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10 }}>
+            <div>
+              <h3 style={{ fontSize: isMobile ? 16 : 18, fontWeight: 700 }}>
+                {step === 'preview' ? 'Vista previa del catálogo'
+                 : step === 'pricing' ? 'Precios (opcional)'
+                 : 'Guardar catálogo'}
+              </h3>
+              <p style={{ fontSize: 14, color: 'var(--text3)', marginTop: 3 }}>
+                {brandGroups.length} marca{brandGroups.length !== 1 ? 's' : ''} — {totalProducts} producto{totalProducts !== 1 ? 's' : ''}
+              </p>
+            </div>
+            {isMobile && (
+              <button onClick={onClose}
+                style={{ background: 'none', border: 'none', color: 'var(--text3)', fontSize: 22, cursor: 'pointer', flexShrink: 0, lineHeight: 1 }}>
+                ✕
+              </button>
+            )}
           </div>
           {step === 'preview' && (
-            <div style={{ display: 'flex', gap: 6, marginLeft: 'auto', marginRight: 16, alignItems: 'center' }}>
+            <div style={{
+              display: 'flex', gap: 6, alignItems: 'center', flexWrap: isMobile ? 'wrap' : 'nowrap',
+              marginLeft: isMobile ? 0 : 'auto', marginRight: isMobile ? 0 : 16,
+            }}>
               <select value={ivaMode} onChange={e => setIvaMode(e.target.value)} style={{
-                padding: '6px 10px', borderRadius: 7, fontSize: 13, cursor: 'pointer',
+                padding: '6px 10px', borderRadius: 7, fontSize: 14, cursor: 'pointer',
                 border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text2)',
+                flex: isMobile ? '1 1 100%' : 'none',
               }}>
                 <option value="sin_iva">Precios sin IVA</option>
                 <option value="con_iva">Precios con IVA</option>
@@ -242,25 +267,28 @@ export default function PDFPreviewModal({
               </select>
               {['landscape','portrait'].map(o => (
                 <button key={o} onClick={() => setOrientation(o)} style={{
-                  padding: '6px 14px', borderRadius: 7, fontSize: 13, cursor: 'pointer',
+                  padding: '6px 14px', borderRadius: 7, fontSize: 14, cursor: 'pointer',
                   border: `1px solid ${orientation === o ? 'var(--accent)' : 'var(--border)'}`,
                   background: orientation === o ? 'var(--accent)' : 'var(--surface)',
                   color: orientation === o ? 'var(--accent-text)' : 'var(--text2)',
                   fontWeight: orientation === o ? 700 : 400,
+                  flex: isMobile ? 1 : 'none',
                 }}>
                   {o === 'landscape' ? <><Icon name="landscape" size={13} /> Horizontal</> : <><Icon name="portrait" size={13} /> Vertical</>}
                 </button>
               ))}
             </div>
           )}
-          <button onClick={onClose}
-            style={{ background: 'none', border: 'none', color: 'var(--text3)', fontSize: 21, cursor: 'pointer', marginLeft: step !== 'preview' ? 'auto' : 0 }}>
-            ✕
-          </button>
+          {!isMobile && (
+            <button onClick={onClose}
+              style={{ background: 'none', border: 'none', color: 'var(--text3)', fontSize: 21, cursor: 'pointer', marginLeft: step !== 'preview' ? 'auto' : 0 }}>
+              ✕
+            </button>
+          )}
         </div>
 
         {/* Body */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '16px' : 24 }}>
 
           {/* Cover panel */}
           {step === 'preview' && (
@@ -344,7 +372,7 @@ export default function PDFPreviewModal({
                       {/* ── Style selector ── */}
                       <div>
                         <div style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 7, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>Estilo de difuminado</div>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: `repeat(${isMobile ? 3 : 4}, 1fr)`, gap: 8 }}>
                           {Object.entries(COVER_STYLES).map(([key, cfg]) => (
                             <button key={key} onClick={() => setCoverStyle(key)} style={{
                               padding: 0, borderRadius: 8, overflow: 'hidden', cursor: 'pointer',
@@ -538,13 +566,13 @@ export default function PDFPreviewModal({
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                     {products.map(p => (
-                      <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: 'var(--bg-panel)', borderRadius: 8 }}>
-                        <span style={{ flex: 1, fontSize: 13, color: 'var(--text)' }}>{p.name}</span>
-                        <span style={{ fontSize: 11, color: 'var(--text3)', fontFamily: 'var(--font-mono)' }}>{p.sku}</span>
+                      <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: '8px 12px', background: 'var(--bg-panel)', borderRadius: 8 }}>
+                        <span style={{ flex: '1 1 140px', fontSize: 14, color: 'var(--text)' }}>{p.name}</span>
+                        <span style={{ fontSize: 12, color: 'var(--text3)', fontFamily: 'var(--font-mono)' }}>{p.sku}</span>
                         <select
                           value={prices[p.id]?.currency ?? '$'}
                           onChange={e => setPrice(p.id, 'currency', e.target.value)}
-                          style={{ padding: '5px 8px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text)', fontSize: 13, cursor: 'pointer', outline: 'none' }}>
+                          style={{ padding: '5px 8px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 6, color: 'var(--text)', fontSize: 14, cursor: 'pointer', outline: 'none' }}>
                           <option value="$">$ UYU</option>
                           <option value="USD">USD</option>
                         </select>
@@ -608,20 +636,21 @@ export default function PDFPreviewModal({
         {/* Footer */}
         {step !== 'saving' && (
           <div style={{
-            padding: '14px 20px', borderTop: '1px solid var(--border)',
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0
+            padding: isMobile ? '12px 16px' : '14px 20px', borderTop: '1px solid var(--border)',
+            display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? 8 : 0,
+            alignItems: isMobile ? 'stretch' : 'center', justifyContent: 'space-between', flexShrink: 0
           }}>
-            <span style={{ fontSize: 13, color: 'var(--text3)' }}>{progress}</span>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button onClick={onClose} style={secondaryBtn}>Cerrar</button>
+            {progress && <span style={{ fontSize: 14, color: 'var(--text3)' }}>{progress}</span>}
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: isMobile ? 'stretch' : 'flex-end' }}>
+              <button onClick={onClose} style={{ ...secondaryBtn, flex: isMobile ? '1 1 auto' : 'none' }}>Cerrar</button>
 
               {step === 'preview' && (
-                <button onClick={() => setStep('pricing')} style={secondaryBtn}>
+                <button onClick={() => setStep('pricing')} style={{ ...secondaryBtn, flex: isMobile ? '1 1 auto' : 'none' }}>
                   $ Agregar precios
                 </button>
               )}
               {step === 'pricing' && (
-                <button onClick={() => setStep('preview')} style={secondaryBtn}>
+                <button onClick={() => setStep('preview')} style={{ ...secondaryBtn, flex: isMobile ? '1 1 auto' : 'none' }}>
                   ← Volver
                 </button>
               )}
@@ -629,7 +658,7 @@ export default function PDFPreviewModal({
               {/* Save button — only when onSaved is provided */}
               {onSaved && (
                 <button onClick={() => { setSaveName(catalogName); setStep('saving') }}
-                  style={{ ...secondaryBtn, display: 'flex', alignItems: 'center', gap: 6 }}>
+                  style={{ ...secondaryBtn, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, flex: isMobile ? '1 1 auto' : 'none' }}>
                   <Icon name="save" size={14} />
                   {catalogId ? (catalogStatus === 'shared' ? 'Guardar cambios' : 'Actualizar borrador') : 'Guardar borrador'}
                 </button>
@@ -640,6 +669,8 @@ export default function PDFPreviewModal({
                 border: 'none', borderRadius: 7, fontWeight: 700,
                 cursor: generating ? 'not-allowed' : 'pointer', fontSize: 14,
                 opacity: generating ? 0.7 : 1, transition: 'var(--transition)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                flex: isMobile ? '1 1 100%' : 'none',
               }}
               onMouseEnter={e => { if (!generating) e.currentTarget.style.transform = 'translateY(-2px)' }}
               onMouseLeave={e => { e.currentTarget.style.transform = 'translateY(0)' }}

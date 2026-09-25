@@ -2,7 +2,18 @@ import { useState, useRef, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuthStore } from '@/store/auth.store'
 
+function useIsMobile() {
+  const [mobile, setMobile] = useState(() => window.innerWidth < 768)
+  useEffect(() => {
+    const fn = () => setMobile(window.innerWidth < 768)
+    window.addEventListener('resize', fn)
+    return () => window.removeEventListener('resize', fn)
+  }, [])
+  return mobile
+}
+
 export default function Settings() {
+  const isMobile    = useIsMobile()
   const membership  = useAuthStore(s => s.membership)
   const companyId   = membership?.company_id
   const fileRef     = useRef()
@@ -81,7 +92,7 @@ export default function Settings() {
   }
 
   return (
-    <div style={{ padding: 28, overflowY: 'auto', flex: 1, maxWidth: 560 }}>
+    <div style={{ padding: isMobile ? 16 : 28, overflowY: 'auto', flex: 1, maxWidth: 560 }}>
       <h2 style={{ fontSize: 19, fontWeight: 700, marginBottom: 6 }}>Configuración de empresa</h2>
       <p style={{ fontSize: 14, color: 'var(--text3)', marginBottom: 28 }}>
         Estos datos aparecen en el encabezado del catálogo PDF.
@@ -103,7 +114,7 @@ export default function Settings() {
             Cualquier forma sirve (cuadrado o rectangular) — se adapta solo, sin deformarse.
           </p>
           <input ref={fileRef} type="file" accept=".svg,.png,.jpg,.jpeg,.webp" style={{ display: 'none' }} onChange={handleLogoUpload} />
-          <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap' }}>
             <div style={{
               width: 120, height: 48, background: '#09090B', borderRadius: 8,
               display: 'flex', alignItems: 'center', justifyContent: 'center',

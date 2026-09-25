@@ -1,8 +1,18 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '@/lib/supabase'
 import { plural } from '@/utils/format'
 import Icon from '@/components/Icon'
+
+function useIsMobile() {
+  const [mobile, setMobile] = useState(() => window.innerWidth < 768)
+  useEffect(() => {
+    const fn = () => setMobile(window.innerWidth < 768)
+    window.addEventListener('resize', fn)
+    return () => window.removeEventListener('resize', fn)
+  }, [])
+  return mobile
+}
 
 const PLANS = {
   free:       { label: 'Free',       color: '#6b7280' },
@@ -20,6 +30,7 @@ const daysAgo = (date) => (Date.now() - new Date(date).getTime()) / 86400000
 const fmtDate = (date) => new Date(date).toLocaleDateString('es-UY', { day: '2-digit', month: 'short', year: 'numeric' })
 
 export default function SuperAdmin() {
+  const isMobile = useIsMobile()
   const qc = useQueryClient()
   const [tab, setTab] = useState('resumen')
 
@@ -46,7 +57,7 @@ export default function SuperAdmin() {
   const newSupport = support.filter(m => m.status === 'new').length
 
   return (
-    <div style={{ padding: 28, overflowY: 'auto', flex: 1 }}>
+    <div style={{ padding: isMobile ? 16 : 28, overflowY: 'auto', flex: 1 }}>
       <div style={{ marginBottom: 20 }}>
         <h2 style={{ fontSize: 19, fontWeight: 700 }}>Superadministración</h2>
         <p style={{ fontSize: 14, color: 'var(--text3)', marginTop: 3 }}>
@@ -54,7 +65,7 @@ export default function SuperAdmin() {
         </p>
       </div>
 
-      <div style={{ display: 'flex', gap: 4, marginBottom: 22, borderBottom: '1px solid var(--border)' }}>
+      <div style={{ display: 'flex', gap: 4, marginBottom: 22, borderBottom: '1px solid var(--border)', overflowX: 'auto' }}>
         {TABS.map(t => (
           <button key={t.key} onClick={() => setTab(t.key)} style={{
             padding: '9px 16px', background: 'none', border: 'none', cursor: 'pointer',

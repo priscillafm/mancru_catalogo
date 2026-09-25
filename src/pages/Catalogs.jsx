@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
@@ -7,7 +7,18 @@ import Icon from '@/components/Icon'
 import PDFPreviewModal from '@/components/PDFPreviewModal'
 import { usePlanLimits } from '@/hooks/usePlanLimits'
 
+function useIsMobile() {
+  const [mobile, setMobile] = useState(() => window.innerWidth < 768)
+  useEffect(() => {
+    const fn = () => setMobile(window.innerWidth < 768)
+    window.addEventListener('resize', fn)
+    return () => window.removeEventListener('resize', fn)
+  }, [])
+  return mobile
+}
+
 export default function CatalogsPage() {
+  const isMobile     = useIsMobile()
   const membership  = useAuthStore(s => s.membership)
   const authUser    = useAuthStore(s => s.user)
   const companyId   = membership?.company_id
@@ -76,37 +87,49 @@ export default function CatalogsPage() {
   }
 
   return (
-    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--bg)' }}>
+    <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: '100vh', overflow: 'hidden', background: 'var(--bg)' }}>
 
-      {/* Sidebar mínimo */}
-      <aside className="glass" style={{ width: 248, minWidth: 248, display: 'flex', flexDirection: 'column' }}>
-        <div style={{ padding: '20px 16px 14px', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ fontSize: 10, color: 'var(--text3)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 6 }}>
-            {membership?.companies?.name ?? '—'}
+      {isMobile ? (
+        /* Barra superior en celular */
+        <header className="glass" style={{
+          display: 'flex', alignItems: 'center', gap: 10, padding: '0 14px',
+          height: 52, borderBottom: '1px solid var(--border)', flexShrink: 0,
+        }}>
+          <button onClick={() => navigate('/app')} style={{ ...sideBtn, padding: '6px 10px' }}>← Catálogo</button>
+          <h1 style={{ fontSize: 15, fontWeight: 700, flex: 1, margin: 0 }}>Mis catálogos</h1>
+          <button onClick={() => navigate('/profile')} style={sideBtn}>Perfil</button>
+        </header>
+      ) : (
+        /* Sidebar mínimo */
+        <aside className="glass" style={{ width: 248, minWidth: 248, display: 'flex', flexDirection: 'column' }}>
+          <div style={{ padding: '20px 16px 14px', borderBottom: '1px solid var(--border)' }}>
+            <div style={{ fontSize: 12, color: 'var(--text3)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 6 }}>
+              {membership?.companies?.name ?? '—'}
+            </div>
+            <h1 style={{ fontSize: 16, fontWeight: 700 }}>Mis catálogos</h1>
           </div>
-          <h1 style={{ fontSize: 15, fontWeight: 700 }}>Mis catálogos</h1>
-        </div>
-        <nav style={{ flex: 1, padding: '8px 6px' }}>
-          <button className="brand-btn" onClick={() => navigate('/app')}>
-            ← Volver al catálogo
-          </button>
-        </nav>
-        <div style={{ padding: '10px 12px', borderTop: '1px solid var(--border)' }}>
-          <button onClick={() => navigate('/profile')} style={sideBtn}>Mi perfil</button>
-        </div>
-      </aside>
+          <nav style={{ flex: 1, padding: '8px 6px' }}>
+            <button className="brand-btn" onClick={() => navigate('/app')}>
+              ← Volver al catálogo
+            </button>
+          </nav>
+          <div style={{ padding: '10px 12px', borderTop: '1px solid var(--border)' }}>
+            <button onClick={() => navigate('/profile')} style={sideBtn}>Mi perfil</button>
+          </div>
+        </aside>
+      )}
 
       {/* Main */}
-      <main style={{ flex: 1, overflowY: 'auto', padding: '32px 32px' }}>
+      <main style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '18px 14px' : '32px 32px' }}>
         <div style={{ maxWidth: 800 }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+          <div style={{ display: 'flex', alignItems: isMobile ? 'flex-start' : 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 24 }}>
             <div>
-              <h2 style={{ fontSize: 20, fontWeight: 700, letterSpacing: '-0.4px' }}>Catálogos guardados</h2>
-              <p style={{ fontSize: 13, color: 'var(--text3)', marginTop: 4 }}>
+              <h2 style={{ fontSize: isMobile ? 18 : 21, fontWeight: 700, letterSpacing: '-0.4px' }}>Catálogos guardados</h2>
+              <p style={{ fontSize: 15, color: 'var(--text3)', marginTop: 4 }}>
                 Abrí un catálogo para modificar precios o regenerar el PDF.
               </p>
             </div>
-            <div style={{ textAlign: 'right' }}>
+            <div style={{ textAlign: isMobile ? 'left' : 'right' }}>
               <button
                 onClick={() => {
                   if (!canAddCatalog) {
@@ -120,14 +143,14 @@ export default function CatalogsPage() {
                   background: canAddCatalog ? 'var(--accent)' : 'var(--surface-h)',
                   color: canAddCatalog ? 'var(--accent-text)' : 'var(--text3)',
                   border: canAddCatalog ? 'none' : '1px solid var(--border)',
-                  borderRadius: 9, fontWeight: 700, fontSize: 13, cursor: 'pointer',
+                  borderRadius: 9, fontWeight: 700, fontSize: 14, cursor: 'pointer',
                 }}
                 title={!canAddCatalog ? `Límite: ${usage.catalogs_active}/${limits.max_catalogs_active} catálogos activos` : undefined}
               >
                 + Nuevo catálogo
               </button>
               {!canAddCatalog && (
-                <div style={{ fontSize: 11, color: 'var(--text3)', marginTop: 4 }}>
+                <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 4 }}>
                   {usage.catalogs_active}/{limits.max_catalogs_active} activos — <Link to="/pricing" style={{ color: 'var(--accent)', textDecoration: 'none' }}>Actualizar plan</Link>
                 </div>
               )}
@@ -143,7 +166,7 @@ export default function CatalogsPage() {
             }}>
               <div style={{ fontSize: 32, marginBottom: 12, opacity: 0.3 }}>◻</div>
               <p style={{ fontWeight: 600, color: 'var(--text2)', margin: 0 }}>Sin catálogos guardados</p>
-              <p style={{ fontSize: 12, marginTop: 4 }}>Generá un PDF desde el catálogo y guardalo para verlo acá.</p>
+              <p style={{ fontSize: 13, marginTop: 4 }}>Generá un PDF desde el catálogo y guardalo para verlo acá.</p>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -175,8 +198,8 @@ export default function CatalogsPage() {
                         justifyContent: 'center', color: 'var(--text3)',
                       }}><Icon name="document" size={18} /></div>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontWeight: 700, fontSize: 14 }}>{cat.name}</div>
-                        <div style={{ fontSize: 12, color: 'var(--text3)', display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 2 }}>
+                        <div style={{ fontWeight: 700, fontSize: 15 }}>{cat.name}</div>
+                        <div style={{ fontSize: 13, color: 'var(--text3)', display: 'flex', gap: 10, flexWrap: 'wrap', marginTop: 2 }}>
                           <span>{productCount} producto{productCount !== 1 ? 's' : ''}</span>
                           {brandNames.length > 0 && <span>{brandNames.join(' · ')}</span>}
                           <span>{new Date(cat.updated_at).toLocaleDateString('es-AR', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
@@ -189,7 +212,7 @@ export default function CatalogsPage() {
                         </div>
                       </div>
                       <span style={{
-                        fontSize: 11, fontWeight: 600, padding: '3px 10px',
+                        fontSize: 12, fontWeight: 600, padding: '3px 10px',
                         borderRadius: 999, background: 'var(--surface-h)', color: st.color, flexShrink: 0,
                       }}>{st.label}</span>
                     </div>
@@ -225,13 +248,13 @@ export default function CatalogsPage() {
           <div className="modal-pop-in" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 24, width: '100%', maxWidth: 460 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, color: 'var(--success)' }}>
               <Icon name="check-circle" size={22} />
-              <h3 style={{ fontSize: 16, fontWeight: 700, color: 'var(--text)' }}>{linkModal.published ? 'Catálogo publicado' : 'Link de tu catálogo'}</h3>
+              <h3 style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)' }}>{linkModal.published ? 'Catálogo publicado' : 'Link de tu catálogo'}</h3>
             </div>
-            <p style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.6, marginBottom: 14 }}>
+            <p style={{ fontSize: 14, color: 'var(--text2)', lineHeight: 1.6, marginBottom: 14 }}>
               Cualquiera con este link puede ver el catálogo y armar su pedido. Podés desactivarlo cuando quieras con «Desactivar».
             </p>
             <input readOnly value={linkModal.url} onFocus={e => e.target.select()}
-              style={{ width: '100%', padding: '10px 12px', background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text)', fontSize: 13, boxSizing: 'border-box', marginBottom: 14 }} />
+              style={{ width: '100%', padding: '10px 12px', background: 'var(--bg-panel)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text)', fontSize: 14, boxSizing: 'border-box', marginBottom: 14 }} />
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button onClick={() => setLinkModal(null)} style={sideBtn}>Cerrar</button>
               <button onClick={async () => { try { await navigator.clipboard.writeText(linkModal.url); setCopied(true) } catch { setCopied(false) } }}
@@ -247,8 +270,8 @@ export default function CatalogsPage() {
         <div className="modal-overlay-in" onClick={e => e.target === e.currentTarget && setWappPrompt(null)}
           style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.75)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}>
           <div className="modal-pop-in" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 14, padding: 24, width: '100%', maxWidth: 420 }}>
-            <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 8 }}>Configurá tu WhatsApp para recibir pedidos</h3>
-            <p style={{ fontSize: 13, color: 'var(--text2)', lineHeight: 1.6, marginBottom: 20 }}>
+            <h3 style={{ fontSize: 17, fontWeight: 700, marginBottom: 8 }}>Configurá tu WhatsApp para recibir pedidos</h3>
+            <p style={{ fontSize: 14, color: 'var(--text2)', lineHeight: 1.6, marginBottom: 20 }}>
               Todavía no cargaste tu número. Si compartís el catálogo así, tus clientes solo van a poder enviarte el pedido por email o copiarlo.
             </p>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
@@ -277,11 +300,11 @@ export default function CatalogsPage() {
 
 const sideBtn = {
   padding: '6px 12px', background: 'var(--surface)', border: '1px solid var(--border)',
-  color: 'var(--text2)', borderRadius: 7, fontSize: 11, cursor: 'pointer',
+  color: 'var(--text2)', borderRadius: 7, fontSize: 12, cursor: 'pointer',
 }
 
 const actionBtn = (color) => ({
-  padding: '6px 14px', borderRadius: 7, fontSize: 12, cursor: 'pointer', fontWeight: 600,
+  padding: '6px 14px', borderRadius: 7, fontSize: 13, cursor: 'pointer', fontWeight: 600,
   border: `1px solid ${color}44`, background: `${color}11`, color,
   transition: 'all 0.15s',
 })
