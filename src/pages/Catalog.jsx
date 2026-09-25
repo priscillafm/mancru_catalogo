@@ -29,6 +29,8 @@ function useTheme() {
   return { theme, toggle }
 }
 
+const UNBRANDED = '__sin_marca__'
+
 export default function CatalogPage() {
   const membership = useAuthStore(s => s.membership)
   const companyId  = membership?.company_id
@@ -69,7 +71,8 @@ export default function CatalogPage() {
         .eq('company_id', companyId)
         .eq('active', true)
         .is('deleted_at', null)
-      if (activeBrandId) q = q.eq('brand_id', activeBrandId)
+      if (activeBrandId === UNBRANDED) q = q.is('brand_id', null)
+      else if (activeBrandId)          q = q.eq('brand_id', activeBrandId)
       if (activeCatId)   q = q.eq('category_id', activeCatId)
       if (search)        q = q.ilike('name', `%${search}%`)
       const { data } = await q.order('category_id', { nullsFirst: false }).order('name').limit(500)
@@ -81,18 +84,33 @@ export default function CatalogPage() {
   const { data: categories = [] } = useQuery({
     queryKey: ['categories-for-brand', companyId, activeBrandId],
     queryFn: async () => {
-      const { data } = await supabase
+      let q = supabase
         .from('products')
         .select('category_id, categories(id, name)')
         .eq('company_id', companyId)
-        .eq('brand_id', activeBrandId)
         .eq('active', true)
         .is('deleted_at', null)
         .not('category_id', 'is', null)
+      q = activeBrandId === UNBRANDED ? q.is('brand_id', null) : q.eq('brand_id', activeBrandId)
+      const { data } = await q
       const seen = new Set()
       return (data ?? []).map(p => p.categories).filter(c => c && !seen.has(c.id) && seen.add(c.id))
     },
     enabled: !!companyId && !!activeBrandId,
+  })
+
+  // Para saber si mostrar "Sin marca" en el panel y para distinguir
+  // "todavía no cargaste productos" de "elegí una marca para empezar".
+  const { data: productStats } = useQuery({
+    queryKey: ['product-stats', companyId],
+    queryFn: async () => {
+      const [{ count: total }, { count: unbranded }] = await Promise.all([
+        supabase.from('products').select('id', { count: 'exact', head: true }).eq('company_id', companyId).eq('active', true).is('deleted_at', null),
+        supabase.from('products').select('id', { count: 'exact', head: true }).eq('company_id', companyId).eq('active', true).is('deleted_at', null).is('brand_id', null),
+      ])
+      return { total: total ?? 0, unbranded: unbranded ?? 0 }
+    },
+    enabled: !!companyId,
   })
 
   function toggleSelect(product) {
@@ -112,7 +130,9 @@ export default function CatalogPage() {
   }
   function clearAll() { setSelectedMap({}) }
 
-  const activeBrand   = brands.find(b => b.id === activeBrandId)
+  const activeBrand   = activeBrandId === UNBRANDED
+    ? { id: null, name: 'Sin marca', color: 'var(--text3)' }
+    : brands.find(b => b.id === activeBrandId)
   const totalSelected = Object.keys(selectedMap).length
   const allSelected   = products.length > 0 && products.every(p => selectedMap[p.id])
 
@@ -204,6 +224,28 @@ export default function CatalogPage() {
               </button>
             )
           })}
+          {!brandsLoading && productStats?.unbranded > 0 && (() => {
+            const isActive = activeBrandId === UNBRANDED
+            const count = Object.values(selectedMap).filter(p => !p.brand_id).length
+            return (
+              <button className={`brand-btn ${isActive ? 'active' : ''}`}
+                style={{ borderLeftColor: isActive ? 'var(--text3)' : 'transparent' }}
+                onClick={() => { setActiveBrandId(UNBRANDED); setActiveCatId(null); setSearch(''); if (isMobile) setSidebarOpen(false) }}>
+                <span style={{
+                  width: 9, height: 9, borderRadius: '50%',
+                  background: 'var(--text3)', flexShrink: 0,
+                }} />
+                <span style={{ fontSize: 14, fontWeight: isActive ? 600 : 400, flex: 1 }}>Sin marca</span>
+                {count > 0 && (
+                  <span style={{
+                    fontSize: 11, fontWeight: 700, padding: '1px 7px', borderRadius: 999,
+                    background: 'var(--text3)', color: '#000', flexShrink: 0,
+                    animation: 'popIn 0.2s ease',
+                  }}>{count}</span>
+                )}
+              </button>
+            )
+          })()}
         </nav>
 
         {/* Footer */}
@@ -324,7 +366,9 @@ export default function CatalogPage() {
         {/* Grid */}
         <div style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '16px 12px 100px' : '24px 24px 80px' }}>
           {!activeBrandId ? (
-            <CatalogInstructions isMobile={isMobile} />
+            productStats?.total === 0
+              ? <NoProductsYet isMobile={isMobile} isAdmin={isAdmin} navigate={navigate} />
+              : <CatalogInstructions isMobile={isMobile} />
           ) : productsLoading ? (
             <SkeletonGrid isMobile={isMobile} />
           ) : products.length === 0 ? (
@@ -445,6 +489,44 @@ function SkeletonGrid({ isMobile }) {
       {Array.from({ length: isMobile ? 8 : 12 }).map((_, i) => (
         <div key={i} className="skeleton" style={{ borderRadius: 12, aspectRatio: '0.75' }} />
       ))}
+    </div>
+  )
+}
+
+function NoProductsYet({ isMobile, isAdmin, navigate }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', minHeight: 240, padding: isMobile ? '24px 16px 0' : '0 48px', textAlign: 'center' }}>
+      <div style={{ maxWidth: 400 }}>
+        <div style={{
+          width: 52, height: 52, borderRadius: '50%', margin: '0 auto 18px',
+          background: 'var(--accent)', color: 'var(--accent-text)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <Icon name="products" size={24} />
+        </div>
+        <h2 style={{ fontSize: 17, fontWeight: 700, marginBottom: 8 }}>Todavía no cargaste productos</h2>
+        <p style={{ fontSize: 14, color: 'var(--text3)', lineHeight: 1.5, marginBottom: 22 }}>
+          {isAdmin
+            ? 'Para armar un catálogo primero necesitás algunos productos. Podés cargarlos uno por uno o subir un Excel con todos de una vez.'
+            : 'Para armar un catálogo primero hacen falta productos cargados. Pedile a un administrador de tu empresa que los cargue.'}
+        </p>
+        {isAdmin && (
+          <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 10, justifyContent: 'center' }}>
+            <button onClick={() => navigate('/admin/products')} style={{
+              padding: '10px 20px', background: 'var(--accent)', color: 'var(--accent-text)',
+              border: 'none', borderRadius: 9, fontWeight: 700, fontSize: 14, cursor: 'pointer',
+            }}>
+              + Agregar productos
+            </button>
+            <button onClick={() => navigate('/admin/import')} style={{
+              padding: '10px 20px', background: 'var(--surface)', color: 'var(--text2)',
+              border: '1px solid var(--border)', borderRadius: 9, fontWeight: 600, fontSize: 14, cursor: 'pointer',
+            }}>
+              Importar desde Excel
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

@@ -51,6 +51,12 @@ WHERE e.id = 'ID_DE_LA_SINCRONIZACION' AND d.execution_id = e.id AND d.change_ty
 - **Recorrido guiado:** al entrar a Admin por primera vez en escritorio aparecen globitos que van señalando cada opción del menú. No se repite solo (se guarda en `localStorage`); se puede volver a ver desde el botón en la Guía. En celular no se muestra automático (el menú vive en un drawer que hay que abrir a mano) pero la página de Guía sí está disponible.
 - **Repo:** GitHub renombró `mancru_catalogo` a `potato` (`github.com/priscillafm/potato`); el remoto viejo sigue redirigiendo pero conviene actualizar la URL localmente.
 
+## Armador de catálogo: productos sin marca invisibles + estado vacío (24 de septiembre)
+- **Qué encontró Priscilla:** cargó un producto sin asignarle marca y no le aparecía en ningún lado al armar un catálogo. Tuvo que crear una marca para que el producto se pudiera usar.
+- **Causa real:** el armador de catálogo (`/app`) organiza todo por marca — sin marca seleccionada en el panel izquierdo no se pide ningún producto, y el panel solo lista marcas reales. Un producto con `brand_id` vacío no tenía ninguna marca para "vivir" ahí, así que quedaba inalcanzable aunque estuviera cargado y activo.
+- **Corrección:** el panel izquierdo suma una entrada "Sin marca" (solo si hay al menos un producto sin marca) que filtra por `brand_id is null`, igual que ya hacía el PDF al agrupar el borrador.
+- **De paso:** el estado vacío del armador ahora distingue "no cargaste ningún producto todavía" (con botones directos a Productos e Importar) de "elegí una marca para empezar" (cuando ya hay productos pero ninguno seleccionado) — antes mostraba siempre el mismo texto de instrucciones sin mirar si la cuenta tenía productos o no.
+
 ## Cómo seguir desde otra computadora
 Clonar el repositorio, crear el archivo `.env` con las dos variables públicas de Supabase y abrir Claude Code en la carpeta: lee `CLAUDE.md` (reglas y método de trabajo) y este historial. La conversación textual no se guarda en el repositorio porque contiene claves; este archivo y `CLAUDE.md` resumen lo importante sin datos sensibles.
 
@@ -65,5 +71,5 @@ Clonar el repositorio, crear el archivo `.env` con las dos variables públicas d
 - Probar un pago real con otra persona y devolverlo; probar en iPhone y Android reales.
 - Dar de baja Vercel; pasar el repositorio a privado; renombrar el proyecto de Supabase; actualizar el remoto local a `github.com/priscillafm/potato`.
 - Decidir el texto de "soporte prioritario" y del alcance del precio de lanzamiento.
-- Borrar (o dejar) las cuentas de prueba QA creadas durante el trabajo (`qa-claude-test-0916@potato-test.dev`, `qa-mobile-0924@potato-test.dev`), cada una con una empresa y datos de ejemplo.
+- Borrar (o dejar) las cuentas de prueba QA creadas durante el trabajo (`qa-claude-test-0916@potato-test.dev`, `qa-mobile-0924@potato-test.dev`, `qa-emptystate-0924@potato-test.dev`), cada una con una empresa y datos de ejemplo.
 - Ideas para después: vista previa del mensaje de WhatsApp, fotos por ZIP nombradas por SKU, cobro en dólares con otro proveedor, redirección de `www` al dominio principal.
